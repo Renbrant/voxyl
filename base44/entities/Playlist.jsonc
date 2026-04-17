@@ -1,0 +1,75 @@
+{
+  "name": "Playlist",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Playlist name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Playlist description"
+    },
+    "creator_id": {
+      "type": "string",
+      "description": "User ID of creator"
+    },
+    "creator_name": {
+      "type": "string",
+      "description": "Display name of creator"
+    },
+    "creator_email": {
+      "type": "string",
+      "description": "Email of creator"
+    },
+    "rss_feeds": {
+      "type": "array",
+      "description": "List of RSS feed URLs",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "image": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "is_public": {
+      "type": "boolean",
+      "default": true,
+      "description": "Public or private playlist"
+    },
+    "max_duration": {
+      "type": "number",
+      "description": "Max episode duration in minutes (0 = no limit)"
+    },
+    "share_token": {
+      "type": "string",
+      "description": "Unique token for sharing"
+    },
+    "cover_image": {
+      "type": "string",
+      "description": "Cover image URL"
+    },
+    "likes_count": {
+      "type": "number",
+      "default": 0
+    },
+    "plays_count": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

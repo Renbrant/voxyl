@@ -1,0 +1,93 @@
+import { Link } from 'react-router-dom';
+import { Play, Heart, Share2, Lock } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const GRADIENT_COLORS = [
+  'from-purple-600 to-cyan-400',
+  'from-pink-600 to-purple-600',
+  'from-blue-600 to-cyan-400',
+  'from-orange-500 to-pink-600',
+  'from-green-500 to-cyan-400',
+];
+
+export default function PlaylistCard({ playlist, onLike, liked, compact = false }) {
+  const gradient = GRADIENT_COLORS[playlist.id?.charCodeAt(0) % GRADIENT_COLORS.length] || GRADIENT_COLORS[0];
+
+  const handleShare = async (e) => {
+    e.preventDefault();
+    const url = `${window.location.origin}/playlist/${playlist.share_token || playlist.id}`;
+    if (navigator.share) {
+      await navigator.share({ title: playlist.name, text: playlist.description, url });
+    } else {
+      navigator.clipboard.writeText(url);
+    }
+  };
+
+  return (
+    <Link to={`/playlist/${playlist.id}`} className="block">
+      <div className={cn(
+        "group relative rounded-2xl overflow-hidden border border-border bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 active:scale-98",
+        compact ? "flex gap-3 p-3 items-center" : ""
+      )}>
+        {compact ? (
+          <>
+            <div className={cn("w-14 h-14 rounded-xl flex-shrink-0 bg-gradient-to-br", gradient)} />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <p className="font-semibold text-sm truncate">{playlist.name}</p>
+                {!playlist.is_public && <Lock size={12} className="text-muted-foreground flex-shrink-0" />}
+              </div>
+              <p className="text-xs text-muted-foreground truncate">{playlist.creator_name}</p>
+              <p className="text-xs text-muted-foreground">{playlist.rss_feeds?.length || 0} feeds</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={e => { e.preventDefault(); onLike?.(playlist); }}
+                className={cn("p-1.5 rounded-full", liked ? "text-red-400" : "text-muted-foreground")}>
+                <Heart size={16} fill={liked ? "currentColor" : "none"} />
+              </button>
+              <button onClick={handleShare} className="p-1.5 rounded-full text-muted-foreground">
+                <Share2 size={16} />
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className={cn("h-36 bg-gradient-to-br relative", gradient)}>
+              <div className="absolute inset-0 bg-black/20" />
+              <div className="absolute bottom-3 left-3 right-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <Play size={18} fill="white" className="text-white ml-0.5" />
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={handleShare} className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white">
+                      <Share2 size={14} />
+                    </button>
+                    <button onClick={e => { e.preventDefault(); onLike?.(playlist); }}
+                      className={cn("w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center", liked ? "text-red-400" : "text-white")}>
+                      <Heart size={14} fill={liked ? "currentColor" : "none"} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="p-3">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <p className="font-semibold text-sm truncate">{playlist.name}</p>
+                {!playlist.is_public && <Lock size={12} className="text-muted-foreground" />}
+              </div>
+              <p className="text-xs text-muted-foreground mb-1">por {playlist.creator_name}</p>
+              {playlist.description && (
+                <p className="text-xs text-muted-foreground line-clamp-2">{playlist.description}</p>
+              )}
+              <div className="flex items-center gap-3 mt-2">
+                <span className="text-xs text-muted-foreground">{playlist.rss_feeds?.length || 0} feeds</span>
+                <span className="text-xs text-muted-foreground">{playlist.likes_count || 0} ♥</span>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </Link>
+  );
+}
