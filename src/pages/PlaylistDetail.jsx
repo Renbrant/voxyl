@@ -107,9 +107,25 @@ export default function PlaylistDetail() {
           <Link to="/playlists" className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
             <ArrowLeft size={18} className="text-white" />
           </Link>
-          <button onClick={handleShare} className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
-            <Share2 size={16} className="text-white" />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Autoplay mini toggle */}
+            <button
+              onClick={() => setAutoplay(v => !v)}
+              title={autoplay ? 'Autoplay ativado' : 'Autoplay desativado'}
+              className={cn(
+                "flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm transition-all text-xs font-medium",
+                autoplay
+                  ? "bg-white/20 text-white"
+                  : "bg-black/30 text-white/40"
+              )}
+            >
+              <SkipForward size={11} />
+              <span>auto</span>
+            </button>
+            <button onClick={handleShare} className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+              <Share2 size={16} className="text-white" />
+            </button>
+          </div>
         </div>
         <div className="absolute bottom-4 left-4 right-4 z-10">
           {playlist ? (
@@ -137,29 +153,14 @@ export default function PlaylistDetail() {
             <ListMusic size={16} className="text-primary" /> Episódios
             {episodes.length > 0 && <span className="text-muted-foreground text-sm font-normal">({episodes.length})</span>}
           </h2>
-          <div className="flex items-center gap-2">
-            {/* Autoplay toggle */}
+          {episodes.length > 0 && (
             <button
-              onClick={() => setAutoplay(v => !v)}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border",
-                autoplay
-                  ? "bg-primary/10 text-primary border-primary/30"
-                  : "bg-secondary text-muted-foreground border-border"
-              )}
+              onClick={() => play(episodes[0], episodes)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full gradient-primary text-white text-xs font-medium"
             >
-              <SkipForward size={12} />
-              {autoplay ? 'Autoplay on' : 'Autoplay off'}
+              <Play size={12} fill="white" /> Tocar tudo
             </button>
-            {episodes.length > 0 && (
-              <button
-                onClick={() => play(episodes[0], episodes)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full gradient-primary text-white text-xs font-medium"
-              >
-                <Play size={12} fill="white" /> Tocar tudo
-              </button>
-            )}
-          </div>
+          )}
         </div>
 
         {loadingEps ? (
