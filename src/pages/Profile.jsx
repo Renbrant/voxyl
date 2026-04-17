@@ -5,7 +5,9 @@ import VoxylHeader from '@/components/common/VoxylHeader';
 import PlaylistCard from '@/components/playlist/PlaylistCard';
 import InviteFriendModal from '@/components/profile/InviteFriendModal';
 import DeleteAccountModal from '@/components/profile/DeleteAccountModal';
-import { UserCircle2, Mail, Users, ListMusic, Trash2 } from 'lucide-react';
+import ConnectAccountsSection from '@/components/profile/ConnectAccountsSection';
+import ShareAppModal from '@/components/profile/ShareAppModal';
+import { UserCircle2, Mail, Users, ListMusic, Trash2, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -13,6 +15,7 @@ export default function Profile() {
   const [user, setUser] = useState(null);
   const [showInvite, setShowInvite] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   useEffect(() => { base44.auth.me().then(setUser).catch(() => {}); }, []);
 
@@ -67,6 +70,9 @@ export default function Profile() {
           </div>
         </div>
 
+        {/* Connected accounts */}
+        <ConnectAccountsSection user={user} />
+
         {/* Invite */}
         <div className="p-4 rounded-2xl bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/30 mb-5">
           <div className="flex items-center gap-3">
@@ -77,13 +83,23 @@ export default function Profile() {
               <p className="font-semibold text-sm">Convide seus amigos!</p>
               <p className="text-xs text-muted-foreground">Compartilhe o Voxyl com quem você ama</p>
             </div>
-            <Button
-              onClick={() => setShowInvite(true)}
-              size="sm"
-              className="rounded-full gradient-primary border-0 text-xs"
-            >
-              Convidar
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setShowShare(true)}
+                size="sm"
+                variant="ghost"
+                className="rounded-full text-xs px-2"
+              >
+                <Share2 size={14} />
+              </Button>
+              <Button
+                onClick={() => setShowInvite(true)}
+                size="sm"
+                className="rounded-full gradient-primary border-0 text-xs"
+              >
+                Convidar
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -122,6 +138,11 @@ export default function Profile() {
       <AnimatePresence>
         {showDelete && user && (
           <DeleteAccountModal user={user} onClose={() => setShowDelete(false)} />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showShare && (
+          <ShareAppModal onClose={() => setShowShare(false)} />
         )}
       </AnimatePresence>
     </div>
