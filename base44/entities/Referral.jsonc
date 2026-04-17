@@ -1,0 +1,37 @@
+{
+  "name": "Referral",
+  "type": "object",
+  "properties": {
+    "inviter_id": {
+      "type": "string",
+      "description": "User ID of who sent the invite"
+    },
+    "inviter_email": {
+      "type": "string"
+    },
+    "inviter_name": {
+      "type": "string"
+    },
+    "invitee_email": {
+      "type": "string",
+      "description": "Email of the person invited"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "joined"
+      ],
+      "default": "pending",
+      "description": "Whether the invitee has joined"
+    },
+    "playlist_id": {
+      "type": "string",
+      "description": "Playlist context if invited via share link"
+    }
+  },
+  "required": [
+    "inviter_id",
+    "invitee_email"
+  ]
+}

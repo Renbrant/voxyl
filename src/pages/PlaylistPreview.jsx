@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { fetchRSSFeed, parseDurationToSeconds } from '@/lib/rssUtils';
-import { Play, Share2, Users, Headphones, Star, Lock } from 'lucide-react';
+import { Play, Share2, Headphones, Star, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
@@ -31,7 +31,34 @@ export default function PlaylistPreview() {
 
   useEffect(() => {
     base44.entities.Playlist.filter({ id })
-      .then(data => setPlaylist(data[0] || null));
+      .then(data => {
+        const pl = data[0] || null;
+        setPlaylist(pl);
+        // Inject dynamic OpenGraph meta tags so WhatsApp/social previews show playlist info
+        if (pl) {
+          const setMeta = (prop, content, attr = 'property') => {
+            let el = document.querySelector(`meta[${attr}="${prop}"]`);
+            if (!el) { el = document.createElement('meta'); el.setAttribute(attr, prop); document.head.appendChild(el); }
+            el.setAttribute('content', content);
+          };
+          const ogImage = pl.cover_image ||
+            `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(pl.name)}&size=1200&backgroundColor=7c3aed,3b82f6`;
+          const title = `${pl.name} — playlist por ${pl.creator_name} | Voxyl`;
+          const desc = pl.description || `${pl.rss_feeds?.length || 0} feeds de podcast curados por ${pl.creator_name}`;
+          const url = `${window.location.origin}/share/${id}`;
+
+          document.title = title;
+          setMeta('og:title', title);
+          setMeta('og:description', desc);
+          setMeta('og:image', ogImage);
+          setMeta('og:url', url);
+          setMeta('og:type', 'music.playlist');
+          setMeta('twitter:title', title, 'name');
+          setMeta('twitter:description', desc, 'name');
+          setMeta('twitter:image', ogImage, 'name');
+          setMeta('twitter:card', 'summary_large_image', 'name');
+        }
+      });
   }, [id]);
 
   useEffect(() => {

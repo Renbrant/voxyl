@@ -1,19 +1,34 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { X, Mail, Send, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export default function InviteFriendModal({ onClose }) {
+export default function InviteFriendModal({ onClose, playlistId = null }) {
   const [email, setEmail] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+  const [user, setUser] = useState(null);
+
+  useEffect(() => { base44.auth.me().then(setUser).catch(() => {}); }, []);
 
   const handleSend = async () => {
     if (!email.trim() || !email.includes('@')) { setError('E-mail inválido'); return; }
     setSending(true);
     setError('');
+    // Invite user to the platform
     await base44.users.inviteUser(email.trim(), 'user');
+    // Record referral
+    if (user) {
+      await base44.entities.Referral.create({
+        inviter_id: user.id,
+        inviter_email: user.email,
+        inviter_name: user.full_name || user.email.split('@')[0],
+        invitee_email: email.trim(),
+        status: 'pending',
+        playlist_id: playlistId || '',
+      });
+    }
     setSending(false);
     setSent(true);
   };
