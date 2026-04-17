@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { fetchRSSFeed, parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
+import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
 import { usePlayer } from '@/lib/PlayerContext';
-import { ArrowLeft, Share2, Play, Clock, Loader2, ListMusic } from 'lucide-react';
+import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
@@ -20,7 +20,8 @@ export default function PlaylistDetail() {
   const [user, setUser] = useState(null);
   const [episodes, setEpisodes] = useState([]);
   const [loadingEps, setLoadingEps] = useState(false);
-  const { play, currentEpisode, isPlaying, togglePlay } = usePlayer();
+  const [playedUrls, setPlayedUrls] = useState(new Set());
+  const { play, currentEpisode, isPlaying, togglePlay, currentTime, duration } = usePlayer();
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -88,6 +89,7 @@ export default function PlaylistDetail() {
   const handlePlayEpisode = (ep) => {
     if (currentEpisode?.audioUrl === ep.audioUrl) { togglePlay(); return; }
     play(ep, episodes);
+    setPlayedUrls(prev => new Set([...prev, ep.audioUrl]));
     base44.entities.Playlist.update(id, { plays_count: (playlist?.plays_count || 0) + 1 });
   };
 
@@ -155,7 +157,10 @@ export default function PlaylistDetail() {
         ) : (
           <div className="space-y-2 pb-4">
             {episodes.map((ep, i) => {
-              const isCurrentlyPlaying = currentEpisode?.audioUrl === ep.audioUrl && isPlaying;
+              const isActive = currentEpisode?.audioUrl === ep.audioUrl;
+              const isCurrentlyPlaying = isActive && isPlaying;
+              const hasBeenPlayed = playedUrls.has(ep.audioUrl) && !isActive;
+              const progress = isActive && duration ? (currentTime / duration) * 100 : 0;
               return (
                 <motion.button
                   key={i}
@@ -164,28 +169,57 @@ export default function PlaylistDetail() {
                   transition={{ delay: i * 0.02 }}
                   onClick={() => handlePlayEpisode(ep)}
                   className={cn(
-                    "w-full text-left flex gap-3 p-3 rounded-2xl border transition-all",
-                    isCurrentlyPlaying
+                    "w-full text-left flex flex-col gap-0 p-3 rounded-2xl border transition-all",
+                    isActive
                       ? "border-primary/60 bg-primary/10"
+                      : hasBeenPlayed
+                      ? "border-border bg-muted/40"
                       : "border-border bg-card hover:border-primary/30"
                   )}
                 >
-                  <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-secondary">
-                    {ep.image ? <img src={ep.image} alt="" className="w-full h-full object-cover" /> : <div className={cn("w-full h-full bg-gradient-to-br", gradient)} />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={cn("text-sm font-medium line-clamp-2", isCurrentlyPlaying ? "text-primary" : "text-foreground")}>
-                      {ep.title}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-muted-foreground">{ep.feedTitle}</span>
-                      {ep.duration && <span className="text-xs text-muted-foreground">• {ep.duration}</span>}
+                  <div className="flex gap-3">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-secondary">
+                      {ep.image
+                        ? <img src={ep.image} alt="" className={cn("w-full h-full object-cover", hasBeenPlayed && "opacity-50")} />
+                        : <div className={cn("w-full h-full bg-gradient-to-br", gradient, hasBeenPlayed && "opacity-50")} />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={cn(
+                        "text-sm font-medium line-clamp-2",
+                        isActive ? "text-primary" : hasBeenPlayed ? "text-muted-foreground" : "text-foreground"
+                      )}>
+                        {ep.title}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-muted-foreground">{ep.feedTitle}</span>
+                        {ep.duration && <span className="text-xs text-muted-foreground">• {ep.duration}</span>}
+                        {hasBeenPlayed && <span className="text-xs text-muted-foreground/60 italic">• ouvido</span>}
+                      </div>
+                    </div>
+                    <div className={cn("w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1",
+                      isActive ? "gradient-primary" : "bg-secondary")}>
+                      {isCurrentlyPlaying
+                        ? <Pause size={12} fill="white" className="text-white" />
+                        : <Play size={12} fill={isActive ? "white" : "currentColor"} className={isActive ? "text-white ml-0.5" : "text-muted-foreground ml-0.5"} />
+                      }
                     </div>
                   </div>
-                  <div className={cn("w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1",
-                    isCurrentlyPlaying ? "gradient-primary" : "bg-secondary")}>
-                    <Play size={12} fill={isCurrentlyPlaying ? "white" : "currentColor"} className={isCurrentlyPlaying ? "text-white ml-0.5" : "text-muted-foreground ml-0.5"} />
-                  </div>
+
+                  {/* Progress bar — only for the active episode */}
+                  {isActive && (
+                    <div className="mt-2.5 px-0.5">
+                      <div className="relative h-1 bg-border rounded-full overflow-hidden">
+                        <div
+                          className="absolute top-0 left-0 h-full rounded-full gradient-primary transition-all duration-300"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between mt-1">
+                        <span className="text-xs text-primary/80">{formatDuration(Math.floor(currentTime))}</span>
+                        <span className="text-xs text-muted-foreground">{formatDuration(Math.floor(duration))}</span>
+                      </div>
+                    </div>
+                  )}
                 </motion.button>
               );
             })}
