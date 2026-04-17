@@ -124,7 +124,7 @@ export default function Feed() {
           <div className="grid grid-cols-2 gap-3">
             {sortedPlaylists.map((pl, i) => (
               <motion.div key={pl.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                <PlaylistCard playlist={pl} liked={likes.includes(pl.id)} onLike={handleLike} />
+                <PlaylistCard playlist={pl} liked={likes.includes(pl.id)} onLike={handleLike} currentUser={user} />
               </motion.div>
             ))}
           </div>

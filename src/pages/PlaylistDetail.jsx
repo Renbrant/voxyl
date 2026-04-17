@@ -10,6 +10,7 @@ import EditPlaylistModal from '@/components/playlist/EditPlaylistModal';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import EpisodeDetailModal from '@/components/player/EpisodeDetailModal';
+import ReportBlockMenu from '@/components/moderation/ReportBlockMenu';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -140,6 +141,15 @@ export default function PlaylistDetail() {
             <button onClick={handleShare} className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
               <Share2 size={16} className="text-white" />
             </button>
+            {!isOwner && playlist && (
+              <ReportBlockMenu
+                currentUser={user}
+                targetUser={{ id: playlist.creator_id, email: playlist.creator_email, name: playlist.creator_name }}
+                contentType="playlist"
+                contentId={playlist.id}
+                contentTitle={playlist.name}
+              />
+            )}
           </div>
         </div>
         <div className="absolute bottom-4 left-4 right-4 z-10">

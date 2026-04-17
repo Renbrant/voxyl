@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Play, Heart, Share2, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import ReportBlockMenu from '@/components/moderation/ReportBlockMenu';
 
 const GRADIENT_COLORS = [
   'from-purple-600 to-cyan-400',
@@ -10,7 +11,7 @@ const GRADIENT_COLORS = [
   'from-green-500 to-cyan-400',
 ];
 
-export default function PlaylistCard({ playlist, onLike, liked, compact = false }) {
+export default function PlaylistCard({ playlist, onLike, liked, compact = false, currentUser }) {
   const gradient = GRADIENT_COLORS[playlist.id?.charCodeAt(0) % GRADIENT_COLORS.length] || GRADIENT_COLORS[0];
 
   const handleShare = async (e) => {
@@ -49,6 +50,13 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false 
               <button onClick={handleShare} className="p-1.5 rounded-full text-muted-foreground">
                 <Share2 size={16} />
               </button>
+              <ReportBlockMenu
+                currentUser={currentUser}
+                targetUser={{ id: playlist.creator_id, email: playlist.creator_email, name: playlist.creator_name }}
+                contentType="playlist"
+                contentId={playlist.id}
+                contentTitle={playlist.name}
+              />
             </div>
           </>
         ) : (
