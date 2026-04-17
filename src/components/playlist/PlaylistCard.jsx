@@ -15,6 +15,7 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false 
 
   const handleShare = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
     const url = `${window.location.origin}/share/${playlist.id}`;
     if (navigator.share) {
       await navigator.share({ title: playlist.name, text: playlist.description, url });
@@ -41,7 +42,7 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false 
               <p className="text-xs text-muted-foreground">{playlist.rss_feeds?.length || 0} feeds</p>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={e => { e.preventDefault(); onLike?.(playlist); }}
+              <button onClick={e => { e.preventDefault(); e.stopPropagation(); onLike?.(playlist); }}
                 className={cn("p-1.5 rounded-full", liked ? "text-red-400" : "text-muted-foreground")}>
                 <Heart size={16} fill={liked ? "currentColor" : "none"} />
               </button>
@@ -63,7 +64,7 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false 
                     <button onClick={handleShare} className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white">
                       <Share2 size={14} />
                     </button>
-                    <button onClick={e => { e.preventDefault(); onLike?.(playlist); }}
+                    <button onClick={e => { e.preventDefault(); e.stopPropagation(); onLike?.(playlist); }}
                       className={cn("w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center", liked ? "text-red-400" : "text-white")}>
                       <Heart size={14} fill={liked ? "currentColor" : "none"} />
                     </button>
