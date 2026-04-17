@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { X, Plus, Trash2, Globe, Lock, Loader2 } from 'lucide-react';
+import { X, Plus, Trash2, Globe, Lock, Loader2, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateShareToken } from '@/lib/rssUtils';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,8 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
   const [feeds, setFeeds] = useState([{ url: '' }]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [coverImage, setCoverImage] = useState('');
+  const [generatingImage, setGeneratingImage] = useState(false);
 
   const atPlaylistLimit = playlistCount >= MAX_PLAYLISTS;
 
@@ -26,6 +28,34 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
   };
   const removeFeed = (i) => setFeeds(prev => prev.filter((_, idx) => idx !== i));
   const updateFeed = (i, url) => setFeeds(prev => prev.map((f, idx) => idx === i ? { url } : f));
+
+  const handleGenerateImage = async () => {
+    if (!name.trim()) { setError('Digite um nome para a playlist primeiro'); return; }
+    setGeneratingImage(true);
+    setError('');
+    const prompt = `Create a vibrant and modern podcast playlist cover art for "${name.trim()}". ${description ? `Theme: ${description.trim()}. ` : ''}Style: colorful, eye-catching, professional. No text or logos.`;
+    const res = await base44.integrations.Core.GenerateImage({ prompt }).catch(() => null);
+    setGeneratingImage(false);
+    if (res?.url) {
+      setCoverImage(res.url);
+    } else {
+      setError('Erro ao gerar imagem');
+    }
+  };
+
+  const handleUploadImage = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setGeneratingImage(true);
+    setError('');
+    const res = await base44.integrations.Core.UploadFile({ file }).catch(() => null);
+    setGeneratingImage(false);
+    if (res?.file_url) {
+      setCoverImage(res.file_url);
+    } else {
+      setError('Erro ao fazer upload da imagem');
+    }
+  };
 
   const handleSave = async () => {
     if (!name.trim()) { setError('Nome é obrigatório'); return; }
@@ -42,6 +72,7 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
       rss_feeds: validFeeds,
       is_public: isPublic,
       max_duration: maxDuration,
+      cover_image: coverImage,
       share_token: generateShareToken(),
       likes_count: 0,
       plays_count: 0,
@@ -103,6 +134,40 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
               min={0}
               className="w-full px-4 py-3 rounded-2xl bg-secondary border border-border text-foreground text-sm focus:outline-none focus:border-primary"
             />
+          </div>
+
+          <div>
+            <label className="text-xs text-muted-foreground mb-1.5 block">Capa da Playlist</label>
+            {coverImage ? (
+              <div className="relative rounded-2xl overflow-hidden mb-3">
+                <img src={coverImage} alt="Cover" className="w-full h-40 object-cover" />
+                <button
+                  onClick={() => setCoverImage('')}
+                  className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-full text-white hover:bg-black/80"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <div className="w-full h-40 rounded-2xl bg-secondary border border-border flex items-center justify-center mb-3">
+                <p className="text-xs text-muted-foreground">Nenhuma capa selecionada</p>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <label className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-secondary text-muted-foreground rounded-2xl border border-border cursor-pointer hover:border-primary/30 transition-all text-xs font-medium">
+                <ImageIcon size={14} />
+                Enviar
+                <input type="file" accept="image/*" onChange={handleUploadImage} disabled={generatingImage} className="hidden" />
+              </label>
+              <button
+                onClick={handleGenerateImage}
+                disabled={generatingImage}
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 gradient-primary text-white rounded-2xl text-xs font-medium disabled:opacity-50"
+              >
+                {generatingImage ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                {generatingImage ? 'Gerando...' : 'Gerar IA'}
+              </button>
+            </div>
           </div>
 
           <div className="flex gap-2">
