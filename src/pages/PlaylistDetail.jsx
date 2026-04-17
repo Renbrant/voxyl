@@ -21,7 +21,7 @@ export default function PlaylistDetail() {
   const [episodes, setEpisodes] = useState([]);
   const [loadingEps, setLoadingEps] = useState(false);
   const [playedUrls, setPlayedUrls] = useState(new Set());
-  const { play, currentEpisode, isPlaying, togglePlay, currentTime, duration } = usePlayer();
+  const { play, currentEpisode, isPlaying, togglePlay, seek, currentTime, duration } = usePlayer();
 
   useEffect(() => {
     base44.auth.me().then(u => {
