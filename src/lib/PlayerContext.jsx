@@ -8,6 +8,7 @@ export function PlayerProvider({ children }) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [queue, setQueue] = useState([]);
+  const [autoplay, setAutoplay] = useState(true);
   const audioRef = useRef(null);
 
   useEffect(() => {
@@ -18,7 +19,8 @@ export function PlayerProvider({ children }) {
     audio.addEventListener('durationchange', () => setDuration(audio.duration));
     audio.addEventListener('ended', () => {
       setIsPlaying(false);
-      playNext();
+      // playNext is called via ref to avoid stale closure
+      playNextRef.current?.();
     });
 
     return () => {
@@ -46,6 +48,8 @@ export function PlayerProvider({ children }) {
     }
   }, [currentEpisode]);
 
+  const playNextRef = useRef(null);
+
   const play = (episode, newQueue = []) => {
     if (newQueue.length > 0) setQueue(newQueue);
     setCurrentEpisode(episode);
@@ -64,9 +68,13 @@ export function PlayerProvider({ children }) {
 
   const playNext = () => {
     if (!currentEpisode || queue.length === 0) return;
+    if (!autoplay) return;
     const idx = queue.findIndex(e => e.audioUrl === currentEpisode.audioUrl);
     if (idx < queue.length - 1) setCurrentEpisode(queue[idx + 1]);
   };
+
+  // Keep ref updated so the ended listener always uses latest version
+  playNextRef.current = playNext;
 
   const playPrev = () => {
     if (!currentEpisode || queue.length === 0) return;
@@ -77,7 +85,8 @@ export function PlayerProvider({ children }) {
   return (
     <PlayerContext.Provider value={{
       currentEpisode, isPlaying, currentTime, duration,
-      queue, play, togglePlay, seek, playNext, playPrev
+      queue, play, togglePlay, seek, playNext, playPrev,
+      autoplay, setAutoplay
     }}>
       {children}
     </PlayerContext.Provider>

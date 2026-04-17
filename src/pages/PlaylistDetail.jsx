@@ -4,9 +4,12 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
 import { usePlayer } from '@/lib/PlayerContext';
-import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic } from 'lucide-react';
+import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import EpisodeDetailModal from '@/components/player/EpisodeDetailModal';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const GRADIENT_COLORS = [
   'from-purple-600 to-cyan-400',
@@ -21,7 +24,8 @@ export default function PlaylistDetail() {
   const [episodes, setEpisodes] = useState([]);
   const [loadingEps, setLoadingEps] = useState(false);
   const [playedUrls, setPlayedUrls] = useState(new Set());
-  const { play, currentEpisode, isPlaying, togglePlay, seek, currentTime, duration } = usePlayer();
+  const [selectedEpisode, setSelectedEpisode] = useState(null);
+  const { play, currentEpisode, isPlaying, togglePlay, seek, currentTime, duration, autoplay, setAutoplay } = usePlayer();
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -133,14 +137,29 @@ export default function PlaylistDetail() {
             <ListMusic size={16} className="text-primary" /> Episódios
             {episodes.length > 0 && <span className="text-muted-foreground text-sm font-normal">({episodes.length})</span>}
           </h2>
-          {episodes.length > 0 && (
+          <div className="flex items-center gap-2">
+            {/* Autoplay toggle */}
             <button
-              onClick={() => play(episodes[0], episodes)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full gradient-primary text-white text-xs font-medium"
+              onClick={() => setAutoplay(v => !v)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border",
+                autoplay
+                  ? "bg-primary/10 text-primary border-primary/30"
+                  : "bg-secondary text-muted-foreground border-border"
+              )}
             >
-              <Play size={12} fill="white" /> Tocar tudo
+              <SkipForward size={12} />
+              {autoplay ? 'Autoplay on' : 'Autoplay off'}
             </button>
-          )}
+            {episodes.length > 0 && (
+              <button
+                onClick={() => play(episodes[0], episodes)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full gradient-primary text-white text-xs font-medium"
+              >
+                <Play size={12} fill="white" /> Tocar tudo
+              </button>
+            )}
+          </div>
         </div>
 
         {loadingEps ? (
@@ -184,15 +203,23 @@ export default function PlaylistDetail() {
                         : <div className={cn("w-full h-full bg-gradient-to-br", gradient, hasBeenPlayed && "opacity-50")} />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={cn(
-                        "text-sm font-medium line-clamp-2",
-                        isActive ? "text-primary" : hasBeenPlayed ? "text-muted-foreground" : "text-foreground"
-                      )}>
+                      <p
+                        className={cn(
+                          "text-sm font-medium line-clamp-2 underline-offset-2 hover:underline cursor-pointer",
+                          isActive ? "text-primary" : hasBeenPlayed ? "text-muted-foreground" : "text-foreground"
+                        )}
+                        onClick={e => { e.stopPropagation(); setSelectedEpisode(ep); }}
+                      >
                         {ep.title}
                       </p>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex flex-wrap items-center gap-x-2 mt-1">
                         <span className="text-xs text-muted-foreground">{ep.feedTitle}</span>
                         {ep.duration && <span className="text-xs text-muted-foreground">• {ep.duration}</span>}
+                        {ep.pubDate && (
+                          <span className="text-xs text-muted-foreground">
+                            • {format(new Date(ep.pubDate), "d MMM yyyy", { locale: ptBR })}
+                          </span>
+                        )}
                         {hasBeenPlayed && <span className="text-xs text-muted-foreground/60 italic">• ouvido</span>}
                       </div>
                     </div>
@@ -233,6 +260,18 @@ export default function PlaylistDetail() {
           </div>
         )}
       </div>
+      <AnimatePresence>
+        {selectedEpisode && (
+          <EpisodeDetailModal
+            episode={selectedEpisode}
+            isActive={currentEpisode?.audioUrl === selectedEpisode.audioUrl}
+            isPlaying={isPlaying}
+            onPlay={handlePlayEpisode}
+            onClose={() => setSelectedEpisode(null)}
+            gradient={gradient}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
