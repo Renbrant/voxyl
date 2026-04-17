@@ -27,7 +27,8 @@ export default function AudioPlayer() {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold truncate text-foreground">{currentEpisode.title}</p>
             <p className="text-xs text-muted-foreground truncate">{currentEpisode.feedTitle}</p>
-            <div className="mt-1.5 relative h-1 bg-border rounded-full cursor-pointer"
+            <div className="mt-1.5 py-1.5 cursor-pointer -my-1"
+              style={{ touchAction: 'none' }}
               onClick={e => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 seek(((e.clientX - rect.left) / rect.width) * duration);
@@ -38,10 +39,12 @@ export default function AudioPlayer() {
                 const rect = e.currentTarget.getBoundingClientRect();
                 seek(((touch.clientX - rect.left) / rect.width) * duration);
               }}>
-              <div
-                className="absolute top-0 left-0 h-full rounded-full gradient-primary transition-all"
-                style={{ width: `${progress}%` }}
-              />
+              <div className="relative h-1 bg-border rounded-full overflow-hidden">
+                <div
+                  className="absolute top-0 left-0 h-full rounded-full gradient-primary transition-all"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
             </div>
             <div className="flex justify-between mt-0.5">
               <span className="text-xs text-muted-foreground">{formatDuration(Math.floor(currentTime))}</span>

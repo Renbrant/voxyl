@@ -22,7 +22,12 @@ export function usePullToRefresh(onRefresh, containerRef) {
     const onTouchMove = (e) => {
       if (!pulling.current) return;
       const dy = e.touches[0].clientY - startY.current;
-      if (dy > 0) setPullProgress(Math.min(dy / THRESHOLD, 1));
+      if (dy > 0) {
+        setPullProgress(Math.min(dy / THRESHOLD, 1));
+      } else {
+        pulling.current = false;
+        setPullProgress(0);
+      }
     };
 
     const onTouchEnd = (e) => {

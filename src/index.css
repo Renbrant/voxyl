@@ -41,6 +41,8 @@
   body {
     @apply bg-background text-foreground font-inter;
     overscroll-behavior: none;
+    touch-action: pan-y;
+    -webkit-text-size-adjust: 100%;
   }
 
   ::-webkit-scrollbar {
