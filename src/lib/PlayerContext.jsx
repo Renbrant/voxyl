@@ -51,16 +51,40 @@ export function PlayerProvider({ children }) {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: currentEpisode.title,
         artist: currentEpisode.feedTitle || 'Voxyl',
-        artwork: currentEpisode.image ? [{ src: currentEpisode.image, sizes: '512x512' }] : []
+        album: 'Voxyl',
+        artwork: currentEpisode.image
+          ? [
+              { src: currentEpisode.image, sizes: '96x96',   type: 'image/jpeg' },
+              { src: currentEpisode.image, sizes: '128x128', type: 'image/jpeg' },
+              { src: currentEpisode.image, sizes: '256x256', type: 'image/jpeg' },
+              { src: currentEpisode.image, sizes: '512x512', type: 'image/jpeg' },
+            ]
+          : [],
       });
-      navigator.mediaSession.setActionHandler('play', () => { audio.play(); setIsPlaying(true); });
-      navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); setIsPlaying(false); });
-      navigator.mediaSession.setActionHandler('previoustrack', playPrev);
-      navigator.mediaSession.setActionHandler('nexttrack', playNext);
+      navigator.mediaSession.setActionHandler('play',          () => { audio.play().then(() => setIsPlaying(true)).catch(() => {}); });
+      navigator.mediaSession.setActionHandler('pause',         () => { audio.pause(); setIsPlaying(false); });
+      navigator.mediaSession.setActionHandler('previoustrack', () => playPrevRef.current?.());
+      navigator.mediaSession.setActionHandler('nexttrack',     () => playNextRef.current?.());
+      navigator.mediaSession.setActionHandler('seekbackward',  (d) => { audio.currentTime = Math.max(0, audio.currentTime - (d?.seekOffset ?? 15)); });
+      navigator.mediaSession.setActionHandler('seekforward',   (d) => { audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + (d?.seekOffset ?? 30)); });
+      navigator.mediaSession.setActionHandler('seekto',        (d) => { if (d.seekTime != null) audio.currentTime = d.seekTime; });
     }
   }, [currentEpisode]);
 
+  // Keep position state in sync for lock screen scrubber
+  useEffect(() => {
+    if (!('mediaSession' in navigator) || !duration) return;
+    try {
+      navigator.mediaSession.setPositionState({
+        duration,
+        playbackRate: audioRef.current?.playbackRate ?? 1,
+        position: currentTime,
+      });
+    } catch (_) {}
+  }, [currentTime, duration]);
+
   const playNextRef = useRef(null);
+  const playPrevRef = useRef(null);
 
   const play = (episode, newQueue = []) => {
     if (newQueue.length > 0) setQueue(newQueue);
@@ -89,8 +113,9 @@ export function PlayerProvider({ children }) {
     if (idx < queue.length - 1) setCurrentEpisode(queue[idx + 1]);
   };
 
-  // Keep ref updated so the ended listener always uses latest version
+  // Keep refs updated so ended listener and MediaSession always use latest version
   playNextRef.current = playNext;
+  playPrevRef.current = playPrev;
 
   const playPrev = () => {
     if (!currentEpisode || queue.length === 0) return;
