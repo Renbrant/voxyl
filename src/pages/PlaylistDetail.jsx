@@ -108,19 +108,22 @@ export default function PlaylistDetail() {
             <ArrowLeft size={18} className="text-white" />
           </Link>
           <div className="flex items-center gap-2">
-            {/* Autoplay mini toggle */}
+            {/* Autoplay toggle switch */}
             <button
               onClick={() => setAutoplay(v => !v)}
               title={autoplay ? 'Autoplay ativado' : 'Autoplay desativado'}
-              className={cn(
-                "flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm transition-all text-xs font-medium",
-                autoplay
-                  ? "bg-white/20 text-white"
-                  : "bg-black/30 text-white/40"
-              )}
+              className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm rounded-full px-1 py-1 transition-all"
             >
-              <SkipForward size={11} />
-              <span>auto</span>
+              <div className={cn(
+                "w-7 h-4 rounded-full relative transition-colors duration-300",
+                autoplay ? "bg-primary" : "bg-white/20"
+              )}>
+                <div className={cn(
+                  "absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-all duration-300",
+                  autoplay ? "left-3.5" : "left-0.5"
+                )} />
+              </div>
+              <SkipForward size={11} className={autoplay ? "text-white" : "text-white/40"} />
             </button>
             <button onClick={handleShare} className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
               <Share2 size={16} className="text-white" />
