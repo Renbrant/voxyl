@@ -112,15 +112,15 @@ export function PlayerProvider({ children }) {
     if (idx < queue.length - 1) setCurrentEpisode(queue[idx + 1]);
   };
 
-  // Keep refs updated so ended listener and MediaSession always use latest version
-  playNextRef.current = playNext;
-  playPrevRef.current = playPrev;
-
   const playPrev = () => {
     if (!currentEpisode || queue.length === 0) return;
     const idx = queue.findIndex(e => e.audioUrl === currentEpisode.audioUrl);
     if (idx > 0) setCurrentEpisode(queue[idx - 1]);
   };
+
+  // Keep refs updated so ended listener and MediaSession always use latest version
+  playNextRef.current = playNext;
+  playPrevRef.current = playPrev;
 
   return (
     <PlayerContext.Provider value={{
