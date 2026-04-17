@@ -258,6 +258,13 @@ export default function PlaylistDetail() {
                           const rect = e.currentTarget.getBoundingClientRect();
                           seek(((e.clientX - rect.left) / rect.width) * duration);
                         }}
+                        onTouchEnd={e => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const touch = e.changedTouches[0];
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          seek(((touch.clientX - rect.left) / rect.width) * duration);
+                        }}
                       >
                         <div
                           className="absolute top-0 left-0 h-full rounded-full gradient-primary transition-all duration-300"

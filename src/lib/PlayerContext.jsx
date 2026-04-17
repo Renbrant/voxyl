@@ -11,21 +11,33 @@ export function PlayerProvider({ children }) {
   const [autoplay, setAutoplay] = useState(true);
   const audioRef = useRef(null);
 
+  // Unlock audio on first user gesture (required by iOS Safari)
   useEffect(() => {
-    audioRef.current = new Audio();
-    const audio = audioRef.current;
+    const audio = new Audio();
+    audio.preload = 'none';
+    audioRef.current = audio;
 
     audio.addEventListener('timeupdate', () => setCurrentTime(audio.currentTime));
-    audio.addEventListener('durationchange', () => setDuration(audio.duration));
+    audio.addEventListener('durationchange', () => setDuration(isNaN(audio.duration) ? 0 : audio.duration));
     audio.addEventListener('ended', () => {
       setIsPlaying(false);
-      // playNext is called via ref to avoid stale closure
       playNextRef.current?.();
     });
+
+    // iOS requires a silent play() inside a touch event to unlock the audio context
+    const unlock = () => {
+      audio.play().then(() => audio.pause()).catch(() => {});
+      document.removeEventListener('touchstart', unlock, { once: true });
+      document.removeEventListener('click', unlock, { once: true });
+    };
+    document.addEventListener('touchstart', unlock, { once: true, passive: true });
+    document.addEventListener('click', unlock, { once: true });
 
     return () => {
       audio.pause();
       audio.src = '';
+      document.removeEventListener('touchstart', unlock);
+      document.removeEventListener('click', unlock);
     };
   }, []);
 
@@ -58,8 +70,12 @@ export function PlayerProvider({ children }) {
   const togglePlay = () => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (isPlaying) { audio.pause(); setIsPlaying(false); }
-    else { audio.play(); setIsPlaying(true); }
+    if (isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+    } else {
+      audio.play().then(() => setIsPlaying(true)).catch(() => {});
+    }
   };
 
   const seek = (time) => {
