@@ -33,7 +33,6 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
     if (validFeeds.length > MAX_FEEDS) { setError(`Máximo de ${MAX_FEEDS} podcasts por playlist durante o período de testes.`); return; }
     setSaving(true);
     setError('');
-    const validFeeds = feeds.filter(f => f.url.trim());
     await base44.entities.Playlist.create({
       name: name.trim(),
       description: description.trim(),
