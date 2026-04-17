@@ -208,7 +208,14 @@ export default function PlaylistDetail() {
                   {/* Progress bar — only for the active episode */}
                   {isActive && (
                     <div className="mt-2.5 px-0.5">
-                      <div className="relative h-1 bg-border rounded-full overflow-hidden">
+                      <div
+                        className="relative h-2 bg-border rounded-full overflow-hidden cursor-pointer"
+                        onClick={e => {
+                          e.stopPropagation();
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          seek(((e.clientX - rect.left) / rect.width) * duration);
+                        }}
+                      >
                         <div
                           className="absolute top-0 left-0 h-full rounded-full gradient-primary transition-all duration-300"
                           style={{ width: `${progress}%` }}
