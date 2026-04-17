@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import PlaylistCard from '@/components/playlist/PlaylistCard';
@@ -9,6 +9,7 @@ import PageTransition from '@/components/common/PageTransition';
 
 export default function UserProfile() {
   const { userId } = useParams();
+  const navigate = useNavigate();
   const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,9 +24,9 @@ export default function UserProfile() {
     <PageTransition>
     <div className="min-h-screen bg-background">
       <div className="px-4 pt-12 pb-4 flex items-center gap-3">
-        <Link to="/" className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center">
+        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center" style={{ WebkitTapHighlightColor: 'transparent' }}>
           <ArrowLeft size={18} />
-        </Link>
+        </button>
         <h1 className="text-xl font-grotesk font-bold">Perfil</h1>
       </div>
 

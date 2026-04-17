@@ -1,4 +1,5 @@
-import { Outlet, useLocation, Link } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useRef } from 'react';
 import { Home, Compass, ListMusic, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AudioPlayer from './player/AudioPlayer';
@@ -13,7 +14,31 @@ const navItems = [
 
 export default function Layout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { currentEpisode } = usePlayer();
+  // Remember last visited sub-route per tab
+  const tabHistory = useRef({});
+
+  const handleNavClick = (path) => {
+    const active = location.pathname === path ||
+      (path !== '/' && location.pathname.startsWith(path));
+
+    if (active) {
+      // Reset to root of this tab
+      navigate(path, { replace: true });
+    } else {
+      // Restore last sub-route for this tab if any
+      const saved = tabHistory.current[path];
+      navigate(saved || path);
+    }
+    // Save current location under its tab
+    const currentTab = navItems.find(n => n.path !== '/'
+      ? location.pathname.startsWith(n.path)
+      : location.pathname === '/');
+    if (currentTab) {
+      tabHistory.current[currentTab.path] = location.pathname;
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-background max-w-md mx-auto relative">
@@ -26,23 +51,23 @@ export default function Layout() {
 
       {currentEpisode && <AudioPlayer />}
 
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass border-t border-border z-50 select-none"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      <nav
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass border-t border-border z-50"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', userSelect: 'none', WebkitUserSelect: 'none' }}
       >
         <div className="flex items-center justify-around px-2 py-3">
           {navItems.map(({ icon: Icon, label, path }) => {
             const active = location.pathname === path ||
               (path !== '/' && location.pathname.startsWith(path));
             return (
-              <Link
+              <button
                 key={path}
-                to={path}
+                onClick={() => handleNavClick(path)}
                 className={cn(
                   "flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-all duration-200 active:scale-95",
-                  "tap-transparent",
-                  active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  active ? "text-primary" : "text-muted-foreground"
                 )}
-                style={{ WebkitTapHighlightColor: 'transparent' }}
+                style={{ WebkitTapHighlightColor: 'transparent', background: 'none', border: 'none' }}
               >
                 <div className={cn(
                   "relative",
@@ -51,7 +76,7 @@ export default function Layout() {
                   <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
                 </div>
                 <span className="text-xs font-medium">{label}</span>
-              </Link>
+              </button>
             );
           })}
         </div>

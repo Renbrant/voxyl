@@ -56,6 +56,10 @@
 }
 
 @layer utilities {
+  .no-select {
+    user-select: none;
+    -webkit-user-select: none;
+  }
   .font-inter {
     font-family: 'Inter', sans-serif;
   }

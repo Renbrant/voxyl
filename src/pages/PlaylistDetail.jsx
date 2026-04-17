@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
@@ -22,6 +22,7 @@ const GRADIENT_COLORS = [
 
 export default function PlaylistDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [episodes, setEpisodes] = useState([]);
   const [loadingEps, setLoadingEps] = useState(false);
@@ -110,9 +111,9 @@ export default function PlaylistDetail() {
       <div className={cn("relative h-56 bg-gradient-to-br", gradient)}>
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute top-12 left-4 right-4 flex items-center justify-between z-10">
-          <Link to="/playlists" className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+          <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center" style={{ WebkitTapHighlightColor: 'transparent' }}>
             <ArrowLeft size={18} className="text-white" />
-          </Link>
+          </button>
           <div className="flex items-center gap-2">
             {/* Autoplay toggle switch */}
             <button
