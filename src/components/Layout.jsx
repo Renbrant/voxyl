@@ -31,16 +31,18 @@ export default function Layout() {
       >
         <div className="flex items-center justify-around px-2 py-3">
           {navItems.map(({ icon: Icon, label, path }) => {
-            const active = location.pathname === path || 
+            const active = location.pathname === path ||
               (path !== '/' && location.pathname.startsWith(path));
             return (
               <Link
                 key={path}
                 to={path}
                 className={cn(
-                  "flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-all duration-200",
+                  "flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-all duration-200 active:scale-95",
+                  "tap-transparent",
                   active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 )}
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
                 <div className={cn(
                   "relative",

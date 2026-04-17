@@ -27,7 +27,7 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false 
   return (
     <Link to={`/playlist/${playlist.id}`} className="block">
       <div className={cn(
-        "group relative rounded-2xl overflow-hidden border border-border bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 active:scale-98",
+        "group relative rounded-2xl overflow-hidden border border-border bg-card transition-all duration-200 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 active:scale-95",
         compact ? "flex gap-3 p-3 items-center" : ""
       )}>
         {compact ? (

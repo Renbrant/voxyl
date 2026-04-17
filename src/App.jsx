@@ -1,7 +1,8 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -41,19 +42,23 @@ const AuthenticatedApp = () => {
     }
   }
 
+  const location = useLocation();
+
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route path="/" element={<Feed />} />
-        <Route path="/explore" element={<Explore />} />
-        <Route path="/playlists" element={<Playlists />} />
-        <Route path="/profile" element={<Profile />} />
-      </Route>
-      <Route path="/playlist/:id" element={<PlaylistDetail />} />
-      <Route path="/share/:id" element={<PlaylistPreview />} />
-      <Route path="/user/:userId" element={<UserProfile />} />
-      <Route path="*" element={<PageNotFound />} />
-    </Routes>
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Feed />} />
+          <Route path="/explore" element={<Explore />} />
+          <Route path="/playlists" element={<Playlists />} />
+          <Route path="/profile" element={<Profile />} />
+        </Route>
+        <Route path="/playlist/:id" element={<PlaylistDetail />} />
+        <Route path="/share/:id" element={<PlaylistPreview />} />
+        <Route path="/user/:userId" element={<UserProfile />} />
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
+    </AnimatePresence>
   );
 };
 

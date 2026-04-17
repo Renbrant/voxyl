@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import VoxylHeader from '@/components/common/VoxylHeader';
 import PlaylistCard from '@/components/playlist/PlaylistCard';
+import PullToRefreshIndicator from '@/components/common/PullToRefreshIndicator';
 import { Flame, Sparkles, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -20,7 +21,7 @@ export default function Feed() {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
-  usePullToRefresh(() => {
+  const { pullProgress, refreshing } = usePullToRefresh(() => {
     queryClient.invalidateQueries({ queryKey: ['feed-playlists'] });
     queryClient.invalidateQueries({ queryKey: ['my-likes'] });
   }, containerRef);
@@ -60,7 +61,8 @@ export default function Feed() {
     : [...playlists].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-background">
+    <div ref={containerRef} className="min-h-screen bg-background relative">
+      <PullToRefreshIndicator pullProgress={pullProgress} refreshing={refreshing} />
       <VoxylHeader
         subtitle="Descubra"
         title={<span className="text-gradient font-grotesk">Voxyl</span>}

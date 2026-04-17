@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import PlaylistCard from '@/components/playlist/PlaylistCard';
 import { ArrowLeft, UserCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import PageTransition from '@/components/common/PageTransition';
 
 export default function UserProfile() {
   const { userId } = useParams();
@@ -19,6 +20,7 @@ export default function UserProfile() {
   const creator = playlists[0]?.creator_name || 'Usuário';
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background">
       <div className="px-4 pt-12 pb-4 flex items-center gap-3">
         <Link to="/" className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center">
@@ -56,5 +58,6 @@ export default function UserProfile() {
         )}
       </div>
     </div>
+    </PageTransition>
   );
 }

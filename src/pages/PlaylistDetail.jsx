@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
 import { usePlayer } from '@/lib/PlayerContext';
 import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward, Pencil } from 'lucide-react';
+import PageTransition from '@/components/common/PageTransition';
 import EditPlaylistModal from '@/components/playlist/EditPlaylistModal';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -104,6 +105,7 @@ export default function PlaylistDetail() {
   const gradient = GRADIENT_COLORS[id?.charCodeAt(0) % GRADIENT_COLORS.length];
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background">
       <div className={cn("relative h-56 bg-gradient-to-br", gradient)}>
         <div className="absolute inset-0 bg-black/40" />
@@ -295,5 +297,6 @@ export default function PlaylistDetail() {
         )}
       </AnimatePresence>
     </div>
+    </PageTransition>
   );
 }
