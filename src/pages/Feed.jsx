@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import VoxylHeader from '@/components/common/VoxylHeader';
 import PlaylistCard from '@/components/playlist/PlaylistCard';
-import { Flame, Sparkles } from 'lucide-react';
+import { Flame, Sparkles, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
@@ -90,14 +91,21 @@ export default function Feed() {
       {/* Hero card */}
       {!isLoading && sortedPlaylists[0] && (
         <div className="px-4 mb-5">
-          <div className="relative rounded-3xl overflow-hidden h-48 bg-gradient-to-br from-purple-800 via-primary/60 to-cyan-600">
-            <div className="absolute inset-0 bg-black/30" />
-            <div className="absolute bottom-0 left-0 right-0 p-4">
-              <p className="text-xs text-white/70 mb-0.5 font-medium">🔥 Mais tocada agora</p>
-              <h2 className="text-xl font-grotesk font-bold text-white">{sortedPlaylists[0].name}</h2>
-              <p className="text-sm text-white/70">por {sortedPlaylists[0].creator_name}</p>
+          <Link to={`/playlist/${sortedPlaylists[0].id}`}>
+            <div className="relative rounded-3xl overflow-hidden h-48 bg-gradient-to-br from-purple-800 via-primary/60 to-cyan-600">
+              <div className="absolute inset-0 bg-black/30" />
+              <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
+                <div>
+                  <p className="text-xs text-white/70 mb-0.5 font-medium">🔥 Mais tocada agora</p>
+                  <h2 className="text-xl font-grotesk font-bold text-white">{sortedPlaylists[0].name}</h2>
+                  <p className="text-sm text-white/70">por {sortedPlaylists[0].creator_name} • {sortedPlaylists[0].plays_count || 0} plays</p>
+                </div>
+                <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center glow-primary flex-shrink-0">
+                  <Play size={20} fill="white" className="text-white ml-0.5" />
+                </div>
+              </div>
             </div>
-          </div>
+          </Link>
         </div>
       )}
 
