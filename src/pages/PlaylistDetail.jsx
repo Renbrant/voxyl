@@ -51,11 +51,20 @@ export default function PlaylistDetail() {
   useEffect(() => {
     if (!playlist?.rss_feeds?.length) return;
     setLoadingEps(true);
-    Promise.allSettled(playlist.rss_feeds.map(f => fetchRSSFeed(f.url)))
+    Promise.allSettled(
+      playlist.rss_feeds.map(f =>
+        base44.functions.invoke('fetchRSSFeed', { url: f.url, count: 30 }).then(r => r.data)
+      )
+    )
       .then(results => {
         const allEpisodes = results
-          .filter(r => r.status === 'fulfilled')
-          .flatMap(r => r.value.items)
+          .filter(r => r.status === 'fulfilled' && r.value?.items)
+          .flatMap(r => r.value.items.map(ep => ({
+            ...ep,
+            // Decode HTML entities in URLs (e.g. &amp; → &)
+            audioUrl: ep.audioUrl?.replace(/&amp;/g, '&'),
+            image: ep.image?.replace(/&amp;/g, '&'),
+          })))
           .filter(ep => {
             if (!playlist.max_duration || playlist.max_duration === 0) return true;
             const secs = parseDurationToSeconds(ep.duration);
