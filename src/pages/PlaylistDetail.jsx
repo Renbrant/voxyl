@@ -4,7 +4,8 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
 import { usePlayer } from '@/lib/PlayerContext';
-import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward } from 'lucide-react';
+import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward, Pencil } from 'lucide-react';
+import EditPlaylistModal from '@/components/playlist/EditPlaylistModal';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import EpisodeDetailModal from '@/components/player/EpisodeDetailModal';
@@ -25,6 +26,7 @@ export default function PlaylistDetail() {
   const [loadingEps, setLoadingEps] = useState(false);
   const [playedUrls, setPlayedUrls] = useState(new Set());
   const [selectedEpisode, setSelectedEpisode] = useState(null);
+  const [editingPlaylist, setEditingPlaylist] = useState(false);
   const { play, currentEpisode, isPlaying, togglePlay, seek, currentTime, duration, autoplay, setAutoplay } = usePlayer();
 
   useEffect(() => {
@@ -47,11 +49,13 @@ export default function PlaylistDetail() {
     }).catch(() => {});
   }, [id]);
 
-  const { data: playlist } = useQuery({
+  const { data: playlist, refetch: refetchPlaylist } = useQuery({
     queryKey: ['playlist', id],
     queryFn: () => base44.entities.Playlist.filter({ id }),
     select: data => data[0],
   });
+
+  const isOwner = user && playlist && user.id === playlist.creator_id;
 
   useEffect(() => {
     if (!playlist?.rss_feeds?.length) return;
@@ -125,6 +129,11 @@ export default function PlaylistDetail() {
               </div>
               <SkipForward size={11} className={autoplay ? "text-white" : "text-white/40"} />
             </button>
+            {isOwner && (
+              <button onClick={() => setEditingPlaylist(true)} className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                <Pencil size={15} className="text-white" />
+              </button>
+            )}
             <button onClick={handleShare} className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
               <Share2 size={16} className="text-white" />
             </button>
@@ -264,6 +273,15 @@ export default function PlaylistDetail() {
           </div>
         )}
       </div>
+      <AnimatePresence>
+        {editingPlaylist && playlist && (
+          <EditPlaylistModal
+            playlist={playlist}
+            onClose={() => setEditingPlaylist(false)}
+            onSaved={() => refetchPlaylist()}
+          />
+        )}
+      </AnimatePresence>
       <AnimatePresence>
         {selectedEpisode && (
           <EpisodeDetailModal
