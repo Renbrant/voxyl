@@ -10,6 +10,8 @@ export function PlayerProvider({ children }) {
   const [queue, setQueue] = useState([]);
   const [autoplay, setAutoplay] = useState(true);
   const audioRef = useRef(null);
+  const playNextRef = useRef(null);
+  const playPrevRef = useRef(null);
 
   // Unlock audio on first user gesture (required by iOS Safari)
   useEffect(() => {
@@ -82,9 +84,6 @@ export function PlayerProvider({ children }) {
       });
     } catch (_) {}
   }, [currentTime, duration]);
-
-  const playNextRef = useRef(null);
-  const playPrevRef = useRef(null);
 
   const play = (episode, newQueue = []) => {
     if (newQueue.length > 0) setQueue(newQueue);
