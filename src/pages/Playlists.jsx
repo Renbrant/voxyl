@@ -146,7 +146,7 @@ export default function Playlists() {
       </div>
 
       {showCreate && user && (
-        <CreatePlaylistModal user={user} onClose={() => setShowCreate(false)} onCreated={handleCreated} />
+        <CreatePlaylistModal user={user} onClose={() => setShowCreate(false)} onCreated={handleCreated} playlistCount={playlists.length} />
       )}
     </div>
   );

@@ -24,10 +24,13 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
   const [saving, setSaving] = useState(false);
   const [feedError, setFeedError] = useState('');
 
+  const MAX_FEEDS = 5;
+
   const handleAddFeed = async () => {
     const url = newFeedUrl.trim();
     if (!url) return;
     if (feeds.some(f => f.url === url)) { setFeedError('Feed já adicionado'); return; }
+    if (feeds.length >= MAX_FEEDS) { setFeedError(`Limite de ${MAX_FEEDS} podcasts por playlist durante o período de testes.`); return; }
     setAddingFeed(true);
     setFeedError('');
     const res = await base44.functions.invoke('fetchRSSFeed', { url, count: 1 }).then(r => r.data).catch(() => null);

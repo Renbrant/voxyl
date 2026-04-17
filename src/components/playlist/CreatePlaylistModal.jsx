@@ -5,7 +5,10 @@ import { Button } from '@/components/ui/button';
 import { generateShareToken } from '@/lib/rssUtils';
 import { cn } from '@/lib/utils';
 
-export default function CreatePlaylistModal({ user, onClose, onCreated }) {
+const MAX_PLAYLISTS = 2;
+const MAX_FEEDS = 5;
+
+export default function CreatePlaylistModal({ user, onClose, onCreated, playlistCount = 0 }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(true);
@@ -14,12 +17,20 @@ export default function CreatePlaylistModal({ user, onClose, onCreated }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  const addFeed = () => setFeeds(prev => [...prev, { url: '' }]);
+  const atPlaylistLimit = playlistCount >= MAX_PLAYLISTS;
+
+  const addFeed = () => {
+    const validCount = feeds.filter(f => f.url.trim()).length;
+    if (validCount >= MAX_FEEDS) { setError(`Máximo de ${MAX_FEEDS} podcasts por playlist durante o período de testes.`); return; }
+    setFeeds(prev => [...prev, { url: '' }]);
+  };
   const removeFeed = (i) => setFeeds(prev => prev.filter((_, idx) => idx !== i));
   const updateFeed = (i, url) => setFeeds(prev => prev.map((f, idx) => idx === i ? { url } : f));
 
   const handleSave = async () => {
     if (!name.trim()) { setError('Nome é obrigatório'); return; }
+    const validFeeds = feeds.filter(f => f.url.trim());
+    if (validFeeds.length > MAX_FEEDS) { setError(`Máximo de ${MAX_FEEDS} podcasts por playlist durante o período de testes.`); return; }
     setSaving(true);
     setError('');
     const validFeeds = feeds.filter(f => f.url.trim());
@@ -50,6 +61,16 @@ export default function CreatePlaylistModal({ user, onClose, onCreated }) {
           </button>
         </div>
 
+        {atPlaylistLimit ? (
+          <div className="text-center py-6 px-2">
+            <p className="text-4xl mb-3">🚧</p>
+            <p className="font-semibold text-foreground mb-1">Limite de playlists atingido</p>
+            <p className="text-sm text-muted-foreground">
+              O Voxyl está em fase de testes e permite até <strong>{MAX_PLAYLISTS} playlists</strong> por usuário no momento. Mais funcionalidades serão liberadas em breve!
+            </p>
+          </div>
+        ) : (
+        <>
         {error && <p className="text-destructive text-sm mb-3 bg-destructive/10 px-3 py-2 rounded-xl">{error}</p>}
 
         <div className="space-y-4">
@@ -137,6 +158,8 @@ export default function CreatePlaylistModal({ user, onClose, onCreated }) {
           {saving ? <Loader2 size={18} className="animate-spin mr-2" /> : null}
           {saving ? 'Salvando...' : 'Criar Playlist'}
         </Button>
+        </>
+        )}
       </div>
     </div>
   );
