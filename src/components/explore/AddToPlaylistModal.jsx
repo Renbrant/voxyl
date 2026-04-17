@@ -69,7 +69,7 @@ export default function AddToPlaylistModal({ podcast, onClose }) {
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm px-0">
       <motion.div
         initial={{ y: '100%' }} animate={{ y: 0 }} transition={{ type: 'spring', damping: 25 }}
-        className="w-full max-w-md bg-card border-t border-border rounded-t-3xl p-5 max-h-[80vh] flex flex-col"
+        className="w-full max-w-md bg-card border-t border-border rounded-t-3xl p-5 max-h-[80vh] flex flex-col pb-24"
       >
         <div className="flex items-center justify-between mb-4 flex-shrink-0">
           <div className="flex items-center gap-3">
