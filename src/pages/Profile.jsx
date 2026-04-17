@@ -4,13 +4,15 @@ import { useQuery } from '@tanstack/react-query';
 import VoxylHeader from '@/components/common/VoxylHeader';
 import PlaylistCard from '@/components/playlist/PlaylistCard';
 import InviteFriendModal from '@/components/profile/InviteFriendModal';
-import { UserCircle2, Mail, Users, ListMusic } from 'lucide-react';
+import DeleteAccountModal from '@/components/profile/DeleteAccountModal';
+import { UserCircle2, Mail, Users, ListMusic, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Profile() {
   const [user, setUser] = useState(null);
   const [showInvite, setShowInvite] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
 
   useEffect(() => { base44.auth.me().then(setUser).catch(() => {}); }, []);
 
@@ -95,7 +97,23 @@ export default function Profile() {
         </div>
       </div>
 
+        {/* Danger zone */}
+        <div className="mt-8 mb-6 border-t border-border pt-6">
+          <button
+            onClick={() => setShowDelete(true)}
+            className="flex items-center gap-2 text-sm text-destructive/70 hover:text-destructive transition-colors"
+          >
+            <Trash2 size={14} />
+            Excluir conta
+          </button>
+        </div>
+
       {showInvite && <InviteFriendModal onClose={() => setShowInvite(false)} />}
+      <AnimatePresence>
+        {showDelete && user && (
+          <DeleteAccountModal user={user} onClose={() => setShowDelete(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

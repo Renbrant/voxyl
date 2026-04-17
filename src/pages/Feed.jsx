@@ -1,20 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import VoxylHeader from '@/components/common/VoxylHeader';
 import PlaylistCard from '@/components/playlist/PlaylistCard';
 import { Flame, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 export default function Feed() {
   const [user, setUser] = useState(null);
   const [likes, setLikes] = useState([]);
   const [tab, setTab] = useState('trending');
+  const containerRef = useRef(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
+
+  usePullToRefresh(() => {
+    queryClient.invalidateQueries({ queryKey: ['feed-playlists'] });
+    queryClient.invalidateQueries({ queryKey: ['my-likes'] });
+  }, containerRef);
 
   const { data: playlists = [], isLoading } = useQuery({
     queryKey: ['feed-playlists'],
@@ -51,7 +59,7 @@ export default function Feed() {
     : [...playlists].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
 
   return (
-    <div className="min-h-screen bg-background">
+    <div ref={containerRef} className="min-h-screen bg-background">
       <VoxylHeader
         subtitle="Descubra"
         title={<span className="text-gradient font-grotesk">Voxyl</span>}

@@ -11,7 +11,9 @@ export default function AudioPlayer() {
   const progress = duration ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-md z-40 px-3 animate-slide-up">
+    <div className="fixed left-1/2 -translate-x-1/2 w-full max-w-md z-40 px-3 animate-slide-up select-none"
+      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4rem)' }}
+    >
       <div className="glass border border-border rounded-2xl p-3 shadow-2xl">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-secondary">

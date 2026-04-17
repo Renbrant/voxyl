@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import VoxylHeader from '@/components/common/VoxylHeader';
 import PlaylistCard from '@/components/playlist/PlaylistCard';
 import CreatePlaylistModal from '@/components/playlist/CreatePlaylistModal';
@@ -12,10 +13,15 @@ export default function Playlists() {
   const [user, setUser] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const queryClient = useQueryClient();
+  const containerRef = useRef(null);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
+
+  usePullToRefresh(() => {
+    queryClient.invalidateQueries({ queryKey: ['my-playlists'] });
+  }, containerRef);
 
   const { data: playlists = [], isLoading } = useQuery({
     queryKey: ['my-playlists', user?.id],
@@ -29,7 +35,7 @@ export default function Playlists() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div ref={containerRef} className="min-h-screen bg-background">
       <VoxylHeader
         title="Minhas Playlists"
         right={

@@ -26,7 +26,9 @@ export default function Layout() {
 
       {currentEpisode && <AudioPlayer />}
 
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass border-t border-border z-50 bottom-nav-safe">
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass border-t border-border z-50 select-none"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
         <div className="flex items-center justify-around px-2 py-3">
           {navItems.map(({ icon: Icon, label, path }) => {
             const active = location.pathname === path || 
