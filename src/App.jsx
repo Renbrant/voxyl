@@ -19,6 +19,7 @@ import PlaylistPreview from '@/pages/PlaylistPreview';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const location = useLocation();
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -41,8 +42,6 @@ const AuthenticatedApp = () => {
       return null;
     }
   }
-
-  const location = useLocation();
 
   return (
     <AnimatePresence mode="wait">
