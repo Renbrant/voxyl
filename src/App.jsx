@@ -14,6 +14,7 @@ import Playlists from '@/pages/Playlists';
 import Profile from '@/pages/Profile';
 import PlaylistDetail from '@/pages/PlaylistDetail';
 import UserProfile from '@/pages/UserProfile';
+import PlaylistPreview from '@/pages/PlaylistPreview';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -49,6 +50,7 @@ const AuthenticatedApp = () => {
         <Route path="/profile" element={<Profile />} />
       </Route>
       <Route path="/playlist/:id" element={<PlaylistDetail />} />
+      <Route path="/share/:id" element={<PlaylistPreview />} />
       <Route path="/user/:userId" element={<UserProfile />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>

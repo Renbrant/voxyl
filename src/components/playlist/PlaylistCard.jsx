@@ -15,7 +15,7 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false 
 
   const handleShare = async (e) => {
     e.preventDefault();
-    const url = `${window.location.origin}/playlist/${playlist.share_token || playlist.id}`;
+    const url = `${window.location.origin}/share/${playlist.id}`;
     if (navigator.share) {
       await navigator.share({ title: playlist.name, text: playlist.description, url });
     } else {

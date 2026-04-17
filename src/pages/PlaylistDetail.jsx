@@ -22,7 +22,25 @@ export default function PlaylistDetail() {
   const [loadingEps, setLoadingEps] = useState(false);
   const { play, currentEpisode, isPlaying, togglePlay } = usePlayer();
 
-  useEffect(() => { base44.auth.me().then(setUser).catch(() => {}); }, []);
+  useEffect(() => {
+    base44.auth.me().then(u => {
+      setUser(u);
+      // Check if this is the pending playlist the user signed up for
+      const pending = localStorage.getItem('voxyl_pending_playlist');
+      if (pending === id) {
+        localStorage.removeItem('voxyl_pending_playlist');
+        // Auto-like/follow the playlist as the first action post-signup
+        base44.entities.PlaylistLike.filter({ playlist_id: id, user_id: u.id })
+          .then(existing => {
+            if (existing.length === 0) {
+              base44.entities.PlaylistLike.create({ playlist_id: id, user_id: u.id, user_email: u.email });
+              base44.entities.Playlist.filter({ id })
+                .then(([pl]) => pl && base44.entities.Playlist.update(id, { likes_count: (pl.likes_count || 0) + 1 }));
+            }
+          });
+      }
+    }).catch(() => {});
+  }, [id]);
 
   const { data: playlist } = useQuery({
     queryKey: ['playlist', id],
@@ -50,7 +68,7 @@ export default function PlaylistDetail() {
   }, [playlist]);
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/playlist/${id}`;
+    const url = `${window.location.origin}/share/${id}`;
     if (navigator.share) {
       await navigator.share({ title: playlist?.name, text: playlist?.description, url });
     } else {
