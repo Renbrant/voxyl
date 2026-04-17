@@ -37,8 +37,18 @@ export default function Profile() {
       <div className="px-4">
         {/* Avatar & Info */}
         <div className="flex flex-col items-center py-6 mb-4">
-          <div className="w-20 h-20 rounded-full gradient-primary flex items-center justify-center mb-3 glow-primary">
-            <UserCircle2 size={40} className="text-white" />
+          <div className="w-20 h-20 rounded-full mb-3 flex-shrink-0">
+            {user.profile_picture ? (
+              <img
+                src={user.profile_picture}
+                alt={user.full_name}
+                className="w-full h-full rounded-full object-cover glow-primary"
+              />
+            ) : (
+              <div className="w-full h-full rounded-full gradient-primary flex items-center justify-center glow-primary">
+                <UserCircle2 size={40} className="text-white" />
+              </div>
+            )}
           </div>
           <h2 className="text-xl font-grotesk font-bold">{user.full_name || 'Usuário'}</h2>
           <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
