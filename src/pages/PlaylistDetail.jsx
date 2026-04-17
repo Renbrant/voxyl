@@ -293,15 +293,13 @@ export default function PlaylistDetail() {
           </div>
         )}
       </div>
-      <AnimatePresence>
-        {editingPlaylist && playlist && (
-          <EditPlaylistModal
-            playlist={playlist}
-            onClose={() => setEditingPlaylist(false)}
-            onSaved={() => refetchPlaylist()}
-          />
-        )}
-      </AnimatePresence>
+      {editingPlaylist && playlist && (
+        <EditPlaylistModal
+          playlist={playlist}
+          onClose={() => setEditingPlaylist(false)}
+          onSaved={() => refetchPlaylist()}
+        />
+      )}
       <AnimatePresence>
         {selectedEpisode && (
           <EpisodeDetailModal
