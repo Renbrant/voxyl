@@ -19,12 +19,38 @@ export default function Explore() {
   const [podcastLoading, setPodcastLoading] = useState(false);
   const [selectedPodcast, setSelectedPodcast] = useState(null);
   const [voxylSearch, setVoxylSearch] = useState('');
+  const [likes, setLikes] = useState([]);
 
   const debouncedQuery = useDebounce(search, 600);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
+
+  useQuery({
+    queryKey: ['my-likes', user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const l = await base44.entities.PlaylistLike.filter({ user_id: user.id });
+      setLikes(l.map(x => x.playlist_id));
+      return l;
+    },
+  });
+
+  const handleLike = async (playlist) => {
+    if (!user) return;
+    const liked = likes.includes(playlist.id);
+    if (liked) {
+      const records = await base44.entities.PlaylistLike.filter({ playlist_id: playlist.id, user_id: user.id });
+      if (records[0]) await base44.entities.PlaylistLike.delete(records[0].id);
+      setLikes(prev => prev.filter(id => id !== playlist.id));
+      await base44.entities.Playlist.update(playlist.id, { likes_count: Math.max(0, (playlist.likes_count || 1) - 1) });
+    } else {
+      await base44.entities.PlaylistLike.create({ playlist_id: playlist.id, user_id: user.id, user_email: user.email });
+      setLikes(prev => [...prev, playlist.id]);
+      await base44.entities.Playlist.update(playlist.id, { likes_count: (playlist.likes_count || 0) + 1 });
+    }
+  };
 
   // Fetch Voxyl playlists
   const { data: playlists = [], isLoading: playlistsLoading } = useQuery({
@@ -97,7 +123,7 @@ export default function Explore() {
             <div className="space-y-2">
               {filteredPlaylists.map((pl, i) => (
                 <motion.div key={pl.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
-                  <PlaylistCard playlist={pl} compact />
+                  <PlaylistCard playlist={pl} compact liked={likes.includes(pl.id)} onLike={handleLike} currentUser={user} />
                 </motion.div>
               ))}
               {filteredPlaylists.length === 0 && (
