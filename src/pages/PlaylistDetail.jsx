@@ -184,7 +184,10 @@ export default function PlaylistDetail() {
           </h2>
           {episodes.length > 0 && (
             <button
-              onClick={() => play(episodes[0], episodes)}
+              onClick={() => {
+                play(episodes[0], episodes);
+                base44.entities.Playlist.update(id, { plays_count: (playlist?.plays_count || 0) + 1 });
+              }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full gradient-primary text-white text-xs font-medium"
             >
               <Play size={12} fill="white" /> Tocar tudo

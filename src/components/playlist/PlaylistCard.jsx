@@ -115,6 +115,7 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
               <div className="flex items-center gap-3 mt-2">
                 <span className="text-xs text-muted-foreground">{playlist.rss_feeds?.length || 0} feeds</span>
                 <span className="text-xs text-muted-foreground">{playlist.likes_count || 0} ♥</span>
+                <span className="text-xs text-muted-foreground">{playlist.plays_count || 0} ▶</span>
               </div>
             </div>
           </>
