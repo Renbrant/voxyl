@@ -10,6 +10,7 @@ export function PlayerProvider({ children }) {
   const [queue, setQueue] = useState([]);
   const [autoplay, setAutoplay] = useState(true);
   const [playerMinimized, setPlayerMinimized] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef(null);
   const playNextRef = useRef(null);
   const playPrevRef = useRef(null);
@@ -23,6 +24,9 @@ export function PlayerProvider({ children }) {
 
     audio.addEventListener('timeupdate', () => setCurrentTime(audio.currentTime));
     audio.addEventListener('durationchange', () => setDuration(isNaN(audio.duration) ? 0 : audio.duration));
+    audio.addEventListener('waiting', () => setIsLoading(true));
+    audio.addEventListener('playing', () => setIsLoading(false));
+    audio.addEventListener('canplay', () => setIsLoading(false));
     audio.addEventListener('ended', () => {
       setIsPlaying(false);
       playNextRef.current?.();
@@ -103,6 +107,7 @@ export function PlayerProvider({ children }) {
       const audio = audioRef.current;
       if (audio) {
         playInitiatedRef.current = true;
+        setIsLoading(true);
         audio.src = episode.audioUrl;
         audio.play().then(() => setIsPlaying(true)).catch(() => {});
       }
@@ -144,7 +149,7 @@ export function PlayerProvider({ children }) {
 
   return (
     <PlayerContext.Provider value={{
-      currentEpisode, isPlaying, currentTime, duration,
+      currentEpisode, isPlaying, isLoading, currentTime, duration,
       queue, play, togglePlay, seek, playNext, playPrev,
       autoplay, setAutoplay,
       playerMinimized, setPlayerMinimized

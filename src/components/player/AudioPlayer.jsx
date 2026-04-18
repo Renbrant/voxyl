@@ -3,7 +3,7 @@ import { Play, Pause, SkipBack, SkipForward, ChevronDown, ChevronUp } from 'luci
 import { formatDuration } from '@/lib/rssUtils';
 
 export default function AudioPlayer() {
-  const { currentEpisode, isPlaying, currentTime, duration, togglePlay, seek, playNext, playPrev, playerMinimized: minimized, setPlayerMinimized: setMinimized } = usePlayer();
+  const { currentEpisode, isPlaying, isLoading, currentTime, duration, togglePlay, seek, playNext, playPrev, playerMinimized: minimized, setPlayerMinimized: setMinimized } = usePlayer();
 
   if (!currentEpisode) return null;
 
@@ -15,8 +15,12 @@ export default function AudioPlayer() {
     >
       <div className="bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
         {/* Progress bar always visible */}
-        <div className="h-1 bg-border">
-          <div className="h-full rounded-full gradient-primary transition-all" style={{ width: `${progress}%` }} />
+        <div className="h-1 bg-border relative overflow-hidden">
+          {isLoading ? (
+            <div className="absolute inset-0 animate-[shimmer_1s_linear_infinite] bg-gradient-to-r from-transparent via-primary/80 to-transparent bg-[length:200%_100%]" />
+          ) : (
+            <div className="h-full rounded-full gradient-primary transition-all" style={{ width: `${progress}%` }} />
+          )}
         </div>
 
         {minimized ? (
@@ -61,7 +65,11 @@ export default function AudioPlayer() {
                     seek(((touch.clientX - rect.left) / rect.width) * duration);
                   }}>
                   <div className="relative h-1 bg-border rounded-full overflow-hidden">
-                    <div className="absolute top-0 left-0 h-full rounded-full gradient-primary transition-all" style={{ width: `${progress}%` }} />
+                    {isLoading ? (
+                      <div className="absolute inset-0 animate-[shimmer_1s_linear_infinite] bg-gradient-to-r from-transparent via-primary/80 to-transparent bg-[length:200%_100%]" />
+                    ) : (
+                      <div className="absolute top-0 left-0 h-full rounded-full gradient-primary transition-all" style={{ width: `${progress}%` }} />
+                    )}
                   </div>
                 </div>
                 <div className="flex justify-between mt-0.5">
