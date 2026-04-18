@@ -88,7 +88,12 @@ export function PlayerProvider({ children }) {
 
   const play = (episode, newQueue = []) => {
     if (newQueue.length > 0) setQueue(newQueue);
-    setCurrentEpisode(episode);
+    if (currentEpisode?.audioUrl === episode.audioUrl) {
+      // Same episode — just play it
+      audioRef.current?.play().then(() => setIsPlaying(true)).catch(() => {});
+    } else {
+      setCurrentEpisode(episode);
+    }
   };
 
   const togglePlay = () => {
