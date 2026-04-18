@@ -33,7 +33,11 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
       )}>
         {compact ? (
           <>
-            <div className={cn("w-14 h-14 rounded-xl flex-shrink-0 bg-gradient-to-br", gradient)} />
+            <div className={cn("w-14 h-14 rounded-xl flex-shrink-0 bg-gradient-to-br relative overflow-hidden", gradient)}>
+              {playlist.cover_image && (
+                <img src={playlist.cover_image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              )}
+            </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
                 <p className="font-semibold text-sm truncate">{playlist.name}</p>
