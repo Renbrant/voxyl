@@ -1,11 +1,9 @@
-import { useState } from 'react';
 import { usePlayer } from '@/lib/PlayerContext';
 import { Play, Pause, SkipBack, SkipForward, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatDuration } from '@/lib/rssUtils';
 
 export default function AudioPlayer() {
-  const { currentEpisode, isPlaying, currentTime, duration, togglePlay, seek, playNext, playPrev } = usePlayer();
-  const [minimized, setMinimized] = useState(false);
+  const { currentEpisode, isPlaying, currentTime, duration, togglePlay, seek, playNext, playPrev, playerMinimized: minimized, setPlayerMinimized: setMinimized } = usePlayer();
 
   if (!currentEpisode) return null;
 

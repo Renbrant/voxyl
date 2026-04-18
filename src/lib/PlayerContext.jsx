@@ -9,6 +9,7 @@ export function PlayerProvider({ children }) {
   const [duration, setDuration] = useState(0);
   const [queue, setQueue] = useState([]);
   const [autoplay, setAutoplay] = useState(true);
+  const [playerMinimized, setPlayerMinimized] = useState(false);
   const audioRef = useRef(null);
   const playNextRef = useRef(null);
   const playPrevRef = useRef(null);
@@ -126,7 +127,8 @@ export function PlayerProvider({ children }) {
     <PlayerContext.Provider value={{
       currentEpisode, isPlaying, currentTime, duration,
       queue, play, togglePlay, seek, playNext, playPrev,
-      autoplay, setAutoplay
+      autoplay, setAutoplay,
+      playerMinimized, setPlayerMinimized
     }}>
       {children}
     </PlayerContext.Provider>
