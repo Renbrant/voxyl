@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Heart, Share2, Lock } from 'lucide-react';
+import { Play, Heart, Share2, Lock, MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReportBlockMenu from '@/components/moderation/ReportBlockMenu';
+import EditPlaylistModal from '@/components/playlist/EditPlaylistModal';
 
 const GRADIENT_COLORS = [
   'from-purple-600 to-cyan-400',
@@ -11,8 +13,10 @@ const GRADIENT_COLORS = [
   'from-green-500 to-cyan-400',
 ];
 
-export default function PlaylistCard({ playlist, onLike, liked, compact = false, currentUser, onBlocked }) {
+export default function PlaylistCard({ playlist, onLike, liked, compact = false, currentUser, onBlocked, onEdited }) {
+  const [editingPlaylist, setEditingPlaylist] = useState(false);
   const gradient = GRADIENT_COLORS[playlist.id?.charCodeAt(0) % GRADIENT_COLORS.length] || GRADIENT_COLORS[0];
+  const isOwner = currentUser && currentUser.id === playlist.creator_id;
 
   const handleShare = async (e) => {
     e.preventDefault();
@@ -54,14 +58,24 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
               <button onClick={handleShare} className="p-1.5 rounded-full text-muted-foreground">
                 <Share2 size={16} />
               </button>
-              <ReportBlockMenu
-                currentUser={currentUser}
-                targetUser={{ id: playlist.creator_id, email: playlist.creator_email, name: playlist.creator_name }}
-                contentType="playlist"
-                contentId={playlist.id}
-                contentTitle={playlist.name}
-                onBlocked={onBlocked}
-              />
+              {isOwner ? (
+                <button
+                  onClick={e => { e.preventDefault(); e.stopPropagation(); setEditingPlaylist(true); }}
+                  onTouchEnd={e => { e.preventDefault(); e.stopPropagation(); setEditingPlaylist(true); }}
+                  className="p-1.5 rounded-full text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <MoreVertical size={16} />
+                </button>
+              ) : (
+                <ReportBlockMenu
+                  currentUser={currentUser}
+                  targetUser={{ id: playlist.creator_id, email: playlist.creator_email, name: playlist.creator_name }}
+                  contentType="playlist"
+                  contentId={playlist.id}
+                  contentTitle={playlist.name}
+                  onBlocked={onBlocked}
+                />
+              )}
             </div>
           </>
         ) : (
@@ -106,5 +120,12 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
         )}
       </div>
     </Link>
+    {editingPlaylist && (
+      <EditPlaylistModal
+        playlist={playlist}
+        onClose={() => setEditingPlaylist(false)}
+        onSaved={() => { setEditingPlaylist(false); onEdited?.(); }}
+      />
+    )}
   );
 }
