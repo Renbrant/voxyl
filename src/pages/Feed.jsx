@@ -65,7 +65,11 @@ export default function Feed() {
   const visiblePlaylists = playlists.filter(p => !blockedIds.includes(p.creator_id));
 
   const sortedPlaylists = tab === 'trending'
-    ? [...visiblePlaylists].sort((a, b) => (b.plays_count || 0) - (a.plays_count || 0))
+    ? [...visiblePlaylists].sort((a, b) => {
+        const likesDiff = (b.likes_count || 0) - (a.likes_count || 0);
+        if (likesDiff !== 0) return likesDiff;
+        return (b.plays_count || 0) - (a.plays_count || 0);
+      })
     : [...visiblePlaylists].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
 
   return (
