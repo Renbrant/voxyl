@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import EpisodeDetailModal from '@/components/player/EpisodeDetailModal';
 import EpisodeActionButton from '@/components/player/EpisodeActionButton';
+import SwipeableEpisodeRow from '@/components/player/SwipeableEpisodeRow';
 import ReportBlockMenu from '@/components/moderation/ReportBlockMenu';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -218,11 +219,18 @@ export default function PlaylistDetail() {
               const isFinished = finishedUrls.has(ep.audioUrl) && !isActive;
               const progress = isActive && duration ? (currentTime / duration) * 100 : 0;
               return (
-                <motion.button
+                <motion.div
                   key={i}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.02 }}
+                >
+                <SwipeableEpisodeRow
+                  isFinished={isFinished}
+                  onMarkFinished={() => setFinishedUrls(prev => new Set([...prev, ep.audioUrl]))}
+                  onMarkUnfinished={() => setFinishedUrls(prev => { const s = new Set(prev); s.delete(ep.audioUrl); return s; })}
+                >
+                <button
                   onClick={() => handlePlayEpisode(ep)}
                   className={cn(
                     "w-full text-left flex flex-col gap-0 p-3 rounded-2xl border transition-all",
@@ -300,7 +308,9 @@ export default function PlaylistDetail() {
                       </div>
                     </div>
                   )}
-                </motion.button>
+                </button>
+                </SwipeableEpisodeRow>
+                </motion.div>
               );
             })}
           </div>
