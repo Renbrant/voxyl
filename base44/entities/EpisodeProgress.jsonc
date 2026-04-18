@@ -1,0 +1,32 @@
+{
+  "name": "EpisodeProgress",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User ID"
+    },
+    "audio_url": {
+      "type": "string",
+      "description": "Episode audio URL (unique identifier)"
+    }
+  },
+  "required": [
+    "user_id",
+    "audio_url"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  }
+}

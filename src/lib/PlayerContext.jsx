@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useRef, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
 
 const PlayerContext = createContext(null);
 
@@ -11,12 +12,9 @@ export function PlayerProvider({ children }) {
   const [autoplay, setAutoplay] = useState(true);
   const [playerMinimized, setPlayerMinimized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [finishedUrls, setFinishedUrls] = useState(() => {
-    try {
-      const stored = localStorage.getItem('voxyl_finished_urls');
-      return stored ? new Set(JSON.parse(stored)) : new Set();
-    } catch { return new Set(); }
-  });
+  const [finishedUrls, setFinishedUrls] = useState(new Set());
+  const [user, setUser] = useState(null);
+  const [initialized, setInitialized] = useState(false);
   const audioRef = useRef(null);
   const playNextRef = useRef(null);
   const playPrevRef = useRef(null);
@@ -106,12 +104,61 @@ export function PlayerProvider({ children }) {
     } catch (_) {}
   }, [currentTime, duration]);
 
-  // Persist finishedUrls to localStorage
+  // Load finished episodes on mount
+  useEffect(() => {
+    base44.auth.me().then(u => {
+      setUser(u);
+      if (u) {
+        base44.entities.EpisodeProgress.filter({ user_id: u.id }).then(records => {
+          setFinishedUrls(new Set(records.map(r => r.audio_url)));
+          setInitialized(true);
+        }).catch(() => {
+          try {
+            const stored = localStorage.getItem('voxyl_finished_urls');
+            setFinishedUrls(stored ? new Set(JSON.parse(stored)) : new Set());
+          } catch {}
+          setInitialized(true);
+        });
+      } else {
+        try {
+          const stored = localStorage.getItem('voxyl_finished_urls');
+          setFinishedUrls(stored ? new Set(JSON.parse(stored)) : new Set());
+        } catch {}
+        setInitialized(true);
+      }
+    }).catch(() => {
+      try {
+        const stored = localStorage.getItem('voxyl_finished_urls');
+        setFinishedUrls(stored ? new Set(JSON.parse(stored)) : new Set());
+      } catch {}
+      setInitialized(true);
+    });
+  }, []);
+
+  // Persist finishedUrls to localStorage and database
   useEffect(() => {
     try {
       localStorage.setItem('voxyl_finished_urls', JSON.stringify([...finishedUrls]));
     } catch {}
-  }, [finishedUrls]);
+    
+    if (user && initialized) {
+      base44.entities.EpisodeProgress.filter({ user_id: user.id }).then(records => {
+        const dbUrls = new Set(records.map(r => r.audio_url));
+        const toAdd = [...finishedUrls].filter(url => !dbUrls.has(url));
+        const toRemove = [...dbUrls].filter(url => !finishedUrls.has(url));
+        
+        if (toAdd.length > 0) {
+          base44.entities.EpisodeProgress.bulkCreate(toAdd.map(url => ({ user_id: user.id, audio_url: url })));
+        }
+        if (toRemove.length > 0) {
+          toRemove.forEach(url => {
+            const record = records.find(r => r.audio_url === url);
+            if (record) base44.entities.EpisodeProgress.delete(record.id);
+          });
+        }
+      }).catch(() => {});
+    }
+  }, [finishedUrls, user, initialized]);
 
   // Keep ref in sync so the 'ended' listener always has the latest episode
   currentEpisodeRef.current = currentEpisode;
