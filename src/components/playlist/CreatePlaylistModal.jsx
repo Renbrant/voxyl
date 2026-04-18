@@ -11,7 +11,7 @@ const MAX_FEEDS = 5;
 export default function CreatePlaylistModal({ user, onClose, onCreated, playlistCount = 0 }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [isPublic, setIsPublic] = useState(true);
+  const [visibility, setVisibility] = useState('public');
   const [maxDuration, setMaxDuration] = useState(0);
   const [feeds, setFeeds] = useState([{ url: '' }]);
   const [saving, setSaving] = useState(false);
@@ -70,7 +70,7 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
       creator_email: user.email,
       creator_name: user.full_name || user.email.split('@')[0],
       rss_feeds: validFeeds,
-      is_public: isPublic,
+      visibility,
       max_duration: maxDuration,
       cover_image: coverImage,
       share_token: generateShareToken(),
@@ -170,21 +170,31 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <button
-              onClick={() => setIsPublic(true)}
-              className={cn("flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl text-sm font-medium transition-all border",
-                isPublic ? "gradient-primary text-white border-transparent" : "bg-secondary text-muted-foreground border-border")}
-            >
-              <Globe size={14} /> Pública
-            </button>
-            <button
-              onClick={() => setIsPublic(false)}
-              className={cn("flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl text-sm font-medium transition-all border",
-                !isPublic ? "bg-primary text-white border-transparent" : "bg-secondary text-muted-foreground border-border")}
-            >
-              <Lock size={14} /> Privada
-            </button>
+          <div>
+            <label className="text-xs text-muted-foreground mb-2 block">Visibilidade</label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => setVisibility('public')}
+                className={cn("py-2.5 rounded-2xl text-sm font-medium transition-all border",
+                  visibility === 'public' ? "gradient-primary text-white border-transparent" : "bg-secondary text-muted-foreground border-border")}
+              >
+                <Globe size={14} className="mx-auto mb-1" /> Pública
+              </button>
+              <button
+                onClick={() => setVisibility('friends_only')}
+                className={cn("py-2.5 rounded-2xl text-sm font-medium transition-all border",
+                  visibility === 'friends_only' ? "bg-primary text-white border-transparent" : "bg-secondary text-muted-foreground border-border")}
+              >
+                Amigos
+              </button>
+              <button
+                onClick={() => setVisibility('private')}
+                className={cn("py-2.5 rounded-2xl text-sm font-medium transition-all border",
+                  visibility === 'private' ? "bg-primary text-white border-transparent" : "bg-secondary text-muted-foreground border-border")}
+              >
+                <Lock size={14} className="mx-auto mb-1" /> Privada
+              </button>
+            </div>
           </div>
 
           <div>
