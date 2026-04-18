@@ -47,8 +47,11 @@ export function PlayerProvider({ children }) {
   useEffect(() => {
     if (!currentEpisode || !audioRef.current) return;
     const audio = audioRef.current;
-    audio.src = currentEpisode.audioUrl;
-    audio.play().then(() => setIsPlaying(true)).catch(() => {});
+    // Only set src if it hasn't been set already by play() in the gesture context
+    if (audio.src !== currentEpisode.audioUrl) {
+      audio.src = currentEpisode.audioUrl;
+      audio.play().then(() => setIsPlaying(true)).catch(() => {});
+    }
 
     if ('mediaSession' in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({
@@ -92,6 +95,13 @@ export function PlayerProvider({ children }) {
       // Same episode — just play it
       audioRef.current?.play().then(() => setIsPlaying(true)).catch(() => {});
     } else {
+      // Set src immediately within the user gesture context before React re-renders,
+      // so iOS doesn't block the play() call that happens in the useEffect.
+      const audio = audioRef.current;
+      if (audio) {
+        audio.src = episode.audioUrl;
+        audio.play().then(() => setIsPlaying(true)).catch(() => {});
+      }
       setCurrentEpisode(episode);
     }
   };
