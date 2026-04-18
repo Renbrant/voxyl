@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { X, Plus, Trash2, GripVertical, Loader2, Clock, Save, Image as ImageIcon } from 'lucide-react';
+import { X, Plus, Trash2, GripVertical, Loader2, Clock, Save, Image as ImageIcon, Lock } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 const DURATION_OPTIONS = [
@@ -24,6 +24,7 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
   const [feedError, setFeedError] = useState('');
   const [coverImage, setCoverImage] = useState(playlist.cover_image || '');
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [isPublic, setIsPublic] = useState(playlist.is_public !== false);
 
   const MAX_FEEDS = 5;
 
@@ -70,6 +71,7 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
       max_duration: maxDuration,
       rss_feeds: feeds,
       cover_image: coverImage,
+      is_public: isPublic,
     });
     setSaving(false);
     onSaved();
@@ -107,6 +109,33 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
               rows={2}
               className="w-full px-3 py-2.5 rounded-xl bg-secondary border border-border text-foreground text-sm focus:outline-none focus:border-primary resize-none"
             />
+          </div>
+
+          {/* Privacy toggle */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1.5 flex items-center gap-1">
+              <Lock size={11} /> Privacidade
+            </label>
+            <button
+              onClick={() => setIsPublic(!isPublic)}
+              className={`w-full text-left px-3 py-2.5 rounded-xl border transition-all flex items-center justify-between ${
+                isPublic
+                  ? 'bg-secondary border-border'
+                  : 'bg-destructive/10 border-destructive/30'
+              }`}
+            >
+              <span className="text-sm font-medium">{isPublic ? 'Pública' : 'Privada'}</span>
+              <div className={`w-12 h-6 rounded-full relative transition-colors ${
+                isPublic ? 'bg-primary' : 'bg-destructive'
+              }`}>
+                <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all duration-200 ${
+                  isPublic ? 'left-6' : 'left-0.5'
+                }`} />
+              </div>
+            </button>
+            <p className="text-xs text-muted-foreground mt-1.5">
+              {isPublic ? 'Qualquer pessoa pode ver e seguir esta playlist' : 'Apenas você pode ver esta playlist'}
+            </p>
           </div>
 
           {/* Max Duration */}
