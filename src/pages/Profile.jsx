@@ -5,7 +5,6 @@ import VoxylHeader from '@/components/common/VoxylHeader';
 import PlaylistCard from '@/components/playlist/PlaylistCard';
 import InviteFriendModal from '@/components/profile/InviteFriendModal';
 import DeleteAccountModal from '@/components/profile/DeleteAccountModal';
-import ConnectAccountsSection from '@/components/profile/ConnectAccountsSection';
 import ShareAppModal from '@/components/profile/ShareAppModal';
 import { UserCircle2, Mail, Users, ListMusic, Trash2, Share2, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -70,9 +69,6 @@ export default function Profile() {
             </div>
           </div>
         </div>
-
-        {/* Connected accounts */}
-        <ConnectAccountsSection user={user} />
 
         {/* Invite */}
         <div className="p-4 rounded-2xl bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/30 mb-5">
