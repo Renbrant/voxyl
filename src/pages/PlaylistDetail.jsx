@@ -6,10 +6,12 @@ import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
 import { usePlayer } from '@/lib/PlayerContext';
 import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward, Pencil, CheckCircle2 } from 'lucide-react';
 import PageTransition from '@/components/common/PageTransition';
+import { useLongPress } from '@/hooks/useLongPress';
 import EditPlaylistModal from '@/components/playlist/EditPlaylistModal';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import EpisodeDetailModal from '@/components/player/EpisodeDetailModal';
+import EpisodeActionButton from '@/components/player/EpisodeActionButton';
 import ReportBlockMenu from '@/components/moderation/ReportBlockMenu';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -30,7 +32,7 @@ export default function PlaylistDetail() {
   const [playedUrls, setPlayedUrls] = useState(new Set());
   const [selectedEpisode, setSelectedEpisode] = useState(null);
   const [editingPlaylist, setEditingPlaylist] = useState(false);
-  const { play, currentEpisode, isPlaying, togglePlay, seek, currentTime, duration, autoplay, setAutoplay, finishedUrls } = usePlayer();
+  const { play, currentEpisode, isPlaying, togglePlay, seek, currentTime, duration, autoplay, setAutoplay, finishedUrls, setFinishedUrls } = usePlayer();
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -258,15 +260,15 @@ export default function PlaylistDetail() {
                         {hasBeenPlayed && <span className="text-xs text-muted-foreground/60 italic">• ouvido</span>}
                       </div>
                     </div>
-                    <div className={cn("w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1",
-                      isActive ? "gradient-primary" : "bg-secondary")}>
-                      {isFinished
-                        ? <CheckCircle2 size={16} className="text-green-400" />
-                        : isCurrentlyPlaying
-                        ? <Pause size={12} fill="white" className="text-white" />
-                        : <Play size={12} fill={isActive ? "white" : "currentColor"} className={isActive ? "text-white ml-0.5" : "text-muted-foreground ml-0.5"} />
-                      }
-                    </div>
+                    <EpisodeActionButton
+                      ep={ep}
+                      isActive={isActive}
+                      isCurrentlyPlaying={isCurrentlyPlaying}
+                      isFinished={isFinished}
+                      onShortPress={() => handlePlayEpisode(ep)}
+                      onMarkFinished={() => setFinishedUrls(prev => new Set([...prev, ep.audioUrl]))}
+                      onMarkUnfinished={() => setFinishedUrls(prev => { const s = new Set(prev); s.delete(ep.audioUrl); return s; })}
+                    />
                   </div>
 
                   {/* Progress bar — only for the active episode */}

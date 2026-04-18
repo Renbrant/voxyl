@@ -161,7 +161,7 @@ export function PlayerProvider({ children }) {
       queue, play, togglePlay, seek, playNext, playPrev,
       autoplay, setAutoplay,
       playerMinimized, setPlayerMinimized,
-      finishedUrls
+      finishedUrls, setFinishedUrls
     }}>
       {children}
     </PlayerContext.Provider>
