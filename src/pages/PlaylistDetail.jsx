@@ -111,6 +111,9 @@ export default function PlaylistDetail() {
     <PageTransition>
     <div className="min-h-screen bg-background">
       <div className={cn("relative h-56 bg-gradient-to-br", gradient)}>
+        {playlist?.cover_image && (
+          <img src={playlist.cover_image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        )}
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute top-12 left-4 right-4 flex items-center justify-between z-10">
           <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center" style={{ WebkitTapHighlightColor: 'transparent' }}>

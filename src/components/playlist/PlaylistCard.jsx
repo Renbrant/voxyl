@@ -62,6 +62,9 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
         ) : (
           <>
             <div className={cn("h-36 bg-gradient-to-br relative", gradient)}>
+              {playlist.cover_image && (
+                <img src={playlist.cover_image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              )}
               <div className="absolute inset-0 bg-black/20" />
               <div className="absolute bottom-3 left-3 right-3">
                 <div className="flex items-center justify-between">
