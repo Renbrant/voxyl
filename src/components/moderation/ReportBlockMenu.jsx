@@ -20,7 +20,8 @@ export default function ReportBlockMenu({ targetUser, contentType = 'playlist', 
 
   if (!currentUser || currentUser.id === targetUser?.id) return null;
 
-  const handleReport = async () => {
+  const handleReport = async (e) => {
+    e?.preventDefault(); e?.stopPropagation();
     if (!reason) return;
     setLoading(true);
     await base44.entities.Report.create({
@@ -38,7 +39,8 @@ export default function ReportBlockMenu({ targetUser, contentType = 'playlist', 
     setMode('done');
   };
 
-  const handleBlock = async () => {
+  const handleBlock = async (e) => {
+    e?.preventDefault(); e?.stopPropagation();
     setLoading(true);
     const existing = await base44.entities.Block.filter({ blocker_id: currentUser.id, blocked_id: targetUser.id });
     if (!existing.length) {
@@ -54,7 +56,7 @@ export default function ReportBlockMenu({ targetUser, contentType = 'playlist', 
     setMode('done');
   };
 
-  const close = () => { setOpen(false); setMode(null); setReason(''); setDetails(''); };
+  const close = (e) => { e?.preventDefault(); e?.stopPropagation(); setOpen(false); setMode(null); setReason(''); setDetails(''); };
 
   return (
     <>
@@ -67,7 +69,7 @@ export default function ReportBlockMenu({ targetUser, contentType = 'playlist', 
 
       <AnimatePresence>
         {open && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={close}>
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={close} onClickCapture={e => { e.preventDefault(); e.stopPropagation(); }}>
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
