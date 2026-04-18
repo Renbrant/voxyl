@@ -20,11 +20,17 @@ export default function Explore() {
   const [selectedPodcast, setSelectedPodcast] = useState(null);
   const [voxylSearch, setVoxylSearch] = useState('');
   const [likes, setLikes] = useState([]);
+  const [blockedIds, setBlockedIds] = useState([]);
 
   const debouncedQuery = useDebounce(search, 600);
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me().then(u => {
+      setUser(u);
+      base44.entities.Block.filter({ blocker_id: u.id })
+        .then(blocks => setBlockedIds(blocks.map(b => b.blocked_id)))
+        .catch(() => {});
+    }).catch(() => {});
   }, []);
 
   useQuery({
@@ -72,12 +78,13 @@ export default function Explore() {
       .catch(() => setPodcastLoading(false));
   }, [debouncedQuery, tab, user]);
 
-  const filteredPlaylists = playlists.filter(p =>
-    !voxylSearch ||
-    p.name?.toLowerCase().includes(voxylSearch.toLowerCase()) ||
-    p.description?.toLowerCase().includes(voxylSearch.toLowerCase()) ||
-    p.creator_name?.toLowerCase().includes(voxylSearch.toLowerCase())
-  );
+  const filteredPlaylists = playlists.filter(p => {
+    if (blockedIds.includes(p.creator_id)) return false;
+    return !voxylSearch ||
+      p.name?.toLowerCase().includes(voxylSearch.toLowerCase()) ||
+      p.description?.toLowerCase().includes(voxylSearch.toLowerCase()) ||
+      p.creator_name?.toLowerCase().includes(voxylSearch.toLowerCase());
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -123,7 +130,7 @@ export default function Explore() {
             <div className="space-y-2">
               {filteredPlaylists.map((pl, i) => (
                 <motion.div key={pl.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
-                  <PlaylistCard playlist={pl} compact liked={likes.includes(pl.id)} onLike={handleLike} currentUser={user} />
+                  <PlaylistCard playlist={pl} compact liked={likes.includes(pl.id)} onLike={handleLike} currentUser={user} onBlocked={id => setBlockedIds(prev => [...prev, id])} />
                 </motion.div>
               ))}
               {filteredPlaylists.length === 0 && (

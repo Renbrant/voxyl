@@ -12,7 +12,7 @@ const REPORT_REASONS = [
   { value: 'other', label: 'Outro' },
 ];
 
-export default function ReportBlockMenu({ targetUser, contentType = 'playlist', contentId, contentTitle, currentUser }) {
+export default function ReportBlockMenu({ targetUser, contentType = 'playlist', contentId, contentTitle, currentUser, onBlocked }) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState(null);
   const [reason, setReason] = useState('');
@@ -26,6 +26,7 @@ export default function ReportBlockMenu({ targetUser, contentType = 'playlist', 
   const handleReport = async () => {
     if (!reason) return;
     setLoading(true);
+    // Create report record
     await base44.entities.Report.create({
       reporter_id: currentUser.id,
       reporter_email: currentUser.email,
@@ -36,7 +37,17 @@ export default function ReportBlockMenu({ targetUser, contentType = 'playlist', 
       content_title: contentTitle,
       reason,
       details,
+      status: 'pending',
     });
+    // Increment reports_count on the playlist
+    if (contentType === 'playlist' && contentId) {
+      const playlists = await base44.entities.Playlist.filter({ id: contentId });
+      if (playlists[0]) {
+        await base44.entities.Playlist.update(contentId, {
+          reports_count: (playlists[0].reports_count || 0) + 1,
+        });
+      }
+    }
     setLoading(false);
     setMode('done');
   };
@@ -55,6 +66,8 @@ export default function ReportBlockMenu({ targetUser, contentType = 'playlist', 
     }
     setLoading(false);
     setMode('done');
+    // Notify parent so it can re-filter the list
+    onBlocked?.(targetUser.id);
   };
 
   const modal = (
@@ -75,8 +88,14 @@ export default function ReportBlockMenu({ targetUser, contentType = 'playlist', 
             {mode === 'done' && (
               <div className="text-center py-6">
                 <div className="text-4xl mb-3">✅</div>
-                <p className="font-semibold text-foreground">Obrigado pelo aviso</p>
-                <p className="text-sm text-muted-foreground mt-1">Nossa equipe irá analisar em breve.</p>
+                <p className="font-semibold text-foreground">
+                  {reason ? 'Denúncia enviada' : 'Usuário bloqueado'}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {reason
+                    ? 'Nossa equipe irá analisar o conteúdo em breve.'
+                    : 'Você não verá mais o conteúdo deste usuário.'}
+                </p>
                 <button onClick={close} className="mt-4 px-6 py-2 rounded-full bg-secondary text-sm font-medium">Fechar</button>
               </div>
             )}
@@ -127,7 +146,7 @@ export default function ReportBlockMenu({ targetUser, contentType = 'playlist', 
                   <button onClick={close}><X size={18} className="text-muted-foreground" /></button>
                 </div>
                 <p className="text-sm text-muted-foreground mb-6">
-                  Você não verá mais o conteúdo de <strong className="text-foreground">{targetUser?.name || 'este usuário'}</strong>. Esta ação pode ser desfeita no seu perfil.
+                  Você não verá mais o conteúdo de <strong className="text-foreground">{targetUser?.name || 'este usuário'}</strong> e ele não verá o seu. Esta ação pode ser desfeita no seu perfil.
                 </p>
                 <button
                   onClick={handleBlock}

@@ -13,12 +13,18 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 export default function Feed() {
   const [user, setUser] = useState(null);
   const [likes, setLikes] = useState([]);
+  const [blockedIds, setBlockedIds] = useState([]);
   const [tab, setTab] = useState('trending');
   const containerRef = useRef(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me().then(u => {
+      setUser(u);
+      base44.entities.Block.filter({ blocker_id: u.id })
+        .then(blocks => setBlockedIds(blocks.map(b => b.blocked_id)))
+        .catch(() => {});
+    }).catch(() => {});
   }, []);
 
   const { pullProgress, refreshing } = usePullToRefresh(() => {
@@ -56,9 +62,11 @@ export default function Feed() {
     }
   };
 
+  const visiblePlaylists = playlists.filter(p => !blockedIds.includes(p.creator_id));
+
   const sortedPlaylists = tab === 'trending'
-    ? [...playlists].sort((a, b) => (b.plays_count || 0) - (a.plays_count || 0))
-    : [...playlists].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    ? [...visiblePlaylists].sort((a, b) => (b.plays_count || 0) - (a.plays_count || 0))
+    : [...visiblePlaylists].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
 
   return (
     <div ref={containerRef} className="min-h-screen bg-background relative">
@@ -124,7 +132,7 @@ export default function Feed() {
           <div className="grid grid-cols-2 gap-3">
             {sortedPlaylists.map((pl, i) => (
               <motion.div key={pl.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                <PlaylistCard playlist={pl} liked={likes.includes(pl.id)} onLike={handleLike} currentUser={user} />
+                <PlaylistCard playlist={pl} liked={likes.includes(pl.id)} onLike={handleLike} currentUser={user} onBlocked={id => setBlockedIds(prev => [...prev, id])} />
               </motion.div>
             ))}
           </div>

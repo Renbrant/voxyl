@@ -11,7 +11,7 @@ const GRADIENT_COLORS = [
   'from-green-500 to-cyan-400',
 ];
 
-export default function PlaylistCard({ playlist, onLike, liked, compact = false, currentUser }) {
+export default function PlaylistCard({ playlist, onLike, liked, compact = false, currentUser, onBlocked }) {
   const gradient = GRADIENT_COLORS[playlist.id?.charCodeAt(0) % GRADIENT_COLORS.length] || GRADIENT_COLORS[0];
 
   const handleShare = async (e) => {
@@ -56,6 +56,7 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
                 contentType="playlist"
                 contentId={playlist.id}
                 contentTitle={playlist.name}
+                onBlocked={onBlocked}
               />
             </div>
           </>

@@ -67,9 +67,36 @@
     "plays_count": {
       "type": "number",
       "default": 0
+    },
+    "reports_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times this playlist has been reported"
     }
   },
   "required": [
     "name"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "data.creator_id": "{{user.id}}",
+      "data.creator_email": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.creator_id": "{{user.id}}"
+        },
+        {
+          "data.is_public": true
+        }
+      ]
+    },
+    "update": {
+      "data.creator_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.creator_id": "{{user.id}}"
+    }
+  }
 }
