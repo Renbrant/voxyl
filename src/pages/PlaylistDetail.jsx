@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
 import { usePlayer } from '@/lib/PlayerContext';
-import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward, Pencil } from 'lucide-react';
+import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward, Pencil, CheckCircle2 } from 'lucide-react';
 import PageTransition from '@/components/common/PageTransition';
 import EditPlaylistModal from '@/components/playlist/EditPlaylistModal';
 import { cn } from '@/lib/utils';
@@ -30,7 +30,7 @@ export default function PlaylistDetail() {
   const [playedUrls, setPlayedUrls] = useState(new Set());
   const [selectedEpisode, setSelectedEpisode] = useState(null);
   const [editingPlaylist, setEditingPlaylist] = useState(false);
-  const { play, currentEpisode, isPlaying, togglePlay, seek, currentTime, duration, autoplay, setAutoplay } = usePlayer();
+  const { play, currentEpisode, isPlaying, togglePlay, seek, currentTime, duration, autoplay, setAutoplay, finishedUrls } = usePlayer();
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -185,7 +185,8 @@ export default function PlaylistDetail() {
           {episodes.length > 0 && (
             <button
               onClick={() => {
-                play(episodes[0], episodes);
+                const nextUnplayed = episodes.find(ep => !finishedUrls.has(ep.audioUrl)) || episodes[0];
+                play(nextUnplayed, episodes);
                 base44.entities.Playlist.update(id, { plays_count: (playlist?.plays_count || 0) + 1 });
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full gradient-primary text-white text-xs font-medium"
@@ -212,6 +213,7 @@ export default function PlaylistDetail() {
               const isActive = currentEpisode?.audioUrl === ep.audioUrl;
               const isCurrentlyPlaying = isActive && isPlaying;
               const hasBeenPlayed = playedUrls.has(ep.audioUrl) && !isActive;
+              const isFinished = finishedUrls.has(ep.audioUrl) && !isActive;
               const progress = isActive && duration ? (currentTime / duration) * 100 : 0;
               return (
                 <motion.button
@@ -258,7 +260,9 @@ export default function PlaylistDetail() {
                     </div>
                     <div className={cn("w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1",
                       isActive ? "gradient-primary" : "bg-secondary")}>
-                      {isCurrentlyPlaying
+                      {isFinished
+                        ? <CheckCircle2 size={16} className="text-green-400" />
+                        : isCurrentlyPlaying
                         ? <Pause size={12} fill="white" className="text-white" />
                         : <Play size={12} fill={isActive ? "white" : "currentColor"} className={isActive ? "text-white ml-0.5" : "text-muted-foreground ml-0.5"} />
                       }

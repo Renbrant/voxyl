@@ -11,10 +11,12 @@ export function PlayerProvider({ children }) {
   const [autoplay, setAutoplay] = useState(true);
   const [playerMinimized, setPlayerMinimized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [finishedUrls, setFinishedUrls] = useState(new Set());
   const audioRef = useRef(null);
   const playNextRef = useRef(null);
   const playPrevRef = useRef(null);
   const playInitiatedRef = useRef(false);
+  const currentEpisodeRef = useRef(null);
 
   // Unlock audio on first user gesture (required by iOS Safari)
   useEffect(() => {
@@ -29,6 +31,9 @@ export function PlayerProvider({ children }) {
     audio.addEventListener('canplay', () => setIsLoading(false));
     audio.addEventListener('ended', () => {
       setIsPlaying(false);
+      if (currentEpisodeRef.current?.audioUrl) {
+        setFinishedUrls(prev => new Set([...prev, currentEpisodeRef.current.audioUrl]));
+      }
       playNextRef.current?.();
     });
 
@@ -96,6 +101,9 @@ export function PlayerProvider({ children }) {
     } catch (_) {}
   }, [currentTime, duration]);
 
+  // Keep ref in sync so the 'ended' listener always has the latest episode
+  currentEpisodeRef.current = currentEpisode;
+
   const play = (episode, newQueue = []) => {
     if (newQueue.length > 0) setQueue(newQueue);
     if (currentEpisode?.audioUrl === episode.audioUrl) {
@@ -152,7 +160,8 @@ export function PlayerProvider({ children }) {
       currentEpisode, isPlaying, isLoading, currentTime, duration,
       queue, play, togglePlay, seek, playNext, playPrev,
       autoplay, setAutoplay,
-      playerMinimized, setPlayerMinimized
+      playerMinimized, setPlayerMinimized,
+      finishedUrls
     }}>
       {children}
     </PlayerContext.Provider>
