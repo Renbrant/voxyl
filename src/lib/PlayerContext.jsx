@@ -13,6 +13,7 @@ export function PlayerProvider({ children }) {
   const audioRef = useRef(null);
   const playNextRef = useRef(null);
   const playPrevRef = useRef(null);
+  const playInitiatedRef = useRef(false);
 
   // Unlock audio on first user gesture (required by iOS Safari)
   useEffect(() => {
@@ -47,8 +48,10 @@ export function PlayerProvider({ children }) {
   useEffect(() => {
     if (!currentEpisode || !audioRef.current) return;
     const audio = audioRef.current;
-    // Only set src if it hasn't been set already by play() in the gesture context
-    if (audio.src !== currentEpisode.audioUrl) {
+    // If play() already set src and started playing, skip to avoid interruption
+    if (playInitiatedRef.current) {
+      playInitiatedRef.current = false;
+    } else {
       audio.src = currentEpisode.audioUrl;
       audio.play().then(() => setIsPlaying(true)).catch(() => {});
     }
@@ -99,6 +102,7 @@ export function PlayerProvider({ children }) {
       // so iOS doesn't block the play() call that happens in the useEffect.
       const audio = audioRef.current;
       if (audio) {
+        playInitiatedRef.current = true;
         audio.src = episode.audioUrl;
         audio.play().then(() => setIsPlaying(true)).catch(() => {});
       }
