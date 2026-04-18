@@ -11,7 +11,12 @@ export function PlayerProvider({ children }) {
   const [autoplay, setAutoplay] = useState(true);
   const [playerMinimized, setPlayerMinimized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [finishedUrls, setFinishedUrls] = useState(new Set());
+  const [finishedUrls, setFinishedUrls] = useState(() => {
+    try {
+      const stored = localStorage.getItem('voxyl_finished_urls');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch { return new Set(); }
+  });
   const audioRef = useRef(null);
   const playNextRef = useRef(null);
   const playPrevRef = useRef(null);
@@ -100,6 +105,13 @@ export function PlayerProvider({ children }) {
       });
     } catch (_) {}
   }, [currentTime, duration]);
+
+  // Persist finishedUrls to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('voxyl_finished_urls', JSON.stringify([...finishedUrls]));
+    } catch {}
+  }, [finishedUrls]);
 
   // Keep ref in sync so the 'ended' listener always has the latest episode
   currentEpisodeRef.current = currentEpisode;
