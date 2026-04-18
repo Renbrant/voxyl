@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { X, Plus, Trash2, GripVertical, Loader2, Clock, Save, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { X, Plus, Trash2, GripVertical, Loader2, Clock, Save, Image as ImageIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
@@ -50,17 +50,6 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
     const [moved] = reordered.splice(result.source.index, 1);
     reordered.splice(result.destination.index, 0, moved);
     setFeeds(reordered);
-  };
-
-  const handleGenerateImage = async () => {
-    if (!name.trim()) { return; }
-    setGeneratingImage(true);
-    const prompt = `Create a vibrant and modern podcast playlist cover art for "${name.trim()}". ${description ? `Theme: ${description.trim()}. ` : ''}Style: colorful, eye-catching, professional. No text or logos.`;
-    const res = await base44.integrations.Core.GenerateImage({ prompt }).catch(() => null);
-    setGeneratingImage(false);
-    if (res?.url) {
-      setCoverImage(res.url);
-    }
   };
 
   const handleUploadImage = async (e) => {
@@ -167,21 +156,11 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
                 <p className="text-xs text-muted-foreground">Nenhuma capa selecionada</p>
               </div>
             )}
-            <div className="flex gap-2">
-              <label className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-secondary text-muted-foreground rounded-2xl border border-border cursor-pointer hover:border-primary/30 transition-all text-xs font-medium">
-                <ImageIcon size={14} />
-                Enviar
-                <input type="file" accept="image/*" onChange={handleUploadImage} disabled={generatingImage} className="hidden" />
-              </label>
-              <button
-                onClick={handleGenerateImage}
-                disabled={generatingImage}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 gradient-primary text-white rounded-2xl text-xs font-medium disabled:opacity-50"
-              >
-                {generatingImage ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                {generatingImage ? 'Gerando...' : 'Gerar IA'}
-              </button>
-            </div>
+            <label className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 bg-secondary text-muted-foreground rounded-2xl border border-border cursor-pointer hover:border-primary/30 transition-all text-xs font-medium">
+              {generatingImage ? <Loader2 size={14} className="animate-spin" /> : <ImageIcon size={14} />}
+              {generatingImage ? 'Enviando...' : 'Enviar foto do telefone'}
+              <input type="file" accept="image/*" onChange={handleUploadImage} disabled={generatingImage} className="hidden" />
+            </label>
           </div>
 
           {/* Feeds */}
