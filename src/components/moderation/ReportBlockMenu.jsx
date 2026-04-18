@@ -70,12 +70,20 @@ export default function ReportBlockMenu({ targetUser, contentType = 'playlist', 
     onBlocked?.(targetUser.id);
   };
 
+  const stopAndClose = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    close();
+  };
+
   const modal = (
     <AnimatePresence>
       {open && (
         <div
           className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/60 backdrop-blur-sm"
           onMouseDown={e => { if (e.target === e.currentTarget) close(); }}
+          onTouchEnd={e => { if (e.target === e.currentTarget) close(); }}
+          onClick={e => e.stopPropagation()}
         >
           <motion.div
             initial={{ y: '100%' }}
@@ -83,6 +91,7 @@ export default function ReportBlockMenu({ targetUser, contentType = 'playlist', 
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25 }}
             className="w-full max-w-md bg-card border-t border-border rounded-t-3xl p-5"
+            onClick={e => e.stopPropagation()}
           >
             {/* Done state */}
             {mode === 'done' && (
@@ -96,7 +105,7 @@ export default function ReportBlockMenu({ targetUser, contentType = 'playlist', 
                     ? 'Nossa equipe irá analisar o conteúdo em breve.'
                     : 'Você não verá mais o conteúdo deste usuário.'}
                 </p>
-                <button onClick={close} className="mt-4 px-6 py-2 rounded-full bg-secondary text-sm font-medium">Fechar</button>
+                <button onClick={stopAndClose} className="mt-4 px-6 py-2 rounded-full bg-secondary text-sm font-medium">Fechar</button>
               </div>
             )}
 
@@ -105,7 +114,7 @@ export default function ReportBlockMenu({ targetUser, contentType = 'playlist', 
               <>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-grotesk font-bold text-base">Denunciar conteúdo</h3>
-                  <button onClick={close}><X size={18} className="text-muted-foreground" /></button>
+                  <button onClick={stopAndClose}><X size={18} className="text-muted-foreground" /></button>
                 </div>
                 <p className="text-xs text-muted-foreground mb-3">Qual é o problema?</p>
                 <div className="space-y-2 mb-3">
@@ -143,7 +152,7 @@ export default function ReportBlockMenu({ targetUser, contentType = 'playlist', 
               <>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-grotesk font-bold text-base">Bloquear usuário</h3>
-                  <button onClick={close}><X size={18} className="text-muted-foreground" /></button>
+                  <button onClick={stopAndClose}><X size={18} className="text-muted-foreground" /></button>
                 </div>
                 <p className="text-sm text-muted-foreground mb-6">
                   Você não verá mais o conteúdo de <strong className="text-foreground">{targetUser?.name || 'este usuário'}</strong> e ele não verá o seu. Esta ação pode ser desfeita no seu perfil.
@@ -155,7 +164,7 @@ export default function ReportBlockMenu({ targetUser, contentType = 'playlist', 
                 >
                   {loading ? 'Bloqueando...' : 'Bloquear'}
                 </button>
-                <button onClick={close} className="w-full py-3 rounded-2xl bg-secondary text-sm font-medium">Cancelar</button>
+                <button onClick={stopAndClose} className="w-full py-3 rounded-2xl bg-secondary text-sm font-medium">Cancelar</button>
               </>
             )}
 
@@ -164,7 +173,7 @@ export default function ReportBlockMenu({ targetUser, contentType = 'playlist', 
               <>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-grotesk font-bold text-base">Opções</h3>
-                  <button onClick={close}><X size={18} className="text-muted-foreground" /></button>
+                  <button onClick={stopAndClose}><X size={18} className="text-muted-foreground" /></button>
                 </div>
                 <div className="space-y-2">
                   <button
@@ -196,6 +205,7 @@ export default function ReportBlockMenu({ targetUser, contentType = 'playlist', 
     <>
       <button
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(true); }}
+        onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(true); }}
         className="p-1.5 rounded-full text-muted-foreground hover:text-foreground transition-colors"
       >
         <MoreVertical size={16} />
