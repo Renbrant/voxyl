@@ -107,6 +107,7 @@ export default function PlaylistDetail() {
   const gradient = GRADIENT_COLORS[id?.charCodeAt(0) % GRADIENT_COLORS.length];
 
   return (
+    <>
     <PageTransition>
     <div className="min-h-screen bg-background">
       <div className={cn("relative h-56 bg-gradient-to-br", gradient)}>
@@ -293,13 +294,6 @@ export default function PlaylistDetail() {
           </div>
         )}
       </div>
-      {editingPlaylist && playlist && (
-        <EditPlaylistModal
-          playlist={playlist}
-          onClose={() => setEditingPlaylist(false)}
-          onSaved={() => refetchPlaylist()}
-        />
-      )}
       <AnimatePresence>
         {selectedEpisode && (
           <EpisodeDetailModal
@@ -314,5 +308,13 @@ export default function PlaylistDetail() {
       </AnimatePresence>
     </div>
     </PageTransition>
+    {editingPlaylist && playlist && (
+      <EditPlaylistModal
+        playlist={playlist}
+        onClose={() => setEditingPlaylist(false)}
+        onSaved={() => refetchPlaylist()}
+      />
+    )}
+    </>
   );
 }
