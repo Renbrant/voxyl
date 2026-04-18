@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { X, Plus, Trash2, GripVertical, Loader2, Clock, Save, Image as ImageIcon } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 const DURATION_OPTIONS = [
@@ -79,13 +78,7 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm">
-      <motion.div
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        transition={{ type: 'spring', damping: 25 }}
-        className="w-full max-w-md bg-card border-t border-border rounded-t-3xl flex flex-col max-h-[92vh]"
-      >
+      <div className="w-full max-w-md bg-card border-t border-border rounded-t-3xl flex flex-col max-h-[92vh] animate-slide-up">
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
           <h2 className="text-base font-grotesk font-bold">Editar Playlist</h2>
@@ -248,7 +241,7 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
             {saving ? 'Salvando...' : 'Salvar alterações'}
           </button>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
