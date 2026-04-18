@@ -231,7 +231,7 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
         </div>
 
         {/* Save button */}
-        <div className="px-5 pb-8 pt-3 flex-shrink-0 border-t border-border">
+        <div className="px-5 pt-3 flex-shrink-0 border-t border-border" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}>
           <button
             onClick={handleSave}
             disabled={saving}
