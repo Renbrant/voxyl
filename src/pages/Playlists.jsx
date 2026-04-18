@@ -137,7 +137,7 @@ export default function Playlists() {
                   playlist={pl}
                   compact
                   liked={likedIds.includes(pl.id)}
-                  onLike={tab === 'liked' ? handleLike : undefined}
+                  onLike={handleLike}
                   currentUser={user}
                 />
               </motion.div>
