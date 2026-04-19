@@ -22,6 +22,15 @@
       "type": "string",
       "description": "Email of creator"
     },
+    "creator_username": {
+      "type": "string",
+      "description": "Public username of creator"
+    },
+    "creator_hidden": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether creator's profile is hidden"
+    },
     "rss_feeds": {
       "type": "array",
       "description": "List of RSS feed URLs",
@@ -51,7 +60,7 @@
         "friends_only"
       ],
       "default": "public",
-      "description": "Playlist visibility: public, private, or friends_only"
+      "description": "Playlist visibility"
     },
     "max_duration": {
       "type": "number",

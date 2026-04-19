@@ -1,0 +1,23 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "user"
+      ],
+      "default": "user"
+    },
+    "username": {
+      "type": "string",
+      "description": "Public username chosen by the user. Only this is shown publicly."
+    },
+    "profile_hidden": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, user won't appear in general searches. Only findable by exact username."
+    }
+  }
+}

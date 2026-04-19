@@ -25,10 +25,13 @@ export default function FollowButton({ currentUserId, currentUserEmail, currentU
       onStatusChange?.(null);
     } else {
       // Send follow request (pending)
+      // Fetch current user's username to store in Follow record
+      const me = await base44.auth.me().catch(() => null);
       await base44.entities.Follow.create({
         follower_id: currentUserId,
         follower_email: currentUserEmail,
         follower_name: currentUserName || '',
+        follower_username: me?.username || '',
         following_id: targetUserId,
         following_email: targetUserEmail,
         status: 'pending',

@@ -78,8 +78,9 @@ export default function FollowRequestsModal({ currentUser, onClose, onCountChang
                       <UserCircle2 size={20} className="text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm truncate">{req.follower_name || 'Usuário'}</p>
-                      <p className="text-xs text-muted-foreground truncate">{req.follower_email}</p>
+                      <p className="font-semibold text-sm truncate">
+                        {req.follower_username ? `@${req.follower_username}` : (req.follower_name || 'Usuário')}
+                      </p>
                     </div>
                     {actionLoading === req.id ? (
                       <Loader2 size={18} className="animate-spin text-muted-foreground" />

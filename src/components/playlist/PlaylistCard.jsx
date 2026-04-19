@@ -49,7 +49,9 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
                 <p className="font-semibold text-sm truncate">{playlist.name}</p>
                 <VisibilityBadge visibility={playlist.visibility || 'public'} />
               </div>
-              <p className="text-xs text-muted-foreground truncate">{playlist.creator_name}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {playlist.creator_username ? `@${playlist.creator_username}` : (playlist.creator_hidden ? 'Usuário' : playlist.creator_name)}
+              </p>
               <p className="text-xs text-muted-foreground">{playlist.rss_feeds?.length || 0} feeds</p>
             </div>
             <div className="flex items-center gap-2">
@@ -109,7 +111,9 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
                 <p className="font-semibold text-sm truncate">{playlist.name}</p>
                 <VisibilityBadge visibility={playlist.visibility || 'public'} />
               </div>
-              <p className="text-xs text-muted-foreground mb-1">por {playlist.creator_name}</p>
+              <p className="text-xs text-muted-foreground mb-1">
+                {playlist.creator_username ? `@${playlist.creator_username}` : (playlist.creator_hidden ? 'Usuário' : playlist.creator_name)}
+              </p>
               {playlist.description && (
                 <p className="text-xs text-muted-foreground line-clamp-2">{playlist.description}</p>
               )}

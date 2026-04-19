@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom';
-import { UserCircle2 } from 'lucide-react';
+import { UserCircle2, AtSign } from 'lucide-react';
 import { motion } from 'framer-motion';
 import FollowButton from '@/components/profile/FollowButton';
 
 export default function UserSearchCard({ user, index, currentUser, followStatus, onStatusChange }) {
+  const displayName = user.username ? `@${user.username}` : 'Usuário';
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -15,14 +17,16 @@ export default function UserSearchCard({ user, index, currentUser, followStatus,
           <UserCircle2 size={22} className="text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm truncate">{user.full_name || 'Usuário'}</p>
-          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+          <p className="font-semibold text-sm truncate">{displayName}</p>
+          {!user.username && (
+            <p className="text-xs text-muted-foreground truncate">Sem nome de usuário</p>
+          )}
         </div>
         {currentUser && currentUser.id !== user.id && (
           <FollowButton
             currentUserId={currentUser.id}
             currentUserEmail={currentUser.email}
-            currentUserName={currentUser.full_name}
+            currentUserName={currentUser.username || currentUser.full_name}
             targetUserId={user.id}
             targetUserEmail={user.email}
             followStatus={followStatus}

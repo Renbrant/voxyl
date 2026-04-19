@@ -6,11 +6,12 @@ import PlaylistCard from '@/components/playlist/PlaylistCard';
 import InviteFriendModal from '@/components/profile/InviteFriendModal';
 import DeleteAccountModal from '@/components/profile/DeleteAccountModal';
 import ShareAppModal from '@/components/profile/ShareAppModal';
-import { UserCircle2, Mail, Users, ListMusic, Trash2, Share2, Shield, LogOut, Bell } from 'lucide-react';
+import { UserCircle2, Mail, Users, ListMusic, Trash2, Share2, Shield, LogOut, Bell, AtSign, EyeOff, Eye, Pencil } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import FollowRequestsModal from '@/components/profile/FollowRequestsModal';
+import UsernameSetupModal from '@/components/profile/UsernameSetupModal';
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -19,15 +20,31 @@ export default function Profile() {
   const [showShare, setShowShare] = useState(false);
   const [showFollowRequests, setShowFollowRequests] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const [hidingProfile, setHidingProfile] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(u => {
       setUser(u);
+      // Show username setup if not set yet
+      if (!u.username) setShowUsernameModal(true);
       base44.entities.Follow.filter({ following_id: u.id, status: 'pending' })
         .then(reqs => setPendingCount(reqs.length))
         .catch(() => {});
     }).catch(() => {});
   }, []);
+
+  const handleToggleHidden = async () => {
+    if (!user) return;
+    setHidingProfile(true);
+    const newVal = !user.profile_hidden;
+    await base44.auth.updateMe({ profile_hidden: newVal });
+    setUser(prev => ({ ...prev, profile_hidden: newVal }));
+    // Sync creator_hidden on all owned playlists
+    const myPlaylists = await base44.entities.Playlist.filter({ creator_id: user.id }).catch(() => []);
+    await Promise.all(myPlaylists.map(p => base44.entities.Playlist.update(p.id, { creator_hidden: newVal })));
+    setHidingProfile(false);
+  };
 
   const { data: playlists = [] } = useQuery({
     queryKey: ['profile-playlists', user?.id],
@@ -65,9 +82,30 @@ export default function Profile() {
             )}
           </div>
           <h2 className="text-xl font-grotesk font-bold">{user.full_name || 'Usuário'}</h2>
-          <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
-            <Mail size={12} /> {user.email}
-          </p>
+
+          {/* Public username */}
+          <button
+            onClick={() => setShowUsernameModal(true)}
+            className="flex items-center gap-1.5 mt-1 px-3 py-1 rounded-full bg-secondary border border-border text-sm text-muted-foreground hover:border-primary/40 transition-colors"
+          >
+            <AtSign size={13} />
+            <span>{user.username ? `@${user.username}` : 'Definir nome de usuário'}</span>
+            <Pencil size={11} className="opacity-60" />
+          </button>
+
+          {/* Profile hidden toggle */}
+          <button
+            onClick={handleToggleHidden}
+            disabled={hidingProfile}
+            className={`flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+              user.profile_hidden
+                ? 'bg-primary/10 border-primary/30 text-primary'
+                : 'bg-secondary border-border text-muted-foreground'
+            }`}
+          >
+            {user.profile_hidden ? <EyeOff size={12} /> : <Eye size={12} />}
+            {user.profile_hidden ? 'Perfil oculto' : 'Perfil visível'}
+          </button>
 
           {/* Follow requests badge */}
           {pendingCount > 0 && (
@@ -171,6 +209,16 @@ export default function Profile() {
           </div>
         </div>
 
+      <AnimatePresence>
+        {showUsernameModal && user && (
+          <UsernameSetupModal
+            currentUser={user}
+            currentUsername={user.username}
+            onClose={() => setShowUsernameModal(false)}
+            onSaved={(uname) => setUser(prev => ({ ...prev, username: uname }))}
+          />
+        )}
+      </AnimatePresence>
       <AnimatePresence>
         {showFollowRequests && user && (
           <FollowRequestsModal

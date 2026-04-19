@@ -12,6 +12,10 @@
     "follower_name": {
       "type": "string"
     },
+    "follower_username": {
+      "type": "string",
+      "description": "Public username of follower"
+    },
     "following_id": {
       "type": "string",
       "description": "User ID being followed"

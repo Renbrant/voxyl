@@ -11,6 +11,7 @@ export default function UserProfile() {
   const { userId } = useParams();
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
+  const [profileUser, setProfileUser] = useState(null);
   const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [followStatus, setFollowStatus] = useState(null); // null | 'pending' | 'accepted'
@@ -32,6 +33,14 @@ export default function UserProfile() {
 
     base44.entities.Follow.filter({ following_id: userId, status: 'accepted' })
       .then(follows => setFollowersCount(follows.length))
+      .catch(() => {});
+
+    // Fetch the profile user to get username
+    base44.entities.User.list()
+      .then(users => {
+        const found = users.find(u => u.id === userId);
+        if (found) setProfileUser(found);
+      })
       .catch(() => {});
   }, [userId]);
 
@@ -80,7 +89,7 @@ export default function UserProfile() {
     setShowBlockConfirm(false);
   };
 
-  const creator = playlists[0]?.creator_name || 'Usuário';
+  const displayName = profileUser?.username ? `@${profileUser.username}` : 'Usuário';
   const isOwnProfile = currentUser?.id === userId;
 
   return (
@@ -108,7 +117,7 @@ export default function UserProfile() {
         <div className="w-16 h-16 rounded-full gradient-primary flex items-center justify-center mb-2">
           <UserCircle2 size={32} className="text-white" />
         </div>
-        <h2 className="text-lg font-grotesk font-bold">{creator}</h2>
+        <h2 className="text-lg font-grotesk font-bold">{displayName}</h2>
         <p className="text-sm text-muted-foreground mb-3">{followersCount} seguidores · {playlists.length} playlists</p>
 
         {currentUser && !isOwnProfile && !isBlocked && (
@@ -169,8 +178,8 @@ export default function UserProfile() {
               </h3>
               <p className="text-sm text-muted-foreground mb-5">
                 {isBlocked
-                  ? `${creator} poderá te seguir novamente e ver seus conteúdos.`
-                  : `Você não verá mais o conteúdo de ${creator} e ele não verá o seu. O seguimento entre vocês será removido.`}
+                  ? `${displayName} poderá te seguir novamente e ver seus conteúdos.`
+                  : `Você não verá mais o conteúdo de ${displayName} e ele não verá o seu. O seguimento entre vocês será removido.`}
               </p>
               <button
                 onClick={handleBlock}

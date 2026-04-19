@@ -113,9 +113,16 @@ export default function Explore() {
 
   const filteredUsers = allUsers.filter(u => {
     if (u.id === user?.id) return false;
-    if (!debouncedUserSearch.trim()) return true;
-    const q = debouncedUserSearch.toLowerCase();
-    return u.full_name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q);
+    const q = debouncedUserSearch.trim().toLowerCase().replace(/^@/, '');
+    if (!q) {
+      // No search: only show non-hidden users
+      return !u.profile_hidden;
+    }
+    // With search: hidden users only appear if their username matches exactly
+    if (u.profile_hidden) {
+      return u.username?.toLowerCase() === q;
+    }
+    return u.username?.toLowerCase().includes(q);
   });
 
   const TABS = [
