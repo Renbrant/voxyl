@@ -86,7 +86,7 @@ export default function Explore() {
   const { data: allUsers = [], isLoading: usersLoading } = useQuery({
     queryKey: ['explore-users'],
     enabled: tab === 'users',
-    queryFn: () => base44.entities.User.filter({ profile_hidden: false }),
+    queryFn: () => base44.entities.User.list(),
   });
 
   // Podcast Index search
@@ -113,9 +113,11 @@ export default function Explore() {
 
   const filteredUsers = allUsers.filter(u => {
     if (u.id === user?.id) return false;
+    if (u.profile_hidden) return false;
     const q = debouncedUserSearch.trim().toLowerCase().replace(/^@/, '');
     if (!q) return true;
-    return u.username?.toLowerCase().includes(q) || u.full_name?.toLowerCase().includes(q);
+    const uname = (u.username || '').toLowerCase().replace(/^@+/, '');
+    return uname.includes(q) || u.full_name?.toLowerCase().includes(q);
   });
 
   const TABS = [
