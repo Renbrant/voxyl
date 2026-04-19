@@ -94,10 +94,10 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
         </div>
 
         {atPlaylistLimit ? (
-          <div className="text-center py-6 px-5">
+          <div className="flex-1 flex flex-col items-center justify-center py-12 px-5">
             <p className="text-4xl mb-3">🚧</p>
             <p className="font-semibold text-foreground mb-1">Limite de playlists atingido</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground text-center">
               O Voxyl está em fase de testes e permite até <strong>{MAX_PLAYLISTS} playlists</strong> por usuário no momento. Mais funcionalidades serão liberadas em breve!
             </p>
           </div>

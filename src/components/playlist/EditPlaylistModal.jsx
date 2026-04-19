@@ -90,7 +90,7 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
           </button>
         </div>
 
-        <div className="overflow-y-auto flex-1 px-5 pb-4 space-y-5">
+        <div className="overflow-y-auto flex-1 px-5 pb-24 space-y-5">
           {/* Name */}
           <div>
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1.5">Nome</label>
