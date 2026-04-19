@@ -44,7 +44,7 @@ export default function Layout() {
   return (
     <div className="flex flex-col min-h-screen bg-background max-w-md mx-auto relative">
       <main
-        className={cn("flex-1 overflow-y-auto", currentEpisode ? "pb-48" : "pb-20")}
+        className={cn("flex-1 overflow-y-auto", currentEpisode ? "pb-56" : "pb-28")}
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <Outlet />

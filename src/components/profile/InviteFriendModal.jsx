@@ -35,7 +35,7 @@ export default function InviteFriendModal({ onClose, playlistId = null }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-card border-t border-border rounded-t-3xl p-5 animate-slide-up">
+      <div className="w-full max-w-md bg-card border-t border-border rounded-t-3xl p-5 pb-28 animate-slide-up" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 7rem)' }}>
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-grotesk font-bold">Convidar Amigos</h2>
           <button onClick={onClose} className="p-1.5 rounded-full bg-secondary text-muted-foreground">

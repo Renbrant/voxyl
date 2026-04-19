@@ -28,8 +28,7 @@ export default function DeleteAccountModal({ user, onClose }) {
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25 }}
-        className="w-full max-w-md bg-card border-t border-border rounded-t-3xl p-5"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.25rem)' }}
+        className="w-full max-w-md bg-card border-t border-border rounded-t-3xl p-5 pb-28"
       >
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2 text-destructive">

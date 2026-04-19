@@ -182,7 +182,7 @@ export default function FollowRequestsModal({ currentUser, onClose, onCountChang
           </button>
         </div>
 
-        <div className="overflow-y-auto flex-1 px-5 pb-6">
+        <div className="overflow-y-auto flex-1 px-5 pb-24">
           {loading ? (
             <div className="flex justify-center py-10">
               <Loader2 size={24} className="animate-spin text-muted-foreground" />
