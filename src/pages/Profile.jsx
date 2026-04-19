@@ -89,7 +89,7 @@ export default function Profile() {
             className="flex items-center gap-1.5 mt-1 px-3 py-1 rounded-full bg-secondary border border-border text-sm text-muted-foreground hover:border-primary/40 transition-colors"
           >
             <AtSign size={13} />
-            <span>{user.username ? `@${user.username}` : 'Definir nome de usuário'}</span>
+            <span>{user.username ? `@${user.username.replace(/^@+/, '')}` : 'Definir nome de usuário'}</span>
             <Pencil size={11} className="opacity-60" />
           </button>
 
