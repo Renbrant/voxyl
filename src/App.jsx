@@ -11,7 +11,7 @@ import Layout from '@/components/Layout';
 // Add page imports here
 import Feed from '@/pages/Feed';
 import Explore from '@/pages/Explore';
-import Playlists from '@/pages/Playlists';
+import Playlists from '@/pages/Playlists.jsx';
 import Profile from '@/pages/Profile';
 import Settings from '@/pages/Settings';
 import PlaylistDetail from '@/pages/PlaylistDetail';

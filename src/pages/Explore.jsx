@@ -36,6 +36,9 @@ export default function Explore() {
   useEffect(() => {
     base44.auth.me().then(u => {
       setUser(u);
+      base44.entities.PodcastLike.filter({ user_id: u.id })
+        .then(likes => setLikedFeedUrls(new Set(likes.map(l => l.feed_url))))
+        .catch(() => {});
       Promise.all([
         base44.entities.Block.filter({ blocker_id: u.id }),
         base44.entities.Block.filter({ blocked_id: u.id }),
@@ -59,9 +62,6 @@ export default function Explore() {
         })
         .catch(() => {});
     }).catch(() => {});
-    base44.entities.PodcastLike.filter({ user_id: u.id })
-      .then(likes => setLikedFeedUrls(new Set(likes.map(l => l.feed_url))))
-      .catch(() => {});
   }, []);
 
   useQuery({
