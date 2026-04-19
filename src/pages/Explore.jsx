@@ -21,6 +21,7 @@ export default function Explore() {
   const [selectedPodcast, setSelectedPodcast] = useState(null);
   const [voxylSearch, setVoxylSearch] = useState('');
   const [userSearch, setUserSearch] = useState('');
+  const [userFilter, setUserFilter] = useState('all'); // 'all' | 'followers' | 'following' | 'pending'
   const [likes, setLikes] = useState([]);
   const [blockedIds, setBlockedIds] = useState([]);
   const [followStatuses, setFollowStatuses] = useState({}); // userId -> 'pending' | 'accepted' | null
@@ -88,10 +89,31 @@ export default function Explore() {
     queryFn: () => base44.entities.Playlist.list('-created_date', 100).then(all => all.filter(p => !p.visibility || p.visibility === 'public')),
   });
 
-  // Fetch all users for search
-  const { data: allUsers = [], isLoading: usersLoading } = useQuery({
+  // Followers: users who follow me (accepted)
+  const { data: followersList = [] } = useQuery({
+    queryKey: ['explore-followers', user?.id],
+    enabled: !!user && tab === 'users',
+    queryFn: () => base44.entities.Follow.filter({ following_id: user.id, status: 'accepted' }),
+  });
+
+  // Following: users I follow (accepted)
+  const { data: followingList = [] } = useQuery({
+    queryKey: ['explore-following', user?.id],
+    enabled: !!user && tab === 'users',
+    queryFn: () => base44.entities.Follow.filter({ follower_id: user.id, status: 'accepted' }),
+  });
+
+  // Pending: requests I sent that are still pending
+  const { data: pendingList = [] } = useQuery({
+    queryKey: ['explore-pending', user?.id],
+    enabled: !!user && tab === 'users',
+    queryFn: () => base44.entities.Follow.filter({ follower_id: user.id, status: 'pending' }),
+  });
+
+  // Search by exact username (only when query typed)
+  const { data: searchedUsers = [], isLoading: usersLoading } = useQuery({
     queryKey: ['explore-users', debouncedUserSearch],
-    enabled: tab === 'users',
+    enabled: tab === 'users' && debouncedUserSearch.trim().length > 0,
     queryFn: () => base44.functions.invoke('searchUsers', { query: debouncedUserSearch }).then(r => r.data?.users || []),
   });
 
@@ -117,7 +139,43 @@ export default function Explore() {
       p.creator_name?.toLowerCase().includes(voxylSearch.toLowerCase());
   });
 
-  const filteredUsers = allUsers;
+  // Build user list based on active filter
+  const filteredUsers = (() => {
+    const q = debouncedUserSearch.trim().toLowerCase();
+
+    if (q) {
+      // Exact username match only
+      return searchedUsers.filter(u => u.username && u.username.toLowerCase() === q);
+    }
+
+    if (userFilter === 'followers') {
+      return followersList.map(f => ({
+        id: f.follower_id,
+        username: f.follower_username,
+        email: f.follower_email,
+        full_name: f.follower_name,
+      }));
+    }
+    if (userFilter === 'following') {
+      return followingList.map(f => ({
+        id: f.following_id,
+        username: f.following_username,
+        email: f.following_email,
+        full_name: '',
+      }));
+    }
+    if (userFilter === 'pending') {
+      return pendingList.map(f => ({
+        id: f.following_id,
+        username: f.following_username,
+        email: f.following_email,
+        full_name: '',
+      }));
+    }
+
+    // 'all' without search: show nothing
+    return [];
+  })();
 
   const TABS = [
     { key: 'playlists', label: 'Playlists', icon: Compass },
@@ -152,7 +210,30 @@ export default function Explore() {
       <div className="px-4 mb-4">
         {tab === 'playlists' && <PodcastSearchBar value={voxylSearch} onChange={setVoxylSearch} loading={false} />}
         {tab === 'podcasts' && <PodcastSearchBar value={search} onChange={setSearch} loading={podcastLoading} />}
-        {tab === 'users' && <PodcastSearchBar value={userSearch} onChange={setUserSearch} loading={usersLoading} />}
+        {tab === 'users' && (
+          <div className="space-y-3">
+            <PodcastSearchBar value={userSearch} onChange={setUserSearch} loading={usersLoading} />
+            <div className="flex gap-2 overflow-x-auto no-scrollbar">
+              {[
+                { key: 'all', label: 'Buscar' },
+                { key: 'followers', label: 'Seguidores' },
+                { key: 'following', label: 'Seguindo' },
+                { key: 'pending', label: 'Aguardando' },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setUserFilter(key)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-full text-xs font-medium transition-all flex-shrink-0',
+                    userFilter === key ? 'gradient-primary text-white' : 'bg-secondary text-muted-foreground'
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="px-4 pb-4">
@@ -190,7 +271,14 @@ export default function Explore() {
               {filteredUsers.length === 0 ? (
                 <div className="text-center py-16 text-muted-foreground">
                   <p className="text-4xl mb-3">👤</p>
-                  <p>{debouncedUserSearch ? `Nenhum usuário encontrado para "${debouncedUserSearch}"` : 'Nenhum usuário encontrado'}</p>
+                  <p className="text-sm">
+                    {debouncedUserSearch
+                      ? `Nenhum usuário encontrado para "@${debouncedUserSearch}"`
+                      : userFilter === 'followers' ? 'Ninguém te segue ainda'
+                      : userFilter === 'following' ? 'Você não segue ninguém ainda'
+                      : userFilter === 'pending' ? 'Nenhuma solicitação pendente'
+                      : 'Digite um @usuário exato para buscar'}
+                  </p>
                 </div>
               ) : (
                 filteredUsers.map((u, i) => (
