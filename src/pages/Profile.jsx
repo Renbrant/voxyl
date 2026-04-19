@@ -52,7 +52,8 @@ export default function Profile() {
     queryFn: () => base44.entities.Playlist.filter({ creator_id: user.id }, '-created_date', 20),
   });
 
-  const publicPlaylists = playlists.filter(p => p.visibility === 'public' || (!p.visibility && p.is_public));
+  const publicPlaylists = playlists.filter(p => p.visibility === 'public' || !p.visibility);
+  const followersPlaylists = playlists.filter(p => p.visibility === 'friends_only');
 
   if (!user) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
@@ -127,6 +128,10 @@ export default function Profile() {
               <p className="text-xl font-bold text-foreground">{publicPlaylists.length}</p>
               <p className="text-xs text-muted-foreground">públicas</p>
             </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-foreground">{followersPlaylists.length}</p>
+              <p className="text-xs text-muted-foreground">seguidores</p>
+            </div>
           </div>
         </div>
 
@@ -161,22 +166,42 @@ export default function Profile() {
         </div>
 
         {/* Playlists */}
-        <div>
-          <h3 className="font-semibold mb-3 text-foreground">Minhas Playlists Públicas</h3>
-          {publicPlaylists.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p className="text-3xl mb-2">🎧</p>
-              <p className="text-sm">Nenhuma playlist pública</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {publicPlaylists.map((pl, i) => (
-                <motion.div key={pl.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                  <PlaylistCard playlist={pl} compact />
-                </motion.div>
-              ))}
-            </div>
-          )}
+        <div className="space-y-6">
+          <div>
+            <h3 className="font-semibold mb-3 text-foreground">Playlists Públicas</h3>
+            {publicPlaylists.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p className="text-3xl mb-2">🎧</p>
+                <p className="text-sm">Nenhuma playlist pública</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {publicPlaylists.map((pl, i) => (
+                  <motion.div key={pl.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                    <PlaylistCard playlist={pl} compact currentUser={user} onEdited={() => {}} />
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h3 className="font-semibold mb-3 text-foreground">Playlists para Seguidores</h3>
+            {followersPlaylists.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p className="text-3xl mb-2">👥</p>
+                <p className="text-sm">Nenhuma playlist exclusiva para seguidores</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {followersPlaylists.map((pl, i) => (
+                  <motion.div key={pl.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                    <PlaylistCard playlist={pl} compact currentUser={user} onEdited={() => {}} />
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
