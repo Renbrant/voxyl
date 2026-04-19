@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
 import PlaylistCard from '@/components/playlist/PlaylistCard';
+import FollowButton from '@/components/profile/FollowButton';
 import { ArrowLeft, UserCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import PageTransition from '@/components/common/PageTransition';
@@ -10,15 +10,39 @@ import PageTransition from '@/components/common/PageTransition';
 export default function UserProfile() {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState(null);
   const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
 
   useEffect(() => {
-    base44.entities.Playlist.filter({ creator_id: userId, is_public: true }, '-created_date', 30)
-      .then(data => { setPlaylists(data); setLoading(false); });
+    base44.auth.me().then(setCurrentUser).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    base44.entities.Playlist.filter({ creator_id: userId }, '-created_date', 30)
+      .then(data => {
+        setPlaylists(data.filter(p => !p.visibility || p.visibility === 'public'));
+        setLoading(false);
+      });
+
+    // Load followers count
+    base44.entities.Follow.filter({ following_id: userId })
+      .then(follows => setFollowersCount(follows.length))
+      .catch(() => {});
   }, [userId]);
 
+  useEffect(() => {
+    if (!currentUser) return;
+    base44.entities.Follow.filter({ follower_id: currentUser.id, following_id: userId })
+      .then(follows => setIsFollowing(follows.length > 0))
+      .catch(() => {});
+  }, [currentUser, userId]);
+
   const creator = playlists[0]?.creator_name || 'Usuário';
+  const creatorEmail = playlists[0]?.creator_email || '';
+  const isOwnProfile = currentUser?.id === userId;
 
   return (
     <PageTransition>
@@ -35,7 +59,21 @@ export default function UserProfile() {
           <UserCircle2 size={32} className="text-white" />
         </div>
         <h2 className="text-lg font-grotesk font-bold">{creator}</h2>
-        <p className="text-sm text-muted-foreground">{playlists.length} playlists públicas</p>
+        <p className="text-sm text-muted-foreground mb-3">{followersCount} seguidores · {playlists.length} playlists</p>
+
+        {currentUser && !isOwnProfile && (
+          <FollowButton
+            currentUserId={currentUser.id}
+            currentUserEmail={currentUser.email}
+            targetUserId={userId}
+            targetUserEmail={creatorEmail}
+            isFollowing={isFollowing}
+            onFollowChange={(following) => {
+              setIsFollowing(following);
+              setFollowersCount(prev => following ? prev + 1 : Math.max(0, prev - 1));
+            }}
+          />
+        )}
       </div>
 
       <div className="px-4 pb-4">
@@ -52,7 +90,7 @@ export default function UserProfile() {
           <div className="space-y-2">
             {playlists.map((pl, i) => (
               <motion.div key={pl.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}>
-                <PlaylistCard playlist={pl} compact />
+                <PlaylistCard playlist={pl} compact currentUser={currentUser} />
               </motion.div>
             ))}
           </div>
