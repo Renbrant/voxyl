@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { X, Plus, Trash2, GripVertical, Loader2, Clock, Save, Image as ImageIcon, Lock } from 'lucide-react';
+import { X, Plus, Trash2, GripVertical, Loader2, Clock, Save, Image as ImageIcon, Lock, Globe, Users } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { cn } from '@/lib/utils';
 
 const DURATION_OPTIONS = [
   { label: 'Sem limite', value: 0 },
@@ -24,7 +25,7 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
   const [feedError, setFeedError] = useState('');
   const [coverImage, setCoverImage] = useState(playlist.cover_image || '');
   const [generatingImage, setGeneratingImage] = useState(false);
-  const [isPublic, setIsPublic] = useState(playlist.is_public !== false);
+  const [visibility, setVisibility] = useState(playlist.visibility || 'public');
 
   const MAX_FEEDS = 5;
 
@@ -71,7 +72,7 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
       max_duration: maxDuration,
       rss_feeds: feeds,
       cover_image: coverImage,
-      is_public: isPublic,
+      visibility,
     });
     setSaving(false);
     onSaved();
@@ -111,30 +112,50 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
             />
           </div>
 
-          {/* Privacy toggle */}
+          {/* Visibility options */}
           <div>
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1.5 flex items-center gap-1">
-              <Lock size={11} /> Privacidade
+              <Lock size={11} /> Visibilidade
             </label>
-            <button
-              onClick={() => setIsPublic(!isPublic)}
-              className={`w-full text-left px-3 py-2.5 rounded-xl border transition-all flex items-center justify-between ${
-                isPublic
-                  ? 'bg-secondary border-border'
-                  : 'bg-destructive/10 border-destructive/30'
-              }`}
-            >
-              <span className="text-sm font-medium">{isPublic ? 'Pública' : 'Privada'}</span>
-              <div className={`w-12 h-6 rounded-full relative transition-colors ${
-                isPublic ? 'bg-primary' : 'bg-destructive'
-              }`}>
-                <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all duration-200 ${
-                  isPublic ? 'left-6' : 'left-0.5'
-                }`} />
-              </div>
-            </button>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => setVisibility('public')}
+                className={cn(
+                  'py-2.5 rounded-2xl text-sm font-medium transition-all border',
+                  visibility === 'public'
+                    ? 'gradient-primary text-white border-transparent'
+                    : 'bg-secondary text-muted-foreground border-border'
+                )}
+              >
+                <Globe size={14} className="mx-auto mb-1" /> Pública
+              </button>
+              <button
+                onClick={() => setVisibility('friends_only')}
+                className={cn(
+                  'py-2.5 rounded-2xl text-sm font-medium transition-all border',
+                  visibility === 'friends_only'
+                    ? 'bg-primary text-white border-transparent'
+                    : 'bg-secondary text-muted-foreground border-border'
+                )}
+              >
+                <Users size={14} className="mx-auto mb-1" /> Amigos
+              </button>
+              <button
+                onClick={() => setVisibility('private')}
+                className={cn(
+                  'py-2.5 rounded-2xl text-sm font-medium transition-all border',
+                  visibility === 'private'
+                    ? 'bg-primary text-white border-transparent'
+                    : 'bg-secondary text-muted-foreground border-border'
+                )}
+              >
+                <Lock size={14} className="mx-auto mb-1" /> Privada
+              </button>
+            </div>
             <p className="text-xs text-muted-foreground mt-1.5">
-              {isPublic ? 'Qualquer pessoa pode ver e seguir esta playlist' : 'Apenas você pode ver esta playlist'}
+              {visibility === 'public' && 'Qualquer pessoa pode ver esta playlist'}
+              {visibility === 'friends_only' && 'Apenas quem você segue pode ver esta playlist'}
+              {visibility === 'private' && 'Apenas você pode ver esta playlist'}
             </p>
           </div>
 

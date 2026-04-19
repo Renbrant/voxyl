@@ -4,6 +4,7 @@ import { Play, Heart, Share2, Lock, MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReportBlockMenu from '@/components/moderation/ReportBlockMenu';
 import EditPlaylistModal from '@/components/playlist/EditPlaylistModal';
+import VisibilityBadge from '@/components/playlist/VisibilityBadge';
 
 const GRADIENT_COLORS = [
   'from-purple-600 to-cyan-400',
@@ -44,9 +45,9 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 mb-0.5">
                 <p className="font-semibold text-sm truncate">{playlist.name}</p>
-                {!playlist.is_public && <Lock size={12} className="text-muted-foreground flex-shrink-0" />}
+                <VisibilityBadge visibility={playlist.visibility || 'public'} />
               </div>
               <p className="text-xs text-muted-foreground truncate">{playlist.creator_name}</p>
               <p className="text-xs text-muted-foreground">{playlist.rss_feeds?.length || 0} feeds</p>
@@ -106,7 +107,7 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
             <div className="p-3">
               <div className="flex items-center gap-1.5 mb-0.5">
                 <p className="font-semibold text-sm truncate">{playlist.name}</p>
-                {!playlist.is_public && <Lock size={12} className="text-muted-foreground" />}
+                <VisibilityBadge visibility={playlist.visibility || 'public'} />
               </div>
               <p className="text-xs text-muted-foreground mb-1">por {playlist.creator_name}</p>
               {playlist.description && (

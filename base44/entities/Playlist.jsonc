@@ -43,10 +43,15 @@
         }
       }
     },
-    "is_public": {
-      "type": "boolean",
-      "default": true,
-      "description": "Public or private playlist"
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "public",
+        "private",
+        "friends_only"
+      ],
+      "default": "public",
+      "description": "Playlist visibility: public, private, or friends_only"
     },
     "max_duration": {
       "type": "number",
@@ -88,7 +93,7 @@
           "data.creator_id": "{{user.id}}"
         },
         {
-          "data.is_public": true
+          "data.visibility": "public"
         }
       ]
     },
