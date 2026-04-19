@@ -42,9 +42,9 @@ export default function Layout() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background max-w-md mx-auto relative overflow-hidden">
+    <div className="flex flex-col h-screen bg-background max-w-md mx-auto relative">
       <main
-        className="flex-1 overflow-y-auto"
+        className="flex-1 overflow-y-auto pb-20"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <Outlet />
