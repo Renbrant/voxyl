@@ -15,6 +15,7 @@ export default function UserProfile() {
   const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [followStatus, setFollowStatus] = useState(null); // null | 'pending' | 'accepted'
+  const [theyFollowMe, setTheyFollowMe] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [isBlocked, setIsBlocked] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
@@ -52,6 +53,11 @@ export default function UserProfile() {
         if (follows.length > 0) setFollowStatus(follows[0].status);
         else setFollowStatus(null);
       })
+      .catch(() => {});
+
+    // Check if they follow me
+    base44.entities.Follow.filter({ follower_id: userId, following_id: currentUser.id, status: 'accepted' })
+      .then(follows => setTheyFollowMe(follows.length > 0))
       .catch(() => {});
 
     // Check block status
@@ -128,6 +134,7 @@ export default function UserProfile() {
             targetUserId={userId}
             targetUserEmail={playlists[0]?.creator_email || ''}
             followStatus={followStatus}
+            theyFollowMe={theyFollowMe}
             onStatusChange={(status) => {
               const wasAccepted = followStatus === 'accepted';
               setFollowStatus(status);

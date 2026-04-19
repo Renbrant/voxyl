@@ -3,7 +3,7 @@ import { UserCircle2, AtSign } from 'lucide-react';
 import { motion } from 'framer-motion';
 import FollowButton from '@/components/profile/FollowButton';
 
-export default function UserSearchCard({ user, index, currentUser, followStatus, onStatusChange }) {
+export default function UserSearchCard({ user, index, currentUser, followStatus, onStatusChange, theyFollowMe = false }) {
   const displayName = user.username ? `@${user.username}` : 'Usuário';
 
   return (
@@ -30,6 +30,7 @@ export default function UserSearchCard({ user, index, currentUser, followStatus,
             targetUserId={user.id}
             targetUserEmail={user.email}
             followStatus={followStatus}
+            theyFollowMe={theyFollowMe}
             onStatusChange={onStatusChange}
           />
         )}

@@ -24,6 +24,7 @@ export default function Explore() {
   const [likes, setLikes] = useState([]);
   const [blockedIds, setBlockedIds] = useState([]);
   const [followStatuses, setFollowStatuses] = useState({}); // userId -> 'pending' | 'accepted' | null
+  const [theyFollowMeIds, setTheyFollowMeIds] = useState(new Set()); // userIds who follow me
 
   const debouncedQuery = useDebounce(search, 600);
   const debouncedUserSearch = useDebounce(userSearch, 400);
@@ -46,6 +47,11 @@ export default function Explore() {
           const map = {};
           follows.forEach(f => { map[f.following_id] = f.status; });
           setFollowStatuses(map);
+        })
+        .catch(() => {});
+      base44.entities.Follow.filter({ following_id: u.id, status: 'accepted' })
+        .then(follows => {
+          setTheyFollowMeIds(new Set(follows.map(f => f.follower_id)));
         })
         .catch(() => {});
     }).catch(() => {});
@@ -194,6 +200,7 @@ export default function Explore() {
                     index={i}
                     currentUser={user}
                     followStatus={followStatuses[u.id] || null}
+                    theyFollowMe={theyFollowMeIds.has(u.id)}
                     onStatusChange={(status) =>
                       setFollowStatuses(prev => ({ ...prev, [u.id]: status }))
                     }

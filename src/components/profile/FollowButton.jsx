@@ -4,7 +4,7 @@ import { UserPlus, UserCheck, Clock, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // status: null = not following, 'pending' = request sent, 'accepted' = following
-export default function FollowButton({ currentUserId, currentUserEmail, currentUserName, targetUserId, targetUserEmail, followStatus, onStatusChange }) {
+export default function FollowButton({ currentUserId, currentUserEmail, currentUserName, targetUserId, targetUserEmail, followStatus, onStatusChange, theyFollowMe = false }) {
   const [loading, setLoading] = useState(false);
 
   const handleClick = async (e) => {
@@ -42,7 +42,7 @@ export default function FollowButton({ currentUserId, currentUserEmail, currentU
     setLoading(false);
   };
 
-  const label = followStatus === 'accepted' ? 'Seguindo' : followStatus === 'pending' ? 'Solicitado' : 'Seguir';
+  const label = followStatus === 'accepted' ? 'Seguindo' : followStatus === 'pending' ? 'Solicitado' : theyFollowMe ? 'Seguir de volta' : 'Seguir';
   const Icon = followStatus === 'accepted' ? UserCheck : followStatus === 'pending' ? Clock : UserPlus;
 
   return (
