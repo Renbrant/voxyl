@@ -228,7 +228,7 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
         </div>
 
         </div>{/* end scroll */}
-        <div className="px-5 pt-3 flex-shrink-0 border-t border-border" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}>
+        <div className="px-5 pt-3 flex-shrink-0 border-t border-border" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}>
           <Button
             onClick={handleSave}
             disabled={saving}

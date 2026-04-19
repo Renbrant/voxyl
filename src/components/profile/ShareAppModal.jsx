@@ -84,7 +84,7 @@ export default function ShareAppModal({ onClose }) {
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25 }}
         className="w-full max-w-md bg-card border-t border-border rounded-t-3xl p-5"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.25rem)' }}
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}
       >
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-base font-grotesk font-bold">Compartilhar Voxyl</h2>

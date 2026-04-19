@@ -69,9 +69,9 @@ export default function AddToPlaylistModal({ podcast, onClose }) {
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm px-0">
       <motion.div
         initial={{ y: '100%' }} animate={{ y: 0 }} transition={{ type: 'spring', damping: 25 }}
-        className="w-full max-w-md bg-card border-t border-border rounded-t-3xl p-5 max-h-[80vh] flex flex-col pb-24"
+        className="w-full max-w-md bg-card border-t border-border rounded-t-3xl flex flex-col max-h-[85vh]"
       >
-        <div className="flex items-center justify-between mb-4 flex-shrink-0">
+        <div className="px-5 pt-5 pb-3 flex-shrink-0">
           <div className="flex items-center gap-3">
             {podcast.image && (
               <img src={podcast.image} alt={podcast.title} className="w-10 h-10 rounded-xl object-cover" />
@@ -86,6 +86,7 @@ export default function AddToPlaylistModal({ podcast, onClose }) {
           </button>
         </div>
 
+        <div className="overflow-y-auto flex-1 px-5 pb-24">
         {done ? (
           <div className="flex flex-col items-center py-8 gap-3">
             <div className="w-14 h-14 rounded-full gradient-primary flex items-center justify-center glow-primary">
@@ -99,7 +100,7 @@ export default function AddToPlaylistModal({ podcast, onClose }) {
             <Button onClick={onClose} className="mt-2 rounded-full gradient-primary border-0 px-8">Fechar</Button>
           </div>
         ) : (
-          <div className="overflow-y-auto flex-1">
+          <>
             {loading ? (
               <div className="flex justify-center py-8"><Loader2 size={24} className="animate-spin text-primary" /></div>
             ) : (
@@ -157,8 +158,9 @@ export default function AddToPlaylistModal({ podcast, onClose }) {
                 ))}
               </div>
             )}
-          </div>
+          </>
         )}
+        </div>
       </motion.div>
     </div>
   );
