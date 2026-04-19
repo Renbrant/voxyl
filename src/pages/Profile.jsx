@@ -41,11 +41,12 @@ export default function Profile() {
         {/* Avatar & Info */}
         <div className="flex flex-col items-center py-6 mb-4">
           <div className="w-20 h-20 rounded-full mb-3 flex-shrink-0">
-            {user.profile_picture ? (
+            {(user.profile_picture || user.picture || user.avatar_url || user.photo_url) ? (
               <img
-                src={user.profile_picture}
+                src={user.profile_picture || user.picture || user.avatar_url || user.photo_url}
                 alt={user.full_name}
                 className="w-full h-full rounded-full object-cover glow-primary"
+                referrerPolicy="no-referrer"
               />
             ) : (
               <div className="w-full h-full rounded-full gradient-primary flex items-center justify-center glow-primary">
