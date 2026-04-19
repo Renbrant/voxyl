@@ -139,7 +139,7 @@ export default function Feed() {
                 <div className="flex-1 min-w-0 mr-3">
                   <p className="text-xs text-white/70 mb-0.5 font-medium">🔥 Mais tocada nos últimos 7 dias</p>
                   <h2 className="text-xl font-grotesk font-bold text-white truncate">{heroBanner.name}</h2>
-                  <p className="text-sm text-white/70 truncate">por {heroBanner.creator_name} • {heroBanner.plays_count || 0} plays</p>
+                  <p className="text-sm text-white/70 truncate">por {heroBanner.creator_username ? `@${heroBanner.creator_username}` : 'Usuário'} • {heroBanner.plays_count || 0} plays</p>
                 </div>
                 <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center glow-primary flex-shrink-0">
                   <Play size={20} fill="white" className="text-white ml-0.5" />
