@@ -1,6 +1,6 @@
 import { Search, X, Loader2 } from 'lucide-react';
 
-export default function PodcastSearchBar({ value, onChange, loading }) {
+export default function PodcastSearchBar({ value, onChange, loading, placeholder = "Buscar..." }) {
   return (
     <div className="relative">
       <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -17,7 +17,7 @@ export default function PodcastSearchBar({ value, onChange, loading }) {
       }
       <input
         type="text"
-        placeholder="Buscar podcasts no mundo todo..."
+        placeholder={placeholder}
         value={value}
         onChange={e => onChange(e.target.value)}
         className="w-full pl-10 pr-10 py-3 rounded-2xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:border-primary transition-colors"

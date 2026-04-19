@@ -208,11 +208,11 @@ export default function Explore() {
 
       {/* Search bar */}
       <div className="px-4 mb-4">
-        {tab === 'playlists' && <PodcastSearchBar value={voxylSearch} onChange={setVoxylSearch} loading={false} />}
-        {tab === 'podcasts' && <PodcastSearchBar value={search} onChange={setSearch} loading={podcastLoading} />}
+        {tab === 'playlists' && <PodcastSearchBar value={voxylSearch} onChange={setVoxylSearch} loading={false} placeholder="Buscar playlists..." />}
+        {tab === 'podcasts' && <PodcastSearchBar value={search} onChange={setSearch} loading={podcastLoading} placeholder="Buscar podcasts no mundo todo..." />}
         {tab === 'users' && (
           <div className="space-y-3">
-            <PodcastSearchBar value={userSearch} onChange={setUserSearch} loading={usersLoading} />
+            <PodcastSearchBar value={userSearch} onChange={setUserSearch} loading={usersLoading} placeholder="Buscar por @usuário exato..." />
             <div className="flex gap-2 overflow-x-auto no-scrollbar">
               {[
                 { key: 'all', label: 'Buscar' },
