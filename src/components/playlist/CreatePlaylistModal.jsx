@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { X, Plus, Trash2, Globe, Lock, Loader2, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { X, Plus, Trash2, Globe, Lock, Loader2, Image as ImageIcon, Sparkles, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateShareToken } from '@/lib/rssUtils';
 import { cn } from '@/lib/utils';
@@ -187,7 +187,7 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
                 className={cn("py-2.5 rounded-2xl text-sm font-medium transition-all border",
                   visibility === 'friends_only' ? "bg-primary text-white border-transparent" : "bg-secondary text-muted-foreground border-border")}
               >
-                Amigos
+                <Users size={14} className="mx-auto mb-1" /> Seguidores
               </button>
               <button
                 onClick={() => setVisibility('private')}

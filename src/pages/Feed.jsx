@@ -14,6 +14,7 @@ export default function Feed() {
   const [user, setUser] = useState(null);
   const [likes, setLikes] = useState([]);
   const [blockedIds, setBlockedIds] = useState([]);
+  const [followingIds, setFollowingIds] = useState(new Set());
   const [tab, setTab] = useState('trending');
   const containerRef = useRef(null);
   const queryClient = useQueryClient();
@@ -32,6 +33,9 @@ export default function Feed() {
         ];
         setBlockedIds([...new Set(ids)]);
       }).catch(() => {});
+      base44.entities.Follow.filter({ follower_id: u.id, status: 'accepted' })
+        .then(follows => setFollowingIds(new Set(follows.map(f => f.following_id))))
+        .catch(() => {});
     }).catch(() => {});
   }, []);
 
@@ -42,7 +46,7 @@ export default function Feed() {
 
   const { data: playlists = [], isLoading } = useQuery({
     queryKey: ['feed-playlists'],
-    queryFn: () => base44.entities.Playlist.list('-plays_count', 100).then(all => all.filter(p => !p.visibility || p.visibility === 'public')),
+    queryFn: () => base44.entities.Playlist.list('-plays_count', 100),
   });
 
   const { data: likedIds = [] } = useQuery({
@@ -70,7 +74,12 @@ export default function Feed() {
     }
   };
 
-  const visiblePlaylists = playlists.filter(p => !blockedIds.includes(p.creator_id));
+  const visiblePlaylists = playlists.filter(p => {
+    if (blockedIds.includes(p.creator_id)) return false;
+    if (!p.visibility || p.visibility === 'public') return true;
+    if (p.visibility === 'friends_only') return user && followingIds.has(p.creator_id);
+    return false; // private
+  });
 
   const sortedPlaylists = tab === 'trending'
     ? [...visiblePlaylists].sort((a, b) => {

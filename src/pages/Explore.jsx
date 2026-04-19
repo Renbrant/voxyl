@@ -86,7 +86,7 @@ export default function Explore() {
   // Fetch Voxyl playlists
   const { data: playlists = [], isLoading: playlistsLoading } = useQuery({
     queryKey: ['explore-playlists'],
-    queryFn: () => base44.entities.Playlist.list('-created_date', 100).then(all => all.filter(p => !p.visibility || p.visibility === 'public')),
+    queryFn: () => base44.entities.Playlist.list('-created_date', 100),
   });
 
   // Followers: users who follow me (accepted)
@@ -133,6 +133,8 @@ export default function Explore() {
 
   const filteredPlaylists = playlists.filter(p => {
     if (blockedIds.includes(p.creator_id)) return false;
+    if (p.visibility === 'private') return false;
+    if (p.visibility === 'friends_only' && !(user && followStatuses[p.creator_id] === 'accepted')) return false;
     return !voxylSearch ||
       p.name?.toLowerCase().includes(voxylSearch.toLowerCase()) ||
       p.description?.toLowerCase().includes(voxylSearch.toLowerCase()) ||

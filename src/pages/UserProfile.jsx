@@ -28,7 +28,8 @@ export default function UserProfile() {
   useEffect(() => {
     base44.entities.Playlist.filter({ creator_id: userId }, '-created_date', 30)
       .then(data => {
-        const visible = data.filter(p => !p.visibility || p.visibility === 'public');
+        // Will re-filter after we know follow status; for now show public only
+        const visible = data.filter(p => !p.visibility || p.visibility === 'public' || p.visibility === 'friends_only');
         setPlaylists(visible);
         setLoading(false);
         // Extract username/name from playlist metadata
@@ -62,8 +63,14 @@ export default function UserProfile() {
     // Check follow status
     base44.entities.Follow.filter({ follower_id: currentUser.id, following_id: userId })
       .then(follows => {
-        if (follows.length > 0) setFollowStatus(follows[0].status);
-        else setFollowStatus(null);
+        const status = follows.length > 0 ? follows[0].status : null;
+        setFollowStatus(status);
+        // Re-filter playlists based on follow status
+        setPlaylists(prev => prev.filter(p => {
+          if (!p.visibility || p.visibility === 'public') return true;
+          if (p.visibility === 'friends_only') return status === 'accepted' || currentUser.id === userId;
+          return false;
+        }));
       })
       .catch(() => {});
 

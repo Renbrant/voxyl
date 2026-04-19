@@ -10,7 +10,7 @@ export default function VisibilityBadge({ visibility }) {
     },
     friends_only: {
       icon: Users,
-      label: 'Amigos',
+      label: 'Seguidores',
       color: 'bg-accent/10 text-accent',
     },
     private: {

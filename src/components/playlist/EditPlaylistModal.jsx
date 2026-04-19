@@ -138,7 +138,7 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
                     : 'bg-secondary text-muted-foreground border-border'
                 )}
               >
-                <Users size={14} className="mx-auto mb-1" /> Amigos
+                <Users size={14} className="mx-auto mb-1" /> Seguidores
               </button>
               <button
                 onClick={() => setVisibility('private')}
@@ -154,7 +154,7 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
             </div>
             <p className="text-xs text-muted-foreground mt-1.5">
               {visibility === 'public' && 'Qualquer pessoa pode ver esta playlist'}
-              {visibility === 'friends_only' && 'Apenas quem você segue pode ver esta playlist'}
+              {visibility === 'friends_only' && 'Apenas seus seguidores aprovados podem ver esta playlist'}
               {visibility === 'private' && 'Apenas você pode ver esta playlist'}
             </p>
           </div>
