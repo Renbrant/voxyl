@@ -23,7 +23,7 @@ export default function Explore() {
   const [userSearch, setUserSearch] = useState('');
   const [likes, setLikes] = useState([]);
   const [blockedIds, setBlockedIds] = useState([]);
-  const [followingIds, setFollowingIds] = useState([]);
+  const [followStatuses, setFollowStatuses] = useState({}); // userId -> 'pending' | 'accepted' | null
 
   const debouncedQuery = useDebounce(search, 600);
   const debouncedUserSearch = useDebounce(userSearch, 400);
@@ -31,11 +31,22 @@ export default function Explore() {
   useEffect(() => {
     base44.auth.me().then(u => {
       setUser(u);
-      base44.entities.Block.filter({ blocker_id: u.id })
-        .then(blocks => setBlockedIds(blocks.map(b => b.blocked_id)))
-        .catch(() => {});
+      Promise.all([
+        base44.entities.Block.filter({ blocker_id: u.id }),
+        base44.entities.Block.filter({ blocked_id: u.id }),
+      ]).then(([myBlocks, theirBlocks]) => {
+        const ids = [
+          ...myBlocks.map(b => b.blocked_id),
+          ...theirBlocks.map(b => b.blocker_id),
+        ];
+        setBlockedIds([...new Set(ids)]);
+      }).catch(() => {});
       base44.entities.Follow.filter({ follower_id: u.id })
-        .then(follows => setFollowingIds(follows.map(f => f.following_id)))
+        .then(follows => {
+          const map = {};
+          follows.forEach(f => { map[f.following_id] = f.status; });
+          setFollowStatuses(map);
+        })
         .catch(() => {});
     }).catch(() => {});
   }, []);
@@ -187,12 +198,10 @@ export default function Explore() {
                     user={u}
                     index={i}
                     currentUser={user}
-                    isFollowing={followingIds.includes(u.id)}
-                    onFollowChange={(following) => {
-                      setFollowingIds(prev =>
-                        following ? [...prev, u.id] : prev.filter(id => id !== u.id)
-                      );
-                    }}
+                    followStatus={followStatuses[u.id] || null}
+                    onStatusChange={(status) =>
+                      setFollowStatuses(prev => ({ ...prev, [u.id]: status }))
+                    }
                   />
                 ))
               )}

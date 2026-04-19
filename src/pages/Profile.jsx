@@ -6,18 +6,28 @@ import PlaylistCard from '@/components/playlist/PlaylistCard';
 import InviteFriendModal from '@/components/profile/InviteFriendModal';
 import DeleteAccountModal from '@/components/profile/DeleteAccountModal';
 import ShareAppModal from '@/components/profile/ShareAppModal';
-import { UserCircle2, Mail, Users, ListMusic, Trash2, Share2, Shield, LogOut } from 'lucide-react';
+import { UserCircle2, Mail, Users, ListMusic, Trash2, Share2, Shield, LogOut, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
+import FollowRequestsModal from '@/components/profile/FollowRequestsModal';
 
 export default function Profile() {
   const [user, setUser] = useState(null);
   const [showInvite, setShowInvite] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [showFollowRequests, setShowFollowRequests] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
 
-  useEffect(() => { base44.auth.me().then(setUser).catch(() => {}); }, []);
+  useEffect(() => {
+    base44.auth.me().then(u => {
+      setUser(u);
+      base44.entities.Follow.filter({ following_id: u.id, status: 'pending' })
+        .then(reqs => setPendingCount(reqs.length))
+        .catch(() => {});
+    }).catch(() => {});
+  }, []);
 
   const { data: playlists = [] } = useQuery({
     queryKey: ['profile-playlists', user?.id],
@@ -58,6 +68,17 @@ export default function Profile() {
           <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
             <Mail size={12} /> {user.email}
           </p>
+
+          {/* Follow requests badge */}
+          {pendingCount > 0 && (
+            <button
+              onClick={() => setShowFollowRequests(true)}
+              className="flex items-center gap-2 mt-3 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 text-primary text-sm font-medium"
+            >
+              <Bell size={14} />
+              {pendingCount} pedido{pendingCount > 1 ? 's' : ''} para seguir
+            </button>
+          )}
 
           <div className="flex gap-6 mt-4">
             <div className="text-center">
@@ -150,6 +171,15 @@ export default function Profile() {
           </div>
         </div>
 
+      <AnimatePresence>
+        {showFollowRequests && user && (
+          <FollowRequestsModal
+            currentUser={user}
+            onClose={() => setShowFollowRequests(false)}
+            onCountChange={setPendingCount}
+          />
+        )}
+      </AnimatePresence>
       {showInvite && <InviteFriendModal onClose={() => setShowInvite(false)} />}
       <AnimatePresence>
         {showDelete && user && (

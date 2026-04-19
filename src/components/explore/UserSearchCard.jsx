@@ -3,7 +3,7 @@ import { UserCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import FollowButton from '@/components/profile/FollowButton';
 
-export default function UserSearchCard({ user, index, currentUser, isFollowing, onFollowChange }) {
+export default function UserSearchCard({ user, index, currentUser, followStatus, onStatusChange }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -22,10 +22,11 @@ export default function UserSearchCard({ user, index, currentUser, isFollowing, 
           <FollowButton
             currentUserId={currentUser.id}
             currentUserEmail={currentUser.email}
+            currentUserName={currentUser.full_name}
             targetUserId={user.id}
             targetUserEmail={user.email}
-            isFollowing={isFollowing}
-            onFollowChange={onFollowChange}
+            followStatus={followStatus}
+            onStatusChange={onStatusChange}
           />
         )}
       </Link>

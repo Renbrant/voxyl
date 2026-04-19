@@ -9,12 +9,24 @@
     "follower_email": {
       "type": "string"
     },
+    "follower_name": {
+      "type": "string"
+    },
     "following_id": {
       "type": "string",
       "description": "User ID being followed"
     },
     "following_email": {
       "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted"
+      ],
+      "default": "pending",
+      "description": "pending = waiting for approval, accepted = follow confirmed"
     }
   },
   "required": [

@@ -21,9 +21,17 @@ export default function Feed() {
   useEffect(() => {
     base44.auth.me().then(u => {
       setUser(u);
-      base44.entities.Block.filter({ blocker_id: u.id })
-        .then(blocks => setBlockedIds(blocks.map(b => b.blocked_id)))
-        .catch(() => {});
+      // Blocks I made + blocks where I was blocked (bilateral)
+      Promise.all([
+        base44.entities.Block.filter({ blocker_id: u.id }),
+        base44.entities.Block.filter({ blocked_id: u.id }),
+      ]).then(([myBlocks, theirBlocks]) => {
+        const ids = [
+          ...myBlocks.map(b => b.blocked_id),
+          ...theirBlocks.map(b => b.blocker_id),
+        ];
+        setBlockedIds([...new Set(ids)]);
+      }).catch(() => {});
     }).catch(() => {});
   }, []);
 
