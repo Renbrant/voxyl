@@ -24,8 +24,8 @@ export default function UsernameSetupModal({ currentUser, currentUsername, onClo
     setError('');
 
     // Check if username is already taken by another user
-    const existing = await base44.entities.User.list().catch(() => []);
-    const taken = existing.find(u => u.username?.toLowerCase() === username.trim().toLowerCase() && u.id !== currentUser.id);
+    const existing = await base44.entities.User.filter({ username: username.trim().toLowerCase() }).catch(() => []);
+    const taken = existing.find(u => u.id !== currentUser.id);
     if (taken) {
       setError('Este nome de usuário já está em uso');
       setLoading(false);
