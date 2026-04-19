@@ -54,8 +54,8 @@ export default function Layout() {
       <FollowRequestsBell />
 
       <nav
-        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-card border-t border-border z-50"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', userSelect: 'none', WebkitUserSelect: 'none' }}
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md border-t border-border z-50"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', userSelect: 'none', WebkitUserSelect: 'none', background: 'hsl(var(--card))' }}
       >
         <div className="flex items-center justify-around px-2 py-3">
           {navItems.map(({ icon: Icon, label, path }) => {
