@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
 import { usePlayer } from '@/lib/PlayerContext';
-import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward, Pencil, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward, Pencil, CheckCircle2, Heart } from 'lucide-react';
 import PageTransition from '@/components/common/PageTransition';
 import { useLongPress } from '@/hooks/useLongPress';
 import EditPlaylistModal from '@/components/playlist/EditPlaylistModal';
@@ -33,7 +33,31 @@ export default function PlaylistDetail() {
   const [playedUrls, setPlayedUrls] = useState(new Set());
   const [selectedEpisode, setSelectedEpisode] = useState(null);
   const [editingPlaylist, setEditingPlaylist] = useState(false);
+  const [liked, setLiked] = useState(false);
   const { play, currentEpisode, isPlaying, togglePlay, seek, currentTime, duration, autoplay, setAutoplay, finishedUrls, setFinishedUrls } = usePlayer();
+
+  useEffect(() => {
+    if (!user || !id) return;
+    base44.entities.PlaylistLike.filter({ playlist_id: id, user_id: user.id })
+      .then(records => setLiked(records.length > 0))
+      .catch(() => {});
+  }, [user, id]);
+
+  const handleLike = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user || !playlist) return;
+    if (liked) {
+      const records = await base44.entities.PlaylistLike.filter({ playlist_id: id, user_id: user.id });
+      if (records[0]) await base44.entities.PlaylistLike.delete(records[0].id);
+      setLiked(false);
+      await base44.entities.Playlist.update(id, { likes_count: Math.max(0, (playlist.likes_count || 1) - 1) });
+    } else {
+      await base44.entities.PlaylistLike.create({ playlist_id: id, user_id: user.id, user_email: user.email });
+      setLiked(true);
+      await base44.entities.Playlist.update(id, { likes_count: (playlist.likes_count || 0) + 1 });
+    }
+  };
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -148,6 +172,11 @@ export default function PlaylistDetail() {
             <button onClick={handleShare} className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
               <Share2 size={16} className="text-white" />
             </button>
+            {!isOwner && (
+              <button onClick={handleLike} className={cn("w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center", liked ? "text-red-400" : "text-white")}>
+                <Heart size={16} fill={liked ? "currentColor" : "none"} />
+              </button>
+            )}
             {!isOwner && playlist && (
               <ReportBlockMenu
                 currentUser={user}

@@ -55,8 +55,11 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
               <p className="text-xs text-muted-foreground">{playlist.rss_feeds?.length || 0} feeds</p>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={e => { e.preventDefault(); e.stopPropagation(); onLike?.(playlist); }}
-                className={cn("p-1.5 rounded-full", liked ? "text-red-400" : "text-muted-foreground")}>
+              <button
+                onClick={e => { e.preventDefault(); e.stopPropagation(); onLike?.(playlist); }}
+                onTouchEnd={e => { e.preventDefault(); e.stopPropagation(); onLike?.(playlist); }}
+                className={cn("p-1.5 rounded-full", liked ? "text-red-400" : "text-muted-foreground")}
+              >
                 <Heart size={16} fill={liked ? "currentColor" : "none"} />
               </button>
               <button onClick={handleShare} className="p-1.5 rounded-full text-muted-foreground">
@@ -98,8 +101,11 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
                     <button onClick={handleShare} className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white">
                       <Share2 size={14} />
                     </button>
-                    <button onClick={e => { e.preventDefault(); e.stopPropagation(); onLike?.(playlist); }}
-                      className={cn("w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center", liked ? "text-red-400" : "text-white")}>
+                    <button
+                      onClick={e => { e.preventDefault(); e.stopPropagation(); onLike?.(playlist); }}
+                      onTouchEnd={e => { e.preventDefault(); e.stopPropagation(); onLike?.(playlist); }}
+                      className={cn("w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center", liked ? "text-red-400" : "text-white")}
+                    >
                       <Heart size={14} fill={liked ? "currentColor" : "none"} />
                     </button>
                   </div>
