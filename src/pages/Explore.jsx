@@ -186,7 +186,7 @@ export default function Explore() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background pb-24">
       <VoxylHeader title="Explorar" subtitle="Descubra podcasts e playlists" />
 
       {/* Tabs */}
@@ -238,7 +238,7 @@ export default function Explore() {
         )}
       </div>
 
-      <div className="px-4 pb-4">
+      <div className="px-4">
         {/* Playlists tab */}
         {tab === 'playlists' && (
           playlistsLoading ? (

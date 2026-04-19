@@ -75,7 +75,7 @@ export default function Playlists() {
   const loading = tab === 'mine' ? isLoading : isLoadingLiked;
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-background relative">
+    <div ref={containerRef} className="bg-background relative">
       <PullToRefreshIndicator pullProgress={pullProgress} refreshing={refreshing} />
       <VoxylHeader
         title="Playlists"
@@ -109,7 +109,7 @@ export default function Playlists() {
         ))}
       </div>
 
-      <div className="px-4 pb-4">
+      <div className="px-4 pb-24">
         {loading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => <div key={i} className="h-20 rounded-2xl bg-secondary animate-pulse" />)}

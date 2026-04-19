@@ -13,6 +13,7 @@ import Feed from '@/pages/Feed';
 import Explore from '@/pages/Explore';
 import Playlists from '@/pages/Playlists';
 import Profile from '@/pages/Profile';
+import Settings from '@/pages/Settings';
 import PlaylistDetail from '@/pages/PlaylistDetail';
 import UserProfile from '@/pages/UserProfile';
 import PlaylistPreview from '@/pages/PlaylistPreview';
@@ -52,6 +53,7 @@ const AuthenticatedApp = () => {
           <Route path="/explore" element={<Explore />} />
           <Route path="/playlists" element={<Playlists />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
         <Route path="/playlist/:id" element={<PlaylistDetail />} />
         <Route path="/share/:id" element={<PlaylistPreview />} />

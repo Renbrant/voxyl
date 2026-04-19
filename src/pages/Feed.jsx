@@ -97,7 +97,7 @@ export default function Feed() {
     : visiblePlaylists.reduce((best, p) => (p.plays_count || 0) > (best.plays_count || 0) ? p : best, visiblePlaylists[0]);
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-background relative">
+    <div ref={containerRef} className="bg-background relative">
       <PullToRefreshIndicator pullProgress={pullProgress} refreshing={refreshing} />
       <VoxylHeader
         subtitle="Descubra"
@@ -151,7 +151,7 @@ export default function Feed() {
       )}
 
       {/* Grid */}
-      <div className="px-4 pb-4">
+      <div className="px-4 pb-24">
         <h2 className="text-base font-semibold mb-3 text-foreground">Playlists em Alta</h2>
         {isLoading ? (
           <div className="grid grid-cols-2 gap-3">
