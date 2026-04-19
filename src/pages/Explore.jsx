@@ -61,7 +61,7 @@ export default function Explore() {
   // Fetch Voxyl playlists
   const { data: playlists = [], isLoading: playlistsLoading } = useQuery({
     queryKey: ['explore-playlists'],
-    queryFn: () => base44.entities.Playlist.filter({ visibility: 'public' }, '-created_date', 50),
+    queryFn: () => base44.entities.Playlist.list('-created_date', 100).then(all => all.filter(p => !p.visibility || p.visibility === 'public')),
   });
 
   // Podcast Index search
