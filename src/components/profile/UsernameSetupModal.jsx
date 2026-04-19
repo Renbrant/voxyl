@@ -49,7 +49,7 @@ export default function UsernameSetupModal({ currentUser, currentUsername, onClo
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25 }}
-        className="w-full max-w-md bg-card border-t border-border rounded-t-3xl p-5"
+        className="w-full max-w-md bg-card border-t border-border rounded-t-3xl p-5 pb-28"
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-grotesk font-bold">Nome de usuário público</h2>
