@@ -28,19 +28,31 @@ export default function UserProfile() {
   useEffect(() => {
     base44.entities.Playlist.filter({ creator_id: userId }, '-created_date', 30)
       .then(data => {
-        setPlaylists(data.filter(p => !p.visibility || p.visibility === 'public'));
+        const visible = data.filter(p => !p.visibility || p.visibility === 'public');
+        setPlaylists(visible);
         setLoading(false);
+        // Extract username/name from playlist metadata
+        if (visible.length > 0) {
+          setProfileUser({
+            username: visible[0].creator_username || null,
+            full_name: visible[0].creator_name || null,
+          });
+        }
       });
 
     base44.entities.Follow.filter({ following_id: userId, status: 'accepted' })
       .then(follows => setFollowersCount(follows.length))
       .catch(() => {});
 
-    // Fetch the profile user to get username
-    base44.entities.User.list()
-      .then(users => {
-        const found = users.find(u => u.id === userId);
-        if (found) setProfileUser(found);
+    // Also try to get username from a Follow record (follower side)
+    base44.entities.Follow.filter({ follower_id: userId })
+      .then(follows => {
+        if (follows.length > 0 && follows[0].follower_username) {
+          setProfileUser(prev => prev?.username ? prev : {
+            username: follows[0].follower_username || null,
+            full_name: follows[0].follower_name || null,
+          });
+        }
       })
       .catch(() => {});
   }, [userId]);
@@ -95,7 +107,9 @@ export default function UserProfile() {
     setShowBlockConfirm(false);
   };
 
-  const displayName = profileUser?.username ? `@${profileUser.username}` : 'Usuário';
+  const displayName = profileUser?.username
+    ? `@${profileUser.username}`
+    : profileUser?.full_name || 'Usuário';
   const isOwnProfile = currentUser?.id === userId;
 
   return (
