@@ -86,7 +86,7 @@ export default function Explore() {
   const { data: allUsers = [], isLoading: usersLoading } = useQuery({
     queryKey: ['explore-users'],
     enabled: tab === 'users',
-    queryFn: () => base44.entities.User.list(),
+    queryFn: () => base44.entities.User.filter({ profile_hidden: false }),
   });
 
   // Podcast Index search
@@ -114,15 +114,8 @@ export default function Explore() {
   const filteredUsers = allUsers.filter(u => {
     if (u.id === user?.id) return false;
     const q = debouncedUserSearch.trim().toLowerCase().replace(/^@/, '');
-    if (!q) {
-      // No search: only show non-hidden users
-      return !u.profile_hidden;
-    }
-    // With search: hidden users only appear if their username matches exactly
-    if (u.profile_hidden) {
-      return u.username?.toLowerCase() === q;
-    }
-    return u.username?.toLowerCase().includes(q);
+    if (!q) return true;
+    return u.username?.toLowerCase().includes(q) || u.full_name?.toLowerCase().includes(q);
   });
 
   const TABS = [
