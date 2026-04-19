@@ -34,7 +34,7 @@ export default function Feed() {
 
   const { data: playlists = [], isLoading } = useQuery({
     queryKey: ['feed-playlists'],
-    queryFn: () => base44.entities.Playlist.filter({ is_public: true }, '-plays_count', 30),
+    queryFn: () => base44.entities.Playlist.filter({ visibility: 'public' }, '-plays_count', 30),
   });
 
   const { data: likedIds = [] } = useQuery({

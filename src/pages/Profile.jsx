@@ -25,7 +25,7 @@ export default function Profile() {
     queryFn: () => base44.entities.Playlist.filter({ creator_id: user.id }, '-created_date', 20),
   });
 
-  const publicPlaylists = playlists.filter(p => p.is_public);
+  const publicPlaylists = playlists.filter(p => p.visibility === 'public' || (!p.visibility && p.is_public));
 
   if (!user) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
