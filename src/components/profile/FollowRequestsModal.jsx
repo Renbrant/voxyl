@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { X, UserCheck, UserX, UserCircle2, Loader2, Ban, ChevronDown, ChevronUp, ListMusic } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import Portal from '@/components/common/Portal';
 
 function RequesterPlaylists({ userId }) {
   const [playlists, setPlaylists] = useState([]);
@@ -160,7 +161,8 @@ export default function FollowRequestsModal({ currentUser, onClose, onCountChang
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm">
+    <Portal>
+    <div className="fixed inset-0 z-[9998] flex items-end justify-center bg-black/70 backdrop-blur-sm">
       <motion.div
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
@@ -209,5 +211,6 @@ export default function FollowRequestsModal({ currentUser, onClose, onCountChang
         </div>
       </motion.div>
     </div>
+    </Portal>
   );
 }

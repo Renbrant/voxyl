@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import FollowRequestsModal from '@/components/profile/FollowRequestsModal';
+import Portal from '@/components/common/Portal';
 
 export default function FollowRequestsBell() {
   const [user, setUser] = useState(null);
@@ -37,14 +38,14 @@ export default function FollowRequestsBell() {
   if (!user || pendingCount === 0) return null;
 
   return (
-    <>
+    <Portal>
       <motion.button
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0, opacity: 0 }}
         onClick={() => setShowModal(true)}
-        className="fixed top-4 right-4 z-50 w-12 h-12 rounded-full glass border border-primary/40 shadow-lg shadow-primary/20 flex items-center justify-center"
-        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
+        className="fixed z-[9999] w-12 h-12 rounded-full glass border border-primary/40 shadow-lg shadow-primary/20 flex items-center justify-center"
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)', right: '1rem' }}
       >
         <motion.div
           animate={pulse ? { rotate: [0, -15, 15, -10, 10, 0] } : {}}
@@ -66,6 +67,6 @@ export default function FollowRequestsBell() {
           />
         )}
       </AnimatePresence>
-    </>
+    </Portal>
   );
 }
