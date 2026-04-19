@@ -26,6 +26,8 @@ export default function Explore() {
   const [blockedIds, setBlockedIds] = useState([]);
   const [followStatuses, setFollowStatuses] = useState({}); // userId -> 'pending' | 'accepted' | null
   const [theyFollowMeIds, setTheyFollowMeIds] = useState(new Set()); // userIds who follow me
+  const [podcastSortBy, setPodcastSortBy] = useState('relevance'); // 'relevance' | 'newest' | 'popularity'
+  const [podcastLanguage, setPodcastLanguage] = useState(''); // filter by language
 
   const debouncedQuery = useDebounce(search, 600);
   const debouncedUserSearch = useDebounce(userSearch, 400);
@@ -123,13 +125,18 @@ export default function Explore() {
     if (!debouncedQuery.trim()) { setPodcastResults([]); return; }
     setPodcastLoading(true);
     const maxDuration = user?.max_duration || 0;
-    base44.functions.invoke('searchPodcasts', { query: debouncedQuery, maxDuration })
+    base44.functions.invoke('searchPodcasts', { 
+      query: debouncedQuery, 
+      maxDuration,
+      language: podcastLanguage,
+      sortBy: podcastSortBy
+    })
       .then(res => {
         setPodcastResults(res.data?.results || []);
         setPodcastLoading(false);
       })
       .catch(() => setPodcastLoading(false));
-  }, [debouncedQuery, tab, user]);
+  }, [debouncedQuery, tab, user, podcastLanguage, podcastSortBy]);
 
   const filteredPlaylists = playlists.filter(p => {
     if (blockedIds.includes(p.creator_id)) return false;
@@ -208,10 +215,37 @@ export default function Explore() {
         ))}
       </div>
 
-      {/* Search bar */}
+      {/* Search bar and filters */}
       <div className="px-4 mb-4">
         {tab === 'playlists' && <PodcastSearchBar value={voxylSearch} onChange={setVoxylSearch} loading={false} placeholder="Buscar playlists..." />}
-        {tab === 'podcasts' && <PodcastSearchBar value={search} onChange={setSearch} loading={podcastLoading} placeholder="Buscar podcasts no mundo todo..." />}
+        {tab === 'podcasts' && (
+          <div className="space-y-3">
+            <PodcastSearchBar value={search} onChange={setSearch} loading={podcastLoading} placeholder="Buscar podcasts no mundo todo..." />
+            <div className="flex gap-2 overflow-x-auto no-scrollbar">
+              <select
+                value={podcastSortBy}
+                onChange={e => setPodcastSortBy(e.target.value)}
+                className="px-3 py-1.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground border border-border focus:outline-none focus:border-primary flex-shrink-0"
+              >
+                <option value="relevance">Relevância</option>
+                <option value="newest">Mais recentes</option>
+                <option value="popularity">Mais populares</option>
+              </select>
+              <select
+                value={podcastLanguage}
+                onChange={e => setPodcastLanguage(e.target.value)}
+                className="px-3 py-1.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground border border-border focus:outline-none focus:border-primary flex-shrink-0"
+              >
+                <option value="">Todos os idiomas</option>
+                <option value="en">Inglês</option>
+                <option value="pt">Português</option>
+                <option value="es">Espanhol</option>
+                <option value="fr">Francês</option>
+                <option value="de">Alemão</option>
+              </select>
+            </div>
+          </div>
+        )}
         {tab === 'users' && (
           <div className="space-y-3">
             <PodcastSearchBar value={userSearch} onChange={setUserSearch} loading={usersLoading} placeholder="Buscar por @usuário exato..." />

@@ -92,6 +92,9 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
                 <img src={playlist.cover_image} alt="" className="absolute inset-0 w-full h-full object-cover" />
               )}
               <div className="absolute inset-0 bg-black/20" />
+              <div className="absolute top-3 left-3 right-3">
+                <VisibilityBadge visibility={playlist.visibility || 'public'} />
+              </div>
               <div className="absolute bottom-3 left-3 right-3">
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
@@ -113,10 +116,7 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
               </div>
             </div>
             <div className="p-3">
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <p className="font-semibold text-sm truncate">{playlist.name}</p>
-                <VisibilityBadge visibility={playlist.visibility || 'public'} />
-              </div>
+              <p className="font-semibold text-sm line-clamp-2 mb-0.5">{playlist.name}</p>
               <p className="text-xs text-muted-foreground mb-1">
                 {playlist.creator_username ? `@${playlist.creator_username}` : (playlist.creator_hidden ? 'Usuário' : playlist.creator_name)}
               </p>

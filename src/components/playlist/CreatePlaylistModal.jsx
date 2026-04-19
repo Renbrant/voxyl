@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { X, Plus, Trash2, Globe, Lock, Loader2, Image as ImageIcon, Sparkles, Users } from 'lucide-react';
+import { X, Plus, Trash2, Globe, Lock, Loader2, Image as ImageIcon, Sparkles, Users, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateShareToken } from '@/lib/rssUtils';
 import { cn } from '@/lib/utils';
@@ -18,6 +18,9 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
   const [error, setError] = useState('');
   const [coverImage, setCoverImage] = useState('');
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [podcastSearch, setPodcastSearch] = useState('');
+  const [podcastResults, setPodcastResults] = useState([]);
+  const [searchingPodcasts, setSearchingPodcasts] = useState(false);
 
   const atPlaylistLimit = playlistCount >= MAX_PLAYLISTS;
 
@@ -25,6 +28,24 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
     const validCount = feeds.filter(f => f.url.trim()).length;
     if (validCount >= MAX_FEEDS) { setError(`Máximo de ${MAX_FEEDS} podcasts por playlist durante o período de testes.`); return; }
     setFeeds(prev => [...prev, { url: '' }]);
+  };
+
+  const handleSearchPodcasts = async (query) => {
+    setPodcastSearch(query);
+    if (!query.trim()) { setPodcastResults([]); return; }
+    setSearchingPodcasts(true);
+    const res = await base44.functions.invoke('searchPodcasts', { query }).then(r => r.data).catch(() => ({ results: [] }));
+    setPodcastResults(res.results || []);
+    setSearchingPodcasts(false);
+  };
+
+  const addPodcastFeed = (podcast) => {
+    const validCount = feeds.filter(f => f.url.trim()).length;
+    if (validCount >= MAX_FEEDS) { setError(`Máximo de ${MAX_FEEDS} podcasts por playlist durante o período de testes.`); return; }
+    if (feeds.some(f => f.url === podcast.feedUrl)) { setError('Este podcast já foi adicionado'); return; }
+    setFeeds(prev => [...prev, { url: podcast.feedUrl, title: podcast.title }]);
+    setPodcastSearch('');
+    setPodcastResults([]);
   };
   const removeFeed = (i) => setFeeds(prev => prev.filter((_, idx) => idx !== i));
   const updateFeed = (i, url) => setFeeds(prev => prev.map((f, idx) => idx === i ? { url } : f));
@@ -201,12 +222,38 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-xs text-muted-foreground">Feeds RSS</label>
-              <button onClick={addFeed} className="text-xs text-primary flex items-center gap-1">
-                <Plus size={12} /> Adicionar
-              </button>
+            <label className="text-xs text-muted-foreground mb-2 block">Feeds RSS</label>
+            
+            {/* Podcast search */}
+            <div className="mb-3 relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={podcastSearch}
+                onChange={e => handleSearchPodcasts(e.target.value)}
+                placeholder="Buscar podcast..."
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-xs focus:outline-none focus:border-primary"
+              />
+              {searchingPodcasts && <Loader2 size={12} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />}
             </div>
+
+            {/* Podcast results */}
+            {podcastResults.length > 0 && (
+              <div className="mb-3 max-h-40 overflow-y-auto space-y-1 rounded-xl bg-secondary/50 border border-border p-2">
+                {podcastResults.map(podcast => (
+                  <button
+                    key={podcast.id}
+                    onClick={() => addPodcastFeed(podcast)}
+                    className="w-full text-left flex items-center gap-2 p-2 rounded-lg hover:bg-secondary transition-colors text-xs"
+                  >
+                    {podcast.image && <img src={podcast.image} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />}
+                    <span className="truncate font-medium text-foreground flex-1">{podcast.title}</span>
+                    <Plus size={12} className="text-primary flex-shrink-0" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Manual RSS input */}
             <div className="space-y-2">
               {feeds.map((feed, i) => (
                 <div key={i} className="flex gap-2">
@@ -223,6 +270,9 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
                   )}
                 </div>
               ))}
+              <button onClick={addFeed} className="text-xs text-primary flex items-center gap-1 mt-2">
+                <Plus size={12} /> Adicionar manualmente
+              </button>
             </div>
           </div>
         </div>

@@ -89,8 +89,9 @@ export default function PlaylistPreview() {
   }, [playlist]);
 
   const handleCTA = () => {
-    // Save the pending playlist ID to localStorage so after signup we auto-follow it
+    // Save the pending playlist ID + creator info to localStorage so after signup we auto-follow it
     localStorage.setItem('voxyl_pending_playlist', id);
+    localStorage.setItem('voxyl_pending_creator_id', playlist?.creator_id);
     base44.auth.redirectToLogin(`/playlist/${id}`);
   };
 

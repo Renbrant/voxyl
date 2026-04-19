@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
 import { usePlayer } from '@/lib/PlayerContext';
-import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward, Pencil, CheckCircle2, Heart } from 'lucide-react';
+import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward, Pencil, CheckCircle2, Heart, UserPlus, UserCheck } from 'lucide-react';
 import PageTransition from '@/components/common/PageTransition';
 import { useLongPress } from '@/hooks/useLongPress';
 import EditPlaylistModal from '@/components/playlist/EditPlaylistModal';
@@ -34,6 +34,8 @@ export default function PlaylistDetail() {
   const [selectedEpisode, setSelectedEpisode] = useState(null);
   const [editingPlaylist, setEditingPlaylist] = useState(false);
   const [liked, setLiked] = useState(false);
+  const [following, setFollowing] = useState(false);
+  const [followingLoader, setFollowingLoader] = useState(false);
   const { play, currentEpisode, isPlaying, togglePlay, seek, currentTime, duration, autoplay, setAutoplay, finishedUrls, setFinishedUrls } = usePlayer();
 
   useEffect(() => {
@@ -64,9 +66,11 @@ export default function PlaylistDetail() {
       setUser(u);
       // Check if this is the pending playlist the user signed up for
       const pending = localStorage.getItem('voxyl_pending_playlist');
+      const pendingCreatorId = localStorage.getItem('voxyl_pending_creator_id');
       if (pending === id) {
         localStorage.removeItem('voxyl_pending_playlist');
-        // Auto-like/follow the playlist as the first action post-signup
+        localStorage.removeItem('voxyl_pending_creator_id');
+        // Auto-like the playlist as the first action post-signup
         base44.entities.PlaylistLike.filter({ playlist_id: id, user_id: u.id })
           .then(existing => {
             if (existing.length === 0) {
@@ -75,6 +79,22 @@ export default function PlaylistDetail() {
                 .then(([pl]) => pl && base44.entities.Playlist.update(id, { likes_count: (pl.likes_count || 0) + 1 }));
             }
           });
+        // Auto-follow the creator if they came from a share link
+        if (pendingCreatorId && pendingCreatorId !== u.id) {
+          base44.entities.Follow.filter({ follower_id: u.id, following_id: pendingCreatorId })
+            .then(existing => {
+              if (existing.length === 0) {
+                base44.entities.Follow.create({
+                  follower_id: u.id,
+                  follower_email: u.email,
+                  follower_name: u.full_name || u.email.split('@')[0],
+                  follower_username: u.username || '',
+                  following_id: pendingCreatorId,
+                  status: 'accepted'
+                });
+              }
+            });
+        }
       }
     }).catch(() => {});
   }, [id]);
@@ -86,6 +106,36 @@ export default function PlaylistDetail() {
   });
 
   const isOwner = user && playlist && user.id === playlist.creator_id;
+
+  const handleFollowCreator = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user || !playlist || isOwner) return;
+    setFollowingLoader(true);
+    if (following) {
+      const records = await base44.entities.Follow.filter({ follower_id: user.id, following_id: playlist.creator_id });
+      if (records[0]) await base44.entities.Follow.delete(records[0].id);
+      setFollowing(false);
+    } else {
+      await base44.entities.Follow.create({
+        follower_id: user.id,
+        follower_email: user.email,
+        follower_name: user.full_name || user.email.split('@')[0],
+        follower_username: user.username || '',
+        following_id: playlist.creator_id,
+        status: 'accepted'
+      });
+      setFollowing(true);
+    }
+    setFollowingLoader(false);
+  };
+
+  useEffect(() => {
+    if (!user || !playlist || isOwner) return;
+    base44.entities.Follow.filter({ follower_id: user.id, following_id: playlist.creator_id })
+      .then(records => setFollowing(records.length > 0))
+      .catch(() => {});
+  }, [user, playlist, isOwner]);
 
   useEffect(() => {
     if (!playlist?.rss_feeds?.length) return;
@@ -175,6 +225,11 @@ export default function PlaylistDetail() {
             {!isOwner && (
               <button onClick={handleLike} className={cn("w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center", liked ? "text-red-400" : "text-white")}>
                 <Heart size={16} fill={liked ? "currentColor" : "none"} />
+              </button>
+            )}
+            {!isOwner && (
+              <button onClick={handleFollowCreator} disabled={followingLoader} className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white disabled:opacity-50">
+                {followingLoader ? <Loader2 size={16} className="animate-spin" /> : (following ? <UserCheck size={16} /> : <UserPlus size={16} />)}
               </button>
             )}
             {!isOwner && playlist && (

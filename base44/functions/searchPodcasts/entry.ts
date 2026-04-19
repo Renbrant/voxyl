@@ -37,11 +37,24 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { query, maxDuration = 0 } = await req.json();
+    const { query, maxDuration = 0, language = '', sortBy = 'relevance' } = await req.json();
     if (!query?.trim()) return Response.json({ results: [] });
 
     const headers = await getPodcastIndexHeaders();
-    const searchUrl = `https://api.podcastindex.org/api/1.0/search/byterm?q=${encodeURIComponent(query)}&max=20&fulltext`;
+    let searchUrl = `https://api.podcastindex.org/api/1.0/search/byterm?q=${encodeURIComponent(query)}&max=20&fulltext`;
+    
+    // Add language filter if specified
+    if (language) {
+      searchUrl += `&lang=${encodeURIComponent(language)}`;
+    }
+    
+    // Add sort parameter
+    if (sortBy === 'newest') {
+      searchUrl += '&sort=newestepisode';
+    } else if (sortBy === 'popularity') {
+      searchUrl += '&sort=score';
+    }
+
     const searchRes = await fetch(searchUrl, { headers });
     const searchData = await searchRes.json();
     const feeds = searchData.feeds || [];
