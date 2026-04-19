@@ -1,43 +1,77 @@
-import { Plus, Mic } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, Mic, Heart, Play, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
-export default function PodcastResultCard({ podcast, index, onAdd }) {
+export default function PodcastResultCard({ podcast, index, onAdd, onLike, liked }) {
+  const [expanded, setExpanded] = useState(false);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04 }}
-      className="flex gap-3 p-3 rounded-2xl bg-card border border-border hover:border-primary/30 transition-all"
+      className="rounded-2xl bg-card border border-border hover:border-primary/30 transition-all overflow-hidden"
     >
-      {podcast.image ? (
-        <img
-          src={podcast.image}
-          alt={podcast.title}
-          className="w-14 h-14 rounded-xl object-cover flex-shrink-0 bg-secondary"
-          onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-        />
-      ) : null}
-      <div
-        className="w-14 h-14 rounded-xl flex-shrink-0 bg-secondary items-center justify-center"
-        style={{ display: podcast.image ? 'none' : 'flex' }}
-      >
-        <Mic size={20} className="text-muted-foreground" />
-      </div>
-
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold text-sm truncate text-foreground">{podcast.title}</p>
-        <p className="text-xs text-primary truncate">{podcast.author}</p>
-        {podcast.description && (
-          <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{podcast.description}</p>
+      <div className="flex gap-3 p-3">
+        {/* Cover */}
+        {podcast.image ? (
+          <img
+            src={podcast.image}
+            alt={podcast.title}
+            className="w-14 h-14 rounded-xl object-cover flex-shrink-0 bg-secondary"
+            onError={e => { e.target.style.display = 'none'; }}
+          />
+        ) : (
+          <div className="w-14 h-14 rounded-xl flex-shrink-0 bg-secondary flex items-center justify-center">
+            <Mic size={20} className="text-muted-foreground" />
+          </div>
         )}
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-sm text-foreground leading-tight">{podcast.title}</p>
+          {podcast.author && <p className="text-xs text-primary truncate mt-0.5">{podcast.author}</p>}
+          {podcast.episodeCount > 0 && (
+            <p className="text-xs text-muted-foreground mt-0.5">{podcast.episodeCount} episódios</p>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-col items-center gap-1.5 flex-shrink-0 self-center">
+          <button
+            onClick={() => onLike?.(podcast)}
+            className={cn(
+              "w-8 h-8 rounded-full flex items-center justify-center transition-all",
+              liked ? "bg-red-500/20 text-red-400" : "bg-secondary text-muted-foreground hover:text-red-400"
+            )}
+          >
+            <Heart size={15} fill={liked ? "currentColor" : "none"} />
+          </button>
+          <button
+            onClick={() => onAdd(podcast)}
+            className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center glow-primary hover:opacity-90 transition-opacity"
+          >
+            <Plus size={15} className="text-white" />
+          </button>
+        </div>
       </div>
 
-      <button
-        onClick={() => onAdd(podcast)}
-        className="flex-shrink-0 w-9 h-9 rounded-full gradient-primary flex items-center justify-center glow-primary hover:opacity-90 transition-opacity self-center"
-      >
-        <Plus size={18} className="text-white" />
-      </button>
+      {/* Description expand */}
+      {podcast.description && (
+        <div className="px-3 pb-2">
+          <button
+            onClick={() => setExpanded(v => !v)}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            {expanded ? 'Menos' : 'Ver descrição'}
+          </button>
+          {expanded && (
+            <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{podcast.description}</p>
+          )}
+        </div>
+      )}
     </motion.div>
   );
 }

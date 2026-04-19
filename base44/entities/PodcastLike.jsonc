@@ -1,0 +1,46 @@
+{
+  "name": "PodcastLike",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "feed_url": {
+      "type": "string",
+      "description": "RSS feed URL"
+    },
+    "podcast_title": {
+      "type": "string"
+    },
+    "podcast_author": {
+      "type": "string"
+    },
+    "podcast_image": {
+      "type": "string"
+    },
+    "podcast_description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "feed_url"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.id}}"
+    }
+  }
+}

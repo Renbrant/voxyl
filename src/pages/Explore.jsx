@@ -7,7 +7,7 @@ import PodcastSearchBar from '@/components/explore/PodcastSearchBar';
 import PodcastResultCard from '@/components/explore/PodcastResultCard';
 import AddToPlaylistModal from '@/components/explore/AddToPlaylistModal';
 import UserSearchCard from '@/components/explore/UserSearchCard';
-import { Compass, Radio, Users } from 'lucide-react';
+import { Compass, Radio, Users, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -26,8 +26,9 @@ export default function Explore() {
   const [blockedIds, setBlockedIds] = useState([]);
   const [followStatuses, setFollowStatuses] = useState({}); // userId -> 'pending' | 'accepted' | null
   const [theyFollowMeIds, setTheyFollowMeIds] = useState(new Set()); // userIds who follow me
-  const [podcastSortBy, setPodcastSortBy] = useState('relevance'); // 'relevance' | 'newest' | 'popularity'
-  const [podcastLanguage, setPodcastLanguage] = useState(''); // filter by language
+  const [podcastSortBy, setPodcastSortBy] = useState('relevance');
+  const [podcastLanguage, setPodcastLanguage] = useState('');
+  const [likedFeedUrls, setLikedFeedUrls] = useState(new Set());
 
   const debouncedQuery = useDebounce(search, 600);
   const debouncedUserSearch = useDebounce(userSearch, 400);
@@ -58,6 +59,9 @@ export default function Explore() {
         })
         .catch(() => {});
     }).catch(() => {});
+    base44.entities.PodcastLike.filter({ user_id: u.id })
+      .then(likes => setLikedFeedUrls(new Set(likes.map(l => l.feed_url))))
+      .catch(() => {});
   }, []);
 
   useQuery({
@@ -118,6 +122,26 @@ export default function Explore() {
     enabled: tab === 'users' && debouncedUserSearch.trim().length > 0,
     queryFn: () => base44.functions.invoke('searchUsers', { query: debouncedUserSearch }).then(r => r.data?.users || []),
   });
+
+  const handleLikePodcast = async (podcast) => {
+    if (!user) return;
+    if (likedFeedUrls.has(podcast.feedUrl)) {
+      const records = await base44.entities.PodcastLike.filter({ user_id: user.id, feed_url: podcast.feedUrl });
+      if (records[0]) await base44.entities.PodcastLike.delete(records[0].id);
+      setLikedFeedUrls(prev => { const s = new Set(prev); s.delete(podcast.feedUrl); return s; });
+    } else {
+      await base44.entities.PodcastLike.create({
+        user_id: user.id,
+        user_email: user.email,
+        feed_url: podcast.feedUrl,
+        podcast_title: podcast.title,
+        podcast_author: podcast.author || '',
+        podcast_image: podcast.image || '',
+        podcast_description: podcast.description || '',
+      });
+      setLikedFeedUrls(prev => new Set([...prev, podcast.feedUrl]));
+    }
+  };
 
   // Podcast Index search
   useEffect(() => {
@@ -351,7 +375,14 @@ export default function Explore() {
               </div>
             )}
             {!podcastLoading && podcastResults.map((podcast, i) => (
-              <PodcastResultCard key={podcast.id} podcast={podcast} index={i} onAdd={setSelectedPodcast} />
+              <PodcastResultCard
+                key={podcast.id}
+                podcast={podcast}
+                index={i}
+                onAdd={setSelectedPodcast}
+                onLike={handleLikePodcast}
+                liked={likedFeedUrls.has(podcast.feedUrl)}
+              />
             ))}
             {!podcastLoading && search.trim() && podcastResults.length === 0 && (
               <div className="text-center py-16 text-muted-foreground">
