@@ -4,6 +4,7 @@ import { Home, Compass, ListMusic, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AudioPlayer from './player/AudioPlayer';
 import { usePlayer } from '@/lib/PlayerContext';
+import FollowRequestsBell from '@/components/notifications/FollowRequestsBell';
 
 const navItems = [
   { icon: Home, label: 'Feed', path: '/' },
@@ -50,6 +51,7 @@ export default function Layout() {
       </main>
 
       {currentEpisode && <AudioPlayer />}
+      <FollowRequestsBell />
 
       <nav
         className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass border-t border-border z-50"

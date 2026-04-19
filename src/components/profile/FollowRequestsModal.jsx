@@ -1,7 +1,116 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { X, UserCheck, UserX, UserCircle2, Loader2 } from 'lucide-react';
+import { X, UserCheck, UserX, UserCircle2, Loader2, Ban, ChevronDown, ChevronUp, ListMusic } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
+
+function RequesterPlaylists({ userId }) {
+  const [playlists, setPlaylists] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    base44.entities.Playlist.filter({ creator_id: userId }, '-created_date', 6)
+      .then(data => {
+        setPlaylists(data.filter(p => !p.visibility || p.visibility === 'public'));
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [userId]);
+
+  if (loading) return <div className="h-10 flex items-center justify-center"><Loader2 size={14} className="animate-spin text-muted-foreground" /></div>;
+  if (playlists.length === 0) return <p className="text-xs text-muted-foreground px-1 py-2">Nenhuma playlist pública</p>;
+
+  return (
+    <div className="mt-2 space-y-1.5">
+      {playlists.map(pl => (
+        <Link
+          key={pl.id}
+          to={`/playlist/${pl.id}`}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl bg-background border border-border hover:border-primary/30 transition-colors"
+        >
+          <ListMusic size={13} className="text-muted-foreground flex-shrink-0" />
+          <span className="text-xs truncate">{pl.name}</span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function FollowRequestItem({ req, onAccept, onReject, onBlock, actionLoading }) {
+  const [expanded, setExpanded] = useState(false);
+  const displayName = req.follower_username ? `@${req.follower_username}` : (req.follower_name || 'Usuário');
+
+  return (
+    <motion.div
+      key={req.id}
+      initial={{ opacity: 0, x: -16 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 16, height: 0, marginBottom: 0 }}
+      className="rounded-2xl bg-secondary border border-border overflow-hidden"
+    >
+      <div className="flex items-center gap-3 p-3">
+        <Link to={`/user/${req.follower_id}`} className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center flex-shrink-0">
+          <UserCircle2 size={20} className="text-white" />
+        </Link>
+        <div className="flex-1 min-w-0">
+          <Link to={`/user/${req.follower_id}`} className="font-semibold text-sm truncate block hover:text-primary transition-colors">
+            {displayName}
+          </Link>
+          <button
+            onClick={() => setExpanded(v => !v)}
+            className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5"
+          >
+            {expanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+            {expanded ? 'Ocultar playlists' : 'Ver playlists'}
+          </button>
+        </div>
+        {actionLoading === req.id ? (
+          <Loader2 size={18} className="animate-spin text-muted-foreground" />
+        ) : (
+          <div className="flex gap-1.5">
+            <button
+              onClick={() => onAccept(req)}
+              className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center"
+              title="Aceitar"
+            >
+              <UserCheck size={16} className="text-white" />
+            </button>
+            <button
+              onClick={() => onReject(req)}
+              className="w-9 h-9 rounded-full bg-secondary border border-border flex items-center justify-center"
+              title="Recusar"
+            >
+              <UserX size={16} className="text-muted-foreground" />
+            </button>
+            <button
+              onClick={() => onBlock(req)}
+              className="w-9 h-9 rounded-full bg-destructive/10 border border-destructive/30 flex items-center justify-center"
+              title="Bloquear"
+            >
+              <Ban size={15} className="text-destructive" />
+            </button>
+          </div>
+        )}
+      </div>
+
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="px-3 pb-3">
+              <RequesterPlaylists userId={req.follower_id} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
 
 export default function FollowRequestsModal({ currentUser, onClose, onCountChange }) {
   const [requests, setRequests] = useState([]);
@@ -32,6 +141,24 @@ export default function FollowRequestsModal({ currentUser, onClose, onCountChang
     setActionLoading(null);
   };
 
+  const handleBlock = async (follow) => {
+    setActionLoading(follow.id);
+    // Delete the follow request
+    await base44.entities.Follow.delete(follow.id);
+    // Create block record
+    await base44.entities.Block.create({
+      blocker_id: currentUser.id,
+      blocker_email: currentUser.email,
+      blocked_id: follow.follower_id,
+      blocked_email: follow.follower_email || '',
+      blocked_name: follow.follower_username || follow.follower_name || '',
+    });
+    const updated = requests.filter(r => r.id !== follow.id);
+    setRequests(updated);
+    onCountChange?.(updated.length);
+    setActionLoading(null);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm">
       <motion.div
@@ -39,7 +166,7 @@ export default function FollowRequestsModal({ currentUser, onClose, onCountChang
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25 }}
-        className="w-full max-w-md bg-card border-t border-border rounded-t-3xl flex flex-col max-h-[80vh]"
+        className="w-full max-w-md bg-card border-t border-border rounded-t-3xl flex flex-col max-h-[85vh]"
       >
         <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
           <div>
@@ -67,42 +194,14 @@ export default function FollowRequestsModal({ currentUser, onClose, onCountChang
             <div className="space-y-3">
               <AnimatePresence>
                 {requests.map(req => (
-                  <motion.div
+                  <FollowRequestItem
                     key={req.id}
-                    initial={{ opacity: 0, x: -16 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 16, height: 0, marginBottom: 0 }}
-                    className="flex items-center gap-3 p-3 rounded-2xl bg-secondary border border-border"
-                  >
-                    <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center flex-shrink-0">
-                      <UserCircle2 size={20} className="text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm truncate">
-                        {req.follower_username ? `@${req.follower_username}` : (req.follower_name || 'Usuário')}
-                      </p>
-                    </div>
-                    {actionLoading === req.id ? (
-                      <Loader2 size={18} className="animate-spin text-muted-foreground" />
-                    ) : (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleAccept(req)}
-                          className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center"
-                          title="Aceitar"
-                        >
-                          <UserCheck size={16} className="text-white" />
-                        </button>
-                        <button
-                          onClick={() => handleReject(req)}
-                          className="w-9 h-9 rounded-full bg-secondary border border-border flex items-center justify-center"
-                          title="Recusar"
-                        >
-                          <UserX size={16} className="text-muted-foreground" />
-                        </button>
-                      </div>
-                    )}
-                  </motion.div>
+                    req={req}
+                    onAccept={handleAccept}
+                    onReject={handleReject}
+                    onBlock={handleBlock}
+                    actionLoading={actionLoading}
+                  />
                 ))}
               </AnimatePresence>
             </div>
