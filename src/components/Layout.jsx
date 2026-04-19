@@ -1,6 +1,6 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useRef } from 'react';
-import { Home, Compass, ListMusic, User } from 'lucide-react';
+import { Home, Compass, Heart, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AudioPlayer from './player/AudioPlayer';
 import { usePlayer } from '@/lib/PlayerContext';
@@ -9,7 +9,7 @@ import FollowRequestsBell from '@/components/notifications/FollowRequestsBell';
 const navItems = [
   { icon: Home, label: 'Feed', path: '/' },
   { icon: Compass, label: 'Explorar', path: '/explore' },
-  { icon: ListMusic, label: 'Playlists', path: '/playlists' },
+  { icon: Heart, label: 'Curtidas', path: '/playlists' },
   { icon: User, label: 'Perfil', path: '/profile' },
 ];
 
@@ -17,7 +17,6 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { currentEpisode } = usePlayer();
-  // Remember last visited sub-route per tab
   const tabHistory = useRef({});
 
   const handleNavClick = (path) => {
@@ -25,14 +24,11 @@ export default function Layout() {
       (path !== '/' && location.pathname.startsWith(path));
 
     if (active) {
-      // Reset to root of this tab
       navigate(path, { replace: true });
     } else {
-      // Restore last sub-route for this tab if any
       const saved = tabHistory.current[path];
       navigate(saved || path);
     }
-    // Save current location under its tab
     const currentTab = navItems.find(n => n.path !== '/'
       ? location.pathname.startsWith(n.path)
       : location.pathname === '/');

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, ListMusic, Heart, Mic } from 'lucide-react';
+import { Plus, ListMusic, Mic } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import VoxylHeader from '@/components/common/VoxylHeader';
@@ -10,14 +10,13 @@ import CreatePlaylistModal from '@/components/playlist/CreatePlaylistModal';
 import LikedPodcastCard from '@/components/explore/LikedPodcastCard';
 
 const TABS = [
-  { key: 'mine', label: 'Minhas', icon: ListMusic },
-  { key: 'liked', label: 'Playlists', icon: Heart },
+  { key: 'playlists', label: 'Playlists', icon: ListMusic },
   { key: 'podcasts', label: 'Podcasts', icon: Mic },
 ];
 
 export default function Playlists() {
   const [user, setUser] = useState(null);
-  const [tab, setTab] = useState('mine');
+  const [tab, setTab] = useState('playlists');
   const [showCreate, setShowCreate] = useState(false);
   const queryClient = useQueryClient();
 
@@ -25,31 +24,38 @@ export default function Playlists() {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
+  // My playlists
   const { data: myPlaylists = [], refetch: refetchMine } = useQuery({
     queryKey: ['my-playlists', user?.id],
     enabled: !!user,
     queryFn: () => base44.entities.Playlist.filter({ creator_id: user.id }, '-created_date', 50),
   });
 
+  // Liked playlist IDs
   const { data: likedPlaylistRecords = [] } = useQuery({
     queryKey: ['liked-playlists', user?.id],
-    enabled: !!user && tab === 'liked',
+    enabled: !!user && tab === 'playlists',
     queryFn: () => base44.entities.PlaylistLike.filter({ user_id: user.id }),
   });
 
   const likedPlaylistIds = likedPlaylistRecords.map(r => r.playlist_id);
+  const myPlaylistIds = new Set(myPlaylists.map(p => p.id));
 
+  // Liked playlists data (excluding ones I own, since they already appear above)
   const { data: likedPlaylists = [] } = useQuery({
     queryKey: ['liked-playlists-data', likedPlaylistIds.join(',')],
     enabled: likedPlaylistIds.length > 0,
     queryFn: async () => {
       const results = await Promise.all(
-        likedPlaylistIds.map(id => base44.entities.Playlist.filter({ id }).then(r => r[0]).catch(() => null))
+        likedPlaylistIds
+          .filter(id => !myPlaylistIds.has(id))
+          .map(id => base44.entities.Playlist.filter({ id }).then(r => r[0]).catch(() => null))
       );
       return results.filter(Boolean);
     },
   });
 
+  // Liked podcasts
   const { data: likedPodcasts = [], refetch: refetchPodcasts } = useQuery({
     queryKey: ['liked-podcasts', user?.id],
     enabled: !!user && tab === 'podcasts',
@@ -81,7 +87,7 @@ export default function Playlists() {
         title="Curtidas"
         subtitle="Suas playlists e podcasts salvos"
         right={
-          tab === 'mine' && (
+          tab === 'playlists' && (
             <button
               onClick={() => setShowCreate(true)}
               className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center glow-primary"
@@ -110,59 +116,62 @@ export default function Playlists() {
       </div>
 
       <div className="px-4 space-y-2">
-        {/* My Playlists */}
-        {tab === 'mine' && (
-          myPlaylists.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
-              <p className="text-4xl mb-3">🎵</p>
-              <p className="font-medium text-foreground">Nenhuma playlist ainda</p>
-              <p className="text-sm mt-1">Crie sua primeira playlist!</p>
-            </div>
-          ) : (
-            myPlaylists.map((pl, i) => (
-              <motion.div key={pl.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
-                <PlaylistCard
-                  playlist={pl}
-                  compact
-                  liked={false}
-                  currentUser={user}
-                  onEdited={refetchMine}
-                />
-              </motion.div>
-            ))
-          )
+        {/* Playlists tab: mine first, then liked */}
+        {tab === 'playlists' && (
+          <>
+            {/* My playlists */}
+            {myPlaylists.length > 0 && (
+              <>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium pb-1">Minhas playlists</p>
+                {myPlaylists.map((pl, i) => (
+                  <motion.div key={pl.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+                    <PlaylistCard
+                      playlist={pl}
+                      compact
+                      liked={likedPlaylistIds.includes(pl.id)}
+                      currentUser={user}
+                      onEdited={refetchMine}
+                    />
+                  </motion.div>
+                ))}
+              </>
+            )}
+
+            {/* Liked playlists from others */}
+            {likedPlaylists.length > 0 && (
+              <>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium pt-3 pb-1">Playlists curtidas</p>
+                {likedPlaylists.map((pl, i) => (
+                  <motion.div key={pl.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+                    <PlaylistCard
+                      playlist={pl}
+                      compact
+                      liked
+                      onLike={handleLikePlaylist}
+                      currentUser={user}
+                    />
+                  </motion.div>
+                ))}
+              </>
+            )}
+
+            {myPlaylists.length === 0 && likedPlaylists.length === 0 && (
+              <div className="text-center py-16 text-muted-foreground">
+                <p className="text-4xl mb-3">🎵</p>
+                <p className="font-medium text-foreground">Nenhuma playlist ainda</p>
+                <p className="text-sm mt-1">Crie ou curta playlists para vê-las aqui!</p>
+              </div>
+            )}
+          </>
         )}
 
-        {/* Liked Playlists */}
-        {tab === 'liked' && (
-          likedPlaylists.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
-              <p className="text-4xl mb-3">❤️</p>
-              <p className="font-medium text-foreground">Nenhuma playlist curtida</p>
-              <p className="text-sm mt-1">Explore e curta playlists!</p>
-            </div>
-          ) : (
-            likedPlaylists.map((pl, i) => (
-              <motion.div key={pl.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
-                <PlaylistCard
-                  playlist={pl}
-                  compact
-                  liked
-                  onLike={handleLikePlaylist}
-                  currentUser={user}
-                />
-              </motion.div>
-            ))
-          )
-        )}
-
-        {/* Liked Podcasts */}
+        {/* Podcasts tab */}
         {tab === 'podcasts' && (
           likedPodcasts.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
               <p className="text-4xl mb-3">🎙️</p>
               <p className="font-medium text-foreground">Nenhum podcast curtido</p>
-              <p className="text-sm mt-1">Explore e curta podcasts!</p>
+              <p className="text-sm mt-1">Explore e curta podcasts para salvá-los aqui!</p>
             </div>
           ) : (
             likedPodcasts.map((like, i) => (
