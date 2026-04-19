@@ -84,9 +84,9 @@ export default function Explore() {
 
   // Fetch all users for search
   const { data: allUsers = [], isLoading: usersLoading } = useQuery({
-    queryKey: ['explore-users'],
+    queryKey: ['explore-users', debouncedUserSearch],
     enabled: tab === 'users',
-    queryFn: () => base44.entities.User.list(),
+    queryFn: () => base44.functions.invoke('searchUsers', { query: debouncedUserSearch }).then(r => r.data?.users || []),
   });
 
   // Podcast Index search
@@ -111,14 +111,7 @@ export default function Explore() {
       p.creator_name?.toLowerCase().includes(voxylSearch.toLowerCase());
   });
 
-  const filteredUsers = allUsers.filter(u => {
-    if (u.id === user?.id) return false;
-    if (u.profile_hidden) return false;
-    const q = debouncedUserSearch.trim().toLowerCase().replace(/^@/, '');
-    if (!q) return true;
-    const uname = (u.username || '').toLowerCase().replace(/^@+/, '');
-    return uname.includes(q) || u.full_name?.toLowerCase().includes(q);
-  });
+  const filteredUsers = allUsers;
 
   const TABS = [
     { key: 'playlists', label: 'Playlists', icon: Compass },
