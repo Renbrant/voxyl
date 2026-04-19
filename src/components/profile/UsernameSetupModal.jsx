@@ -32,7 +32,7 @@ export default function UsernameSetupModal({ currentUser, currentUsername, onClo
       return;
     }
 
-    const uname = username.trim().toLowerCase();
+    const uname = username.trim().toLowerCase().replace(/^@+/, '');
     await base44.auth.updateMe({ username: uname });
     // Sync creator_username on all owned playlists
     const myPlaylists = await base44.entities.Playlist.filter({ creator_id: currentUser.id }).catch(() => []);
