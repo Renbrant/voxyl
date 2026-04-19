@@ -89,6 +89,41 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const processReferral = async (currentUser) => {
+    const params = new URLSearchParams(window.location.search);
+    const referrerId = params.get('ref');
+    if (!referrerId || referrerId === currentUser.id) return;
+
+    // Store so it's not processed twice across re-renders
+    const storageKey = `voxyl_ref_processed_${currentUser.id}`;
+    if (localStorage.getItem(storageKey)) return;
+    localStorage.setItem(storageKey, '1');
+
+    // Auto-follow the referrer
+    const existing = await base44.entities.Follow.filter({ follower_id: currentUser.id, following_id: referrerId }).catch(() => []);
+    if (existing.length === 0) {
+      await base44.entities.Follow.create({
+        follower_id: currentUser.id,
+        follower_email: currentUser.email,
+        follower_name: currentUser.full_name || currentUser.email.split('@')[0],
+        follower_username: currentUser.username || '',
+        following_id: referrerId,
+        status: 'accepted',
+      }).catch(() => {});
+    }
+
+    // Update referral record if exists
+    const referrals = await base44.entities.Referral.filter({ inviter_id: referrerId, invitee_email: currentUser.email }).catch(() => []);
+    if (referrals[0]) {
+      await base44.entities.Referral.update(referrals[0].id, { status: 'joined' }).catch(() => {});
+    }
+
+    // Clean ref param from URL without reload
+    params.delete('ref');
+    const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+    window.history.replaceState({}, '', newUrl);
+  };
+
   const checkUserAuth = async () => {
     try {
       // Now check if the user is authenticated
@@ -98,6 +133,8 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       setIsLoadingAuth(false);
       setAuthChecked(true);
+      // Process referral link if present
+      processReferral(currentUser).catch(() => {});
     } catch (error) {
       console.error('User auth check failed:', error);
       setIsLoadingAuth(false);
