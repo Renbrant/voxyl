@@ -6,7 +6,7 @@ import PlaylistCard from '@/components/playlist/PlaylistCard';
 import InviteFriendModal from '@/components/profile/InviteFriendModal';
 import DeleteAccountModal from '@/components/profile/DeleteAccountModal';
 import ShareAppModal from '@/components/profile/ShareAppModal';
-import { UserCircle2, Mail, Users, ListMusic, Trash2, Share2, Shield } from 'lucide-react';
+import { UserCircle2, Mail, Users, ListMusic, Trash2, Share2, Shield, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -123,13 +123,22 @@ export default function Profile() {
         {/* Danger zone */}
         <div className="mt-8 mb-6 border-t border-border pt-6">
           <div className="flex items-center justify-between">
-            <button
-              onClick={() => setShowDelete(true)}
-              className="flex items-center gap-2 text-sm text-destructive/70 hover:text-destructive transition-colors"
-            >
-              <Trash2 size={14} />
-              Excluir conta
-            </button>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => base44.auth.logout()}
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <LogOut size={14} />
+                Sair
+              </button>
+              <button
+                onClick={() => setShowDelete(true)}
+                className="flex items-center gap-2 text-sm text-destructive/70 hover:text-destructive transition-colors"
+              >
+                <Trash2 size={14} />
+                Excluir conta
+              </button>
+            </div>
             <Link
               to="/privacy"
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
