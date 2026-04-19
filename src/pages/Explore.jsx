@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import VoxylHeader from '@/components/common/VoxylHeader';
@@ -6,7 +6,8 @@ import PlaylistCard from '@/components/playlist/PlaylistCard';
 import PodcastSearchBar from '@/components/explore/PodcastSearchBar';
 import PodcastResultCard from '@/components/explore/PodcastResultCard';
 import AddToPlaylistModal from '@/components/explore/AddToPlaylistModal';
-import { Compass, Radio } from 'lucide-react';
+import UserSearchCard from '@/components/explore/UserSearchCard';
+import { Compass, Radio, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -19,16 +20,22 @@ export default function Explore() {
   const [podcastLoading, setPodcastLoading] = useState(false);
   const [selectedPodcast, setSelectedPodcast] = useState(null);
   const [voxylSearch, setVoxylSearch] = useState('');
+  const [userSearch, setUserSearch] = useState('');
   const [likes, setLikes] = useState([]);
   const [blockedIds, setBlockedIds] = useState([]);
+  const [followingIds, setFollowingIds] = useState([]);
 
   const debouncedQuery = useDebounce(search, 600);
+  const debouncedUserSearch = useDebounce(userSearch, 400);
 
   useEffect(() => {
     base44.auth.me().then(u => {
       setUser(u);
       base44.entities.Block.filter({ blocker_id: u.id })
         .then(blocks => setBlockedIds(blocks.map(b => b.blocked_id)))
+        .catch(() => {});
+      base44.entities.Follow.filter({ follower_id: u.id })
+        .then(follows => setFollowingIds(follows.map(f => f.following_id)))
         .catch(() => {});
     }).catch(() => {});
   }, []);
@@ -64,6 +71,13 @@ export default function Explore() {
     queryFn: () => base44.entities.Playlist.list('-created_date', 100).then(all => all.filter(p => !p.visibility || p.visibility === 'public')),
   });
 
+  // Fetch all users for search
+  const { data: allUsers = [], isLoading: usersLoading } = useQuery({
+    queryKey: ['explore-users'],
+    enabled: tab === 'users',
+    queryFn: () => base44.entities.User.list(),
+  });
+
   // Podcast Index search
   useEffect(() => {
     if (tab !== 'podcasts') return;
@@ -86,21 +100,31 @@ export default function Explore() {
       p.creator_name?.toLowerCase().includes(voxylSearch.toLowerCase());
   });
 
+  const filteredUsers = allUsers.filter(u => {
+    if (u.id === user?.id) return false;
+    if (!debouncedUserSearch.trim()) return true;
+    const q = debouncedUserSearch.toLowerCase();
+    return u.full_name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q);
+  });
+
+  const TABS = [
+    { key: 'playlists', label: 'Playlists', icon: Compass },
+    { key: 'users', label: 'Usuários', icon: Users },
+    { key: 'podcasts', label: 'Podcasts', icon: Radio },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <VoxylHeader title="Explorar" subtitle="Descubra podcasts e playlists" />
 
       {/* Tabs */}
-      <div className="flex gap-2 px-4 mb-4">
-        {[
-          { key: 'playlists', label: 'Playlists Voxyl', icon: Compass },
-          { key: 'podcasts', label: 'Buscar Podcasts', icon: Radio },
-        ].map(({ key, label, icon: Icon }) => (
+      <div className="flex gap-2 px-4 mb-4 overflow-x-auto no-scrollbar">
+        {TABS.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
             className={cn(
-              "flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all flex-1 justify-center",
+              "flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all flex-shrink-0",
               tab === key
                 ? "gradient-primary text-white glow-primary"
                 : "bg-secondary text-muted-foreground"
@@ -112,16 +136,16 @@ export default function Explore() {
         ))}
       </div>
 
+      {/* Search bar */}
       <div className="px-4 mb-4">
-        {tab === 'playlists' ? (
-          <PodcastSearchBar value={voxylSearch} onChange={setVoxylSearch} loading={false} />
-        ) : (
-          <PodcastSearchBar value={search} onChange={setSearch} loading={podcastLoading} />
-        )}
+        {tab === 'playlists' && <PodcastSearchBar value={voxylSearch} onChange={setVoxylSearch} loading={false} />}
+        {tab === 'podcasts' && <PodcastSearchBar value={search} onChange={setSearch} loading={podcastLoading} />}
+        {tab === 'users' && <PodcastSearchBar value={userSearch} onChange={setUserSearch} loading={usersLoading} />}
       </div>
 
       <div className="px-4 pb-4">
-        {tab === 'playlists' ? (
+        {/* Playlists tab */}
+        {tab === 'playlists' && (
           playlistsLoading ? (
             <div className="space-y-3">
               {[...Array(5)].map((_, i) => <div key={i} className="h-20 rounded-2xl bg-secondary animate-pulse" />)}
@@ -141,7 +165,43 @@ export default function Explore() {
               )}
             </div>
           )
-        ) : (
+        )}
+
+        {/* Users tab */}
+        {tab === 'users' && (
+          usersLoading ? (
+            <div className="space-y-3">
+              {[...Array(5)].map((_, i) => <div key={i} className="h-16 rounded-2xl bg-secondary animate-pulse" />)}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {filteredUsers.length === 0 ? (
+                <div className="text-center py-16 text-muted-foreground">
+                  <p className="text-4xl mb-3">👤</p>
+                  <p>{debouncedUserSearch ? `Nenhum usuário encontrado para "${debouncedUserSearch}"` : 'Nenhum usuário encontrado'}</p>
+                </div>
+              ) : (
+                filteredUsers.map((u, i) => (
+                  <UserSearchCard
+                    key={u.id}
+                    user={u}
+                    index={i}
+                    currentUser={user}
+                    isFollowing={followingIds.includes(u.id)}
+                    onFollowChange={(following) => {
+                      setFollowingIds(prev =>
+                        following ? [...prev, u.id] : prev.filter(id => id !== u.id)
+                      );
+                    }}
+                  />
+                ))
+              )}
+            </div>
+          )
+        )}
+
+        {/* Podcasts tab */}
+        {tab === 'podcasts' && (
           <div className="space-y-2">
             {!search.trim() && !podcastLoading && podcastResults.length === 0 && (
               <div className="text-center py-16 text-muted-foreground">
@@ -156,12 +216,7 @@ export default function Explore() {
               </div>
             )}
             {!podcastLoading && podcastResults.map((podcast, i) => (
-              <PodcastResultCard
-                key={podcast.id}
-                podcast={podcast}
-                index={i}
-                onAdd={setSelectedPodcast}
-              />
+              <PodcastResultCard key={podcast.id} podcast={podcast} index={i} onAdd={setSelectedPodcast} />
             ))}
             {!podcastLoading && search.trim() && podcastResults.length === 0 && (
               <div className="text-center py-16 text-muted-foreground">
