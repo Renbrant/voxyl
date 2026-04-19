@@ -54,7 +54,7 @@ export default function Layout() {
       <FollowRequestsBell />
 
       <nav
-        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass border-t border-border z-50"
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-card border-t border-border z-50"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', userSelect: 'none', WebkitUserSelect: 'none' }}
       >
         <div className="flex items-center justify-around px-2 py-3">

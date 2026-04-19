@@ -85,8 +85,8 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm px-0">
-      <div className="w-full max-w-md bg-card border-t border-border rounded-t-3xl p-5 animate-slide-up max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-5">
+      <div className="w-full max-w-md bg-card border-t border-border rounded-t-3xl flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between p-5 pb-3 flex-shrink-0">
           <h2 className="text-lg font-grotesk font-bold">Nova Playlist</h2>
           <button onClick={onClose} className="p-1.5 rounded-full bg-secondary text-muted-foreground">
             <X size={18} />
@@ -94,7 +94,7 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
         </div>
 
         {atPlaylistLimit ? (
-          <div className="text-center py-6 px-2">
+          <div className="text-center py-6 px-5">
             <p className="text-4xl mb-3">🚧</p>
             <p className="font-semibold text-foreground mb-1">Limite de playlists atingido</p>
             <p className="text-sm text-muted-foreground">
@@ -103,6 +103,7 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
           </div>
         ) : (
         <>
+        <div className="overflow-y-auto flex-1 px-5 pb-2">
         {error && <p className="text-destructive text-sm mb-3 bg-destructive/10 px-3 py-2 rounded-xl">{error}</p>}
 
         <div className="space-y-4">
@@ -226,14 +227,17 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
           </div>
         </div>
 
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full mt-5 rounded-2xl gradient-primary border-0 py-6 text-base font-semibold"
-        >
-          {saving ? <Loader2 size={18} className="animate-spin mr-2" /> : null}
-          {saving ? 'Salvando...' : 'Criar Playlist'}
-        </Button>
+        </div>{/* end scroll */}
+        <div className="px-5 pt-3 flex-shrink-0 border-t border-border" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)' }}>
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full rounded-2xl gradient-primary border-0 py-6 text-base font-semibold"
+          >
+            {saving ? <Loader2 size={18} className="animate-spin mr-2" /> : null}
+            {saving ? 'Salvando...' : 'Criar Playlist'}
+          </Button>
+        </div>
         </>
         )}
       </div>
