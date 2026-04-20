@@ -31,7 +31,6 @@ async function fetchRecentEpisodeDurations(feedUrl) {
   }
 }
 
-// Language code normalization: some feeds return "pt-BR", "pt-br", "Portuguese", etc.
 function normalizeLanguage(lang) {
   if (!lang) return '';
   return lang.toLowerCase().replace(/_/g, '-').split('-')[0].trim();
@@ -55,6 +54,54 @@ function matchesLanguage(feedLang, filterLang) {
   return aliases.some(alias => normalized === alias || feedLang.toLowerCase().startsWith(alias));
 }
 
+// Map our category labels to Podcast Index category IDs
+const CATEGORY_MAP = {
+  'tecnologia': 102,
+  'negócios': 9,
+  'educação': 11,
+  'entretenimento': 12,
+  'esportes': 77,
+  'saúde': 14,
+  'notícias': 55,
+  'ciência': 67,
+  'história': null,
+  'true crime': 103,
+  'comédia': 10,
+  'política': 59,
+};
+
+// Generate query variations to get more diverse results
+function buildQueries(query, category) {
+  const q = query?.trim() || '';
+  const cat = category?.toLowerCase().trim() || '';
+  const queries = new Set();
+
+  if (q) queries.add(q);
+
+  // Add category-enriched queries only if category is meaningful (not generic)
+  if (q && cat && CATEGORY_MAP[cat] === null) {
+    // Unmapped category — add as a keyword combo
+    queries.add(`${q} ${cat}`);
+  }
+
+  // Add common variations for learning-related queries
+  const learningKeywords = ['aprender', 'learn', 'curso', 'aula', 'ensinar', 'study'];
+  if (q && learningKeywords.some(kw => q.toLowerCase().includes(kw))) {
+    queries.add(q);
+  }
+
+  return [...queries].slice(0, 3); // max 3 parallel queries
+}
+
+async function searchByTerm(query, sortBy, headers) {
+  let url = `https://api.podcastindex.org/api/1.0/search/byterm?q=${encodeURIComponent(query)}&max=100&fulltext`;
+  if (sortBy === 'newest') url += '&sort=newestepisode';
+  else if (sortBy === 'popularity') url += '&sort=score';
+  const res = await fetch(url, { headers });
+  const data = await res.json();
+  return data.feeds || [];
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -63,31 +110,54 @@ Deno.serve(async (req) => {
 
     const { query: rawQuery, maxDuration = 0, language = '', sortBy = 'relevance', category = '' } = await req.json();
 
-    // Build effective query: combine user query + category if set
-    const effectiveQuery = category && !rawQuery?.trim()
-      ? category
-      : category && rawQuery?.trim()
-        ? `${rawQuery.trim()} ${category}`
-        : rawQuery?.trim() || '';
-
-    if (!effectiveQuery) return Response.json({ results: [] });
+    const query = rawQuery?.trim() || '';
+    if (!query && !category) return Response.json({ results: [] });
 
     const headers = await getPodcastIndexHeaders();
+    const categoryId = category ? CATEGORY_MAP[category.toLowerCase()] : null;
 
-    // Fetch more results so filtering doesn't leave too few
-    let searchUrl = `https://api.podcastindex.org/api/1.0/search/byterm?q=${encodeURIComponent(effectiveQuery)}&max=40&fulltext`;
+    let feeds = [];
 
-    if (sortBy === 'newest') {
-      searchUrl += '&sort=newestepisode';
-    } else if (sortBy === 'popularity') {
-      searchUrl += '&sort=score';
+    if (query) {
+      // Run multiple queries in parallel for richer results
+      const queries = buildQueries(query, category);
+      const results = await Promise.all(queries.map(q => searchByTerm(q, sortBy, headers)));
+
+      // Merge and deduplicate by feed ID
+      const seen = new Set();
+      for (const batch of results) {
+        for (const feed of batch) {
+          if (!seen.has(feed.id)) {
+            seen.add(feed.id);
+            feeds.push(feed);
+          }
+        }
+      }
+
+      // Filter by category ID if available (only keep feeds that match)
+      if (categoryId) {
+        const catFiltered = feeds.filter(f => {
+          const cats = f.categories || {};
+          return Object.keys(cats).includes(String(categoryId));
+        });
+        // Soft filter: use category match as a boost (put matches first), but don't discard the rest
+        const nonCat = feeds.filter(f => !catFiltered.includes(f));
+        feeds = [...catFiltered, ...nonCat];
+      }
+    } else if (categoryId) {
+      // Browse by category only (no query)
+      let catUrl = `https://api.podcastindex.org/api/1.0/podcasts/bycategory?id=${categoryId}&max=100`;
+      if (sortBy === 'newest') catUrl += '&sort=newestepisode';
+      else if (sortBy === 'popularity') catUrl += '&sort=score';
+      const catRes = await fetch(catUrl, { headers });
+      const catData = await catRes.json();
+      feeds = catData.feeds || [];
+    } else if (category) {
+      // Unmapped category with no query — search by category name as text
+      feeds = await searchByTerm(category, sortBy, headers);
     }
 
-    const searchRes = await fetch(searchUrl, { headers });
-    const searchData = await searchRes.json();
-    let feeds = searchData.feeds || [];
-
-    // Filter by language client-side (the API lang param is unreliable)
+    // Filter by language
     if (language) {
       feeds = feeds.filter(f => matchesLanguage(f.language, language));
     }
@@ -107,7 +177,7 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({
-      results: feeds.slice(0, 20).map(f => ({
+      results: feeds.slice(0, 50).map(f => ({
         id: f.id,
         title: f.title,
         author: f.author,
