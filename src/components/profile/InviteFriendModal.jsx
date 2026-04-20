@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { appParams } from '@/lib/app-params';
 import { X, Mail, Copy, Check, CheckCircle2, Loader2, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
-// Use the configured app base URL (production URL), fallback to current origin
-const APP_BASE_URL = (appParams.appBaseUrl || window.location.origin).replace(/\/$/, '');
+const APP_BASE_URL = 'https://voxyl-app.base44.app';
 
 function buildInviteLink(inviterId) {
   return `${APP_BASE_URL}?ref=${inviterId}`;
