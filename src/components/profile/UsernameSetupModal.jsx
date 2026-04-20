@@ -34,9 +34,8 @@ export default function UsernameSetupModal({ currentUser, currentUsername, onClo
 
     const uname = username.trim().toLowerCase().replace(/^@+/, '');
     await base44.auth.updateMe({ username: uname });
-    // Sync creator_username on all owned playlists
-    const myPlaylists = await base44.entities.Playlist.filter({ creator_id: currentUser.id }).catch(() => []);
-    await Promise.all(myPlaylists.map(p => base44.entities.Playlist.update(p.id, { creator_username: uname })));
+    // Sync creator_username on ALL owned playlists via backend (bypasses RLS)
+    await base44.functions.invoke('syncUsername', { username: uname }).catch(() => {});
     setLoading(false);
     onSaved(uname);
     onClose();

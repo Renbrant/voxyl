@@ -47,7 +47,7 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm truncate mb-0.5">{playlist.name}</p>
               <p className="text-xs text-muted-foreground truncate">
-                {playlist.creator_username ? `@${playlist.creator_username}` : (playlist.creator_hidden ? 'Usuário' : playlist.creator_name)}
+                {playlist.creator_username ? `@${playlist.creator_username}` : 'Usuário'}
               </p>
               <p className="text-xs text-muted-foreground">{playlist.rss_feeds?.length || 0} feeds</p>
             </div>
@@ -116,7 +116,7 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
             <div className="p-3">
               <p className="font-semibold text-sm line-clamp-1 mb-0.5">{playlist.name}</p>
               <p className="text-xs text-muted-foreground mb-1">
-                {playlist.creator_username ? `@${playlist.creator_username}` : (playlist.creator_hidden ? 'Usuário' : playlist.creator_name)}
+                {playlist.creator_username ? `@${playlist.creator_username}` : 'Usuário'}
               </p>
               {playlist.description && (
                 <p className="text-xs text-muted-foreground line-clamp-2">{playlist.description}</p>
