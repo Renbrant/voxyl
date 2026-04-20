@@ -1,9 +1,14 @@
-import { Mic, Heart, Trash2 } from 'lucide-react';
+import { Mic, Heart, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 export default function LikedPodcastCard({ podcastLike, onUnlike }) {
+  const navigate = useNavigate();
   return (
-    <div className="flex gap-3 p-3 rounded-2xl bg-card border border-border items-center">
+    <div
+      className="flex gap-3 p-3 rounded-2xl bg-card border border-border items-center cursor-pointer hover:border-primary/40 transition-all active:scale-95"
+      onClick={() => navigate(`/podcast/${encodeURIComponent(podcastLike.feed_url)}`)}
+    >
       {podcastLike.podcast_image ? (
         <img
           src={podcastLike.podcast_image}
@@ -26,12 +31,17 @@ export default function LikedPodcastCard({ podcastLike, onUnlike }) {
         )}
       </div>
 
-      <button
-        onClick={onUnlike}
-        className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center text-red-400 hover:bg-red-500/20 transition-colors flex-shrink-0"
-      >
-        <Heart size={15} fill="currentColor" />
-      </button>
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+          <Play size={14} fill="currentColor" />
+        </div>
+        <button
+          onClick={e => { e.stopPropagation(); onUnlike(); }}
+          className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center text-red-400 hover:bg-red-500/20 transition-colors"
+        >
+          <Heart size={15} fill="currentColor" />
+        </button>
+      </div>
     </div>
   );
 }
