@@ -1,16 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import VoxylHeader from '@/components/common/VoxylHeader';
 import PlaylistCard from '@/components/playlist/PlaylistCard';
 import PodcastSearchBar from '@/components/explore/PodcastSearchBar';
 import PodcastResultCard from '@/components/explore/PodcastResultCard';
 import AddToPlaylistModal from '@/components/explore/AddToPlaylistModal';
 import UserSearchCard from '@/components/explore/UserSearchCard';
-import { Compass, Radio, Users, Heart } from 'lucide-react';
+import SelectBottomSheet from '@/components/common/SelectBottomSheet';
+import PullToRefreshIndicator from '@/components/common/PullToRefreshIndicator';
+import { Compass, Radio, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { useDebounce } from '@/hooks/useDebounce';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 export default function Explore() {
   const [tab, setTab] = useState('playlists');
@@ -21,11 +24,11 @@ export default function Explore() {
   const [selectedPodcast, setSelectedPodcast] = useState(null);
   const [voxylSearch, setVoxylSearch] = useState('');
   const [userSearch, setUserSearch] = useState('');
-  const [userFilter, setUserFilter] = useState('all'); // 'all' | 'followers' | 'following' | 'pending'
+  const [userFilter, setUserFilter] = useState('all');
   const [likes, setLikes] = useState([]);
   const [blockedIds, setBlockedIds] = useState([]);
-  const [followStatuses, setFollowStatuses] = useState({}); // userId -> 'pending' | 'accepted' | null
-  const [theyFollowMeIds, setTheyFollowMeIds] = useState(new Set()); // userIds who follow me
+  const [followStatuses, setFollowStatuses] = useState({});
+  const [theyFollowMeIds, setTheyFollowMeIds] = useState(new Set());
   const [podcastSortBy, setPodcastSortBy] = useState('relevance');
   const [podcastLanguage, setPodcastLanguage] = useState('');
   const [podcastCategory, setPodcastCategory] = useState('');
@@ -33,6 +36,13 @@ export default function Explore() {
 
   const debouncedQuery = useDebounce(search, 600);
   const debouncedUserSearch = useDebounce(userSearch, 400);
+  const containerRef = useRef(null);
+  const queryClient = useQueryClient();
+
+  const { pullProgress, refreshing } = usePullToRefresh(() => {
+    queryClient.invalidateQueries({ queryKey: ['explore-playlists'] });
+    queryClient.invalidateQueries({ queryKey: ['my-likes'] });
+  }, containerRef);
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -223,13 +233,49 @@ export default function Explore() {
     { key: 'podcasts', label: 'Podcasts', icon: Radio },
   ];
 
+  const sortOptions = [
+    { value: 'relevance', label: '🔍 Relevância' },
+    { value: 'popularity', label: '🔥 Populares' },
+    { value: 'episodes', label: '📦 Mais episódios' },
+    { value: 'recent', label: '🕐 Episódio recente' },
+    { value: 'frequency', label: '📅 Mais frequentes' },
+  ];
+
+  const languageOptions = [
+    { value: '', label: '🌍 Todos os idiomas' },
+    { value: 'pt', label: '🇧🇷 Português' },
+    { value: 'en', label: '🇺🇸 Inglês' },
+    { value: 'es', label: '🇪🇸 Espanhol' },
+    { value: 'fr', label: '🇫🇷 Francês' },
+    { value: 'de', label: '🇩🇪 Alemão' },
+    { value: 'it', label: '🇮🇹 Italiano' },
+    { value: 'ja', label: '🇯🇵 Japonês' },
+  ];
+
+  const categoryOptions = [
+    { value: '', label: '🎙️ Todas as categorias' },
+    { value: 'tecnologia', label: '💻 Tecnologia' },
+    { value: 'negócios', label: '💼 Negócios' },
+    { value: 'educação', label: '📚 Educação' },
+    { value: 'entretenimento', label: '🎭 Entretenimento' },
+    { value: 'esportes', label: '⚽ Esportes' },
+    { value: 'saúde', label: '❤️ Saúde & Bem-estar' },
+    { value: 'notícias', label: '📰 Notícias' },
+    { value: 'ciência', label: '🔬 Ciência' },
+    { value: 'história', label: '🏛️ História' },
+    { value: 'true crime', label: '🔍 True Crime' },
+    { value: 'comédia', label: '😂 Comédia' },
+    { value: 'política', label: '🗳️ Política' },
+  ];
+
   return (
-    <div className="bg-background pb-24">
+    <div ref={containerRef} className="bg-background pb-24 relative">
+      <PullToRefreshIndicator pullProgress={pullProgress} refreshing={refreshing} />
       <VoxylHeader title="Explorar" subtitle="Descubra podcasts e playlists" />
 
       {/* Tabs */}
       <div className="flex gap-2 px-4 mb-4 overflow-x-auto no-scrollbar">
-        {TABS.map(({ key, label, icon: Icon }) => (
+        {TABS.map(({ key, label, icon: TabIcon }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
@@ -240,7 +286,7 @@ export default function Explore() {
                 : "bg-secondary text-muted-foreground"
             )}
           >
-            <Icon size={14} />
+            <TabIcon size={14} />
             {label}
           </button>
         ))}
@@ -253,57 +299,26 @@ export default function Explore() {
           <div className="space-y-3">
             <PodcastSearchBar value={search} onChange={setSearch} loading={podcastLoading} placeholder="Ex: tecnologia, true crime, notícias..." />
             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-              {/* Sort */}
-              <select
+              <SelectBottomSheet
                 value={podcastSortBy}
-                onChange={e => setPodcastSortBy(e.target.value)}
-                className="px-3 py-1.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground border border-border focus:outline-none focus:border-primary flex-shrink-0"
-              >
-                <option value="relevance">🔍 Relevância</option>
-                <option value="popularity">🔥 Populares</option>
-                <option value="episodes">📦 Mais episódios</option>
-                <option value="recent">🕐 Episódio recente</option>
-                <option value="frequency">📅 Mais frequentes</option>
-              </select>
-              {/* Language */}
-              <select
+                onChange={setPodcastSortBy}
+                options={sortOptions}
+                placeholder="Ordenar"
+              />
+              <SelectBottomSheet
                 value={podcastLanguage}
-                onChange={e => setPodcastLanguage(e.target.value)}
-                className={cn("px-3 py-1.5 rounded-full text-xs font-medium border focus:outline-none flex-shrink-0 transition-all",
-                  podcastLanguage ? "bg-primary/20 text-primary border-primary/40" : "bg-secondary text-muted-foreground border-border focus:border-primary"
-                )}
-              >
-                <option value="">🌍 Todos os idiomas</option>
-                <option value="pt">🇧🇷 Português</option>
-                <option value="en">🇺🇸 Inglês</option>
-                <option value="es">🇪🇸 Espanhol</option>
-                <option value="fr">🇫🇷 Francês</option>
-                <option value="de">🇩🇪 Alemão</option>
-                <option value="it">🇮🇹 Italiano</option>
-                <option value="ja">🇯🇵 Japonês</option>
-              </select>
-              {/* Category */}
-              <select
+                onChange={setPodcastLanguage}
+                options={languageOptions}
+                placeholder="Idioma"
+                activeColor="primary"
+              />
+              <SelectBottomSheet
                 value={podcastCategory}
-                onChange={e => setPodcastCategory(e.target.value)}
-                className={cn("px-3 py-1.5 rounded-full text-xs font-medium border focus:outline-none flex-shrink-0 transition-all",
-                  podcastCategory ? "bg-accent/20 text-accent border-accent/40" : "bg-secondary text-muted-foreground border-border focus:border-primary"
-                )}
-              >
-                <option value="">🎙️ Todas as categorias</option>
-                <option value="tecnologia">💻 Tecnologia</option>
-                <option value="negócios">💼 Negócios</option>
-                <option value="educação">📚 Educação</option>
-                <option value="entretenimento">🎭 Entretenimento</option>
-                <option value="esportes">⚽ Esportes</option>
-                <option value="saúde">❤️ Saúde & Bem-estar</option>
-                <option value="notícias">📰 Notícias</option>
-                <option value="ciência">🔬 Ciência</option>
-                <option value="história">🏛️ História</option>
-                <option value="true crime">🔍 True Crime</option>
-                <option value="comédia">😂 Comédia</option>
-                <option value="política">🗳️ Política</option>
-              </select>
+                onChange={setPodcastCategory}
+                options={categoryOptions}
+                placeholder="Categoria"
+                activeColor="accent"
+              />
             </div>
           </div>
         )}

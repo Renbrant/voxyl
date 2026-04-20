@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, ListMusic, Mic } from 'lucide-react';
@@ -8,6 +8,8 @@ import VoxylHeader from '@/components/common/VoxylHeader';
 import PlaylistCard from '@/components/playlist/PlaylistCard';
 import CreatePlaylistModal from '@/components/playlist/CreatePlaylistModal';
 import LikedPodcastCard from '@/components/explore/LikedPodcastCard';
+import PullToRefreshIndicator from '@/components/common/PullToRefreshIndicator';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 const TABS = [
   { key: 'playlists', label: 'Playlists', icon: ListMusic },
@@ -18,7 +20,14 @@ export default function Playlists() {
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState('playlists');
   const [showCreate, setShowCreate] = useState(false);
+  const containerRef = useRef(null);
   const queryClient = useQueryClient();
+
+  const { pullProgress, refreshing } = usePullToRefresh(() => {
+    queryClient.invalidateQueries({ queryKey: ['my-playlists'] });
+    queryClient.invalidateQueries({ queryKey: ['liked-playlists'] });
+    queryClient.invalidateQueries({ queryKey: ['liked-podcasts'] });
+  }, containerRef);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -74,7 +83,8 @@ export default function Playlists() {
   };
 
   return (
-    <div className="bg-background pb-24">
+    <div ref={containerRef} className="bg-background pb-24 relative">
+      <PullToRefreshIndicator pullProgress={pullProgress} refreshing={refreshing} />
       <VoxylHeader
         title="Curtidas"
         subtitle="Suas playlists e podcasts salvos"
@@ -83,6 +93,7 @@ export default function Playlists() {
             <button
               onClick={() => setShowCreate(true)}
               className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center glow-primary"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               <Plus size={18} className="text-white" />
             </button>
