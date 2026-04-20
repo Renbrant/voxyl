@@ -49,6 +49,8 @@ export default function AddToPlaylistModal({ podcast, onClose }) {
       creator_id: user.id,
       creator_email: user.email,
       creator_name: user.full_name || user.email.split('@')[0],
+      creator_username: user.username || '',
+      creator_hidden: user.profile_hidden || false,
       rss_feeds: [{
         url: podcast.feedUrl,
         title: podcast.title,
