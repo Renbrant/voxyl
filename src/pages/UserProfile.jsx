@@ -46,7 +46,7 @@ export default function UserProfile() {
     if (!currentUser) return;
 
     // Fetch playlists via backend function (respects friends_only visibility)
-    base44.functions.invoke('getUserPlaylists', { userId })
+    base44.functions.invoke('getUserPlaylists', { userId, currentUserId: currentUser.id })
       .then(res => {
         const data = res.data;
         setPlaylists(data.playlists || []);
