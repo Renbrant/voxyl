@@ -6,6 +6,7 @@ import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
 import { usePlayer } from '@/lib/PlayerContext';
 import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward, Pencil, CheckCircle2, Heart, UserPlus, UserCheck } from 'lucide-react';
 import PageTransition from '@/components/common/PageTransition';
+import VisibilityBadge from '@/components/playlist/VisibilityBadge';
 import { useLongPress } from '@/hooks/useLongPress';
 import EditPlaylistModal from '@/components/playlist/EditPlaylistModal';
 import { cn } from '@/lib/utils';
@@ -246,7 +247,10 @@ export default function PlaylistDetail() {
         <div className="absolute bottom-4 left-4 right-4 z-10">
           {playlist ? (
             <>
-              <h1 className="text-2xl font-grotesk font-bold text-white">{playlist.name}</h1>
+              <div className="flex items-center gap-2 mb-0.5">
+                <h1 className="text-2xl font-grotesk font-bold text-white leading-tight">{playlist.name}</h1>
+                <VisibilityBadge visibility={playlist.visibility || 'public'} withLabel />
+              </div>
               <p className="text-sm text-white/70">por {playlist.creator_name} • {playlist.rss_feeds?.length || 0} feeds</p>
               {playlist.description && <p className="text-xs text-white/60 mt-1 line-clamp-2">{playlist.description}</p>}
             </>

@@ -45,16 +45,14 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-0.5 min-w-0">
-                <p className="font-semibold text-sm truncate flex-1 min-w-0">{playlist.name}</p>
-                <VisibilityBadge visibility={playlist.visibility || 'public'} />
-              </div>
+              <p className="font-semibold text-sm truncate mb-0.5">{playlist.name}</p>
               <p className="text-xs text-muted-foreground truncate">
                 {playlist.creator_username ? `@${playlist.creator_username}` : (playlist.creator_hidden ? 'Usuário' : playlist.creator_name)}
               </p>
               <p className="text-xs text-muted-foreground">{playlist.rss_feeds?.length || 0} feeds</p>
             </div>
             <div className="flex items-center gap-2">
+              <VisibilityBadge visibility={playlist.visibility || 'public'} />
               <button
                 onClick={e => { e.preventDefault(); e.stopPropagation(); onLike?.(playlist); }}
                 onTouchEnd={e => { e.preventDefault(); e.stopPropagation(); onLike?.(playlist); }}
