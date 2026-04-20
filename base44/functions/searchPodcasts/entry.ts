@@ -94,7 +94,7 @@ function buildQueries(query, category) {
 }
 
 async function searchByTerm(query, sortBy, headers) {
-  let url = `https://api.podcastindex.org/api/1.0/search/byterm?q=${encodeURIComponent(query)}&max=100&fulltext`;
+  let url = `https://api.podcastindex.org/api/1.0/search/byterm?q=${encodeURIComponent(query)}&max=1000&fulltext&similar`;
   if (sortBy === 'newest') url += '&sort=newestepisode';
   else if (sortBy === 'popularity') url += '&sort=score';
   const res = await fetch(url, { headers });
@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
       }
     } else if (categoryId) {
       // Browse by category only (no query)
-      let catUrl = `https://api.podcastindex.org/api/1.0/podcasts/bycategory?id=${categoryId}&max=100`;
+      let catUrl = `https://api.podcastindex.org/api/1.0/podcasts/bycategory?id=${categoryId}&max=1000`;
       if (sortBy === 'newest') catUrl += '&sort=newestepisode';
       else if (sortBy === 'popularity') catUrl += '&sort=score';
       const catRes = await fetch(catUrl, { headers });
