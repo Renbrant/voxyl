@@ -68,7 +68,9 @@ export default function PodcastResultCard({ podcast, index, onAdd, onLike, liked
             {expanded ? 'Menos' : 'Ver descrição'}
           </button>
           {expanded && (
-            <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{podcast.description}</p>
+            <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: podcast.description?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() }}
+            />
           )}
         </div>
       )}
