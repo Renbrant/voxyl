@@ -26,26 +26,10 @@ export default function UserProfile() {
   }, []);
 
   useEffect(() => {
-    base44.entities.Playlist.filter({ creator_id: userId }, '-created_date', 30)
-      .then(data => {
-        // Will re-filter after we know follow status; for now show public only
-        const visible = data.filter(p => !p.visibility || p.visibility === 'public' || p.visibility === 'friends_only');
-        setPlaylists(visible);
-        setLoading(false);
-        // Extract username/name from playlist metadata
-        if (visible.length > 0) {
-          setProfileUser({
-            username: visible[0].creator_username || null,
-            full_name: visible[0].creator_name || null,
-          });
-        }
-      });
-
     base44.entities.Follow.filter({ following_id: userId, status: 'accepted' })
       .then(follows => setFollowersCount(follows.length))
       .catch(() => {});
 
-    // Also try to get username from a Follow record (follower side)
     base44.entities.Follow.filter({ follower_id: userId })
       .then(follows => {
         if (follows.length > 0 && follows[0].follower_username) {
@@ -60,17 +44,30 @@ export default function UserProfile() {
 
   useEffect(() => {
     if (!currentUser) return;
-    // Check follow status
+
+    // Fetch playlists via backend function (respects friends_only visibility)
+    base44.functions.invoke('getUserPlaylists', { userId })
+      .then(res => {
+        const data = res.data;
+        setPlaylists(data.playlists || []);
+        setFollowStatus(data.isFollowing ? 'accepted' : null);
+        setLoading(false);
+        const first = (data.playlists || [])[0];
+        if (first) {
+          setProfileUser({
+            username: first.creator_username || null,
+            full_name: first.creator_name || null,
+          });
+        }
+      })
+      .catch(() => setLoading(false));
+
+    // Check follow status for pending
     base44.entities.Follow.filter({ follower_id: currentUser.id, following_id: userId })
       .then(follows => {
-        const status = follows.length > 0 ? follows[0].status : null;
-        setFollowStatus(status);
-        // Re-filter playlists based on follow status
-        setPlaylists(prev => prev.filter(p => {
-          if (!p.visibility || p.visibility === 'public') return true;
-          if (p.visibility === 'friends_only') return status === 'accepted' || currentUser.id === userId;
-          return false;
-        }));
+        if (follows.length > 0 && follows[0].status === 'pending') {
+          setFollowStatus('pending');
+        }
       })
       .catch(() => {});
 
