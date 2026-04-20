@@ -31,24 +31,52 @@ async function fetchRecentEpisodeDurations(feedUrl) {
   }
 }
 
+// Language code normalization: some feeds return "pt-BR", "pt-br", "Portuguese", etc.
+function normalizeLanguage(lang) {
+  if (!lang) return '';
+  return lang.toLowerCase().replace(/_/g, '-').split('-')[0].trim();
+}
+
+const LANGUAGE_CODES = {
+  'pt': ['pt', 'portuguese', 'portugues', 'português'],
+  'en': ['en', 'english'],
+  'es': ['es', 'spanish', 'espanol', 'español'],
+  'fr': ['fr', 'french', 'français', 'francais'],
+  'de': ['de', 'german', 'deutsch'],
+  'it': ['it', 'italian', 'italiano'],
+  'ja': ['ja', 'japanese', '日本語'],
+};
+
+function matchesLanguage(feedLang, filterLang) {
+  if (!filterLang) return true;
+  if (!feedLang) return false;
+  const normalized = normalizeLanguage(feedLang);
+  const aliases = LANGUAGE_CODES[filterLang] || [filterLang];
+  return aliases.some(alias => normalized === alias || feedLang.toLowerCase().startsWith(alias));
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { query, maxDuration = 0, language = '', sortBy = 'relevance' } = await req.json();
-    if (!query?.trim()) return Response.json({ results: [] });
+    const { query: rawQuery, maxDuration = 0, language = '', sortBy = 'relevance', category = '' } = await req.json();
+
+    // Build effective query: combine user query + category if set
+    const effectiveQuery = category && !rawQuery?.trim()
+      ? category
+      : category && rawQuery?.trim()
+        ? `${rawQuery.trim()} ${category}`
+        : rawQuery?.trim() || '';
+
+    if (!effectiveQuery) return Response.json({ results: [] });
 
     const headers = await getPodcastIndexHeaders();
-    let searchUrl = `https://api.podcastindex.org/api/1.0/search/byterm?q=${encodeURIComponent(query)}&max=20&fulltext`;
-    
-    // Add language filter if specified
-    if (language) {
-      searchUrl += `&lang=${encodeURIComponent(language)}`;
-    }
-    
-    // Add sort parameter
+
+    // Fetch more results so filtering doesn't leave too few
+    let searchUrl = `https://api.podcastindex.org/api/1.0/search/byterm?q=${encodeURIComponent(effectiveQuery)}&max=40&fulltext`;
+
     if (sortBy === 'newest') {
       searchUrl += '&sort=newestepisode';
     } else if (sortBy === 'popularity') {
@@ -57,25 +85,29 @@ Deno.serve(async (req) => {
 
     const searchRes = await fetch(searchUrl, { headers });
     const searchData = await searchRes.json();
-    const feeds = searchData.feeds || [];
+    let feeds = searchData.feeds || [];
 
-    // If maxDuration filter active, check recent episode durations
-    let results = feeds;
+    // Filter by language client-side (the API lang param is unreliable)
+    if (language) {
+      feeds = feeds.filter(f => matchesLanguage(f.language, language));
+    }
+
+    // Filter by maxDuration if active
     if (maxDuration > 0) {
       const maxSeconds = maxDuration * 60;
       const filtered = await Promise.all(
         feeds.map(async (feed) => {
           const durations = await fetchRecentEpisodeDurations(feed.url);
-          if (durations.length === 0) return feed; // can't filter, include
+          if (durations.length === 0) return feed;
           const hasMatch = durations.some(d => d <= maxSeconds);
           return hasMatch ? feed : null;
         })
       );
-      results = filtered.filter(Boolean);
+      feeds = filtered.filter(Boolean);
     }
 
     return Response.json({
-      results: results.map(f => ({
+      results: feeds.slice(0, 20).map(f => ({
         id: f.id,
         title: f.title,
         author: f.author,
@@ -84,6 +116,7 @@ Deno.serve(async (req) => {
         feedUrl: f.url,
         episodeCount: f.episodeCount,
         language: f.language,
+        categories: f.categories,
       }))
     });
   } catch (error) {

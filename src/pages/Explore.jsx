@@ -28,6 +28,7 @@ export default function Explore() {
   const [theyFollowMeIds, setTheyFollowMeIds] = useState(new Set()); // userIds who follow me
   const [podcastSortBy, setPodcastSortBy] = useState('relevance');
   const [podcastLanguage, setPodcastLanguage] = useState('');
+  const [podcastCategory, setPodcastCategory] = useState('');
   const [likedFeedUrls, setLikedFeedUrls] = useState(new Set());
 
   const debouncedQuery = useDebounce(search, 600);
@@ -102,18 +103,31 @@ export default function Explore() {
     queryFn: () => base44.entities.Follow.filter({ following_id: user.id, status: 'accepted' }),
   });
 
-  // Following: users I follow (accepted)
+  // Following: users I follow (accepted) - enrich with user profiles to get username
   const { data: followingList = [] } = useQuery({
     queryKey: ['explore-following', user?.id],
     enabled: !!user && tab === 'users',
-    queryFn: () => base44.entities.Follow.filter({ follower_id: user.id, status: 'accepted' }),
+    queryFn: async () => {
+      const follows = await base44.entities.Follow.filter({ follower_id: user.id, status: 'accepted' });
+      // Fetch usernames from searchUsers for enrichment
+      const profiles = await base44.functions.invoke('searchUsers', { query: '' }).then(r => r.data?.users || []).catch(() => []);
+      const profileMap = {};
+      profiles.forEach(p => { profileMap[p.id] = p; });
+      return follows.map(f => ({ ...f, _profile: profileMap[f.following_id] || null }));
+    },
   });
 
-  // Pending: requests I sent that are still pending
+  // Pending: requests I sent that are still pending - enrich with user profiles
   const { data: pendingList = [] } = useQuery({
     queryKey: ['explore-pending', user?.id],
     enabled: !!user && tab === 'users',
-    queryFn: () => base44.entities.Follow.filter({ follower_id: user.id, status: 'pending' }),
+    queryFn: async () => {
+      const follows = await base44.entities.Follow.filter({ follower_id: user.id, status: 'pending' });
+      const profiles = await base44.functions.invoke('searchUsers', { query: '' }).then(r => r.data?.users || []).catch(() => []);
+      const profileMap = {};
+      profiles.forEach(p => { profileMap[p.id] = p; });
+      return follows.map(f => ({ ...f, _profile: profileMap[f.following_id] || null }));
+    },
   });
 
   // Search by exact username (only when query typed)
@@ -153,14 +167,15 @@ export default function Explore() {
       query: debouncedQuery, 
       maxDuration,
       language: podcastLanguage,
-      sortBy: podcastSortBy
+      sortBy: podcastSortBy,
+      category: podcastCategory,
     })
       .then(res => {
         setPodcastResults(res.data?.results || []);
         setPodcastLoading(false);
       })
       .catch(() => setPodcastLoading(false));
-  }, [debouncedQuery, tab, user, podcastLanguage, podcastSortBy]);
+  }, [debouncedQuery, tab, user, podcastLanguage, podcastSortBy, podcastCategory]);
 
   const filteredPlaylists = playlists.filter(p => {
     if (blockedIds.includes(p.creator_id)) return false;
@@ -192,17 +207,17 @@ export default function Explore() {
     if (userFilter === 'following') {
       return followingList.map(f => ({
         id: f.following_id,
-        username: f.following_username,
+        username: f._profile?.username || f.following_username || null,
         email: f.following_email,
-        full_name: '',
+        full_name: f._profile?.full_name || f.following_name || '',
       }));
     }
     if (userFilter === 'pending') {
       return pendingList.map(f => ({
         id: f.following_id,
-        username: f.following_username,
+        username: f._profile?.username || f.following_username || null,
         email: f.following_email,
-        full_name: '',
+        full_name: f._profile?.full_name || f.following_name || '',
       }));
     }
 
@@ -244,28 +259,56 @@ export default function Explore() {
         {tab === 'playlists' && <PodcastSearchBar value={voxylSearch} onChange={setVoxylSearch} loading={false} placeholder="Buscar playlists..." />}
         {tab === 'podcasts' && (
           <div className="space-y-3">
-            <PodcastSearchBar value={search} onChange={setSearch} loading={podcastLoading} placeholder="Buscar podcasts no mundo todo..." />
-            <div className="flex gap-2 overflow-x-auto no-scrollbar">
+            <PodcastSearchBar value={search} onChange={setSearch} loading={podcastLoading} placeholder="Ex: tecnologia, true crime, notícias..." />
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+              {/* Sort */}
               <select
                 value={podcastSortBy}
                 onChange={e => setPodcastSortBy(e.target.value)}
                 className="px-3 py-1.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground border border-border focus:outline-none focus:border-primary flex-shrink-0"
               >
-                <option value="relevance">Relevância</option>
-                <option value="newest">Mais recentes</option>
-                <option value="popularity">Mais populares</option>
+                <option value="relevance">🔍 Relevância</option>
+                <option value="newest">🆕 Mais recentes</option>
+                <option value="popularity">🔥 Populares</option>
               </select>
+              {/* Language */}
               <select
                 value={podcastLanguage}
                 onChange={e => setPodcastLanguage(e.target.value)}
-                className="px-3 py-1.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground border border-border focus:outline-none focus:border-primary flex-shrink-0"
+                className={cn("px-3 py-1.5 rounded-full text-xs font-medium border focus:outline-none flex-shrink-0 transition-all",
+                  podcastLanguage ? "bg-primary/20 text-primary border-primary/40" : "bg-secondary text-muted-foreground border-border focus:border-primary"
+                )}
               >
-                <option value="">Todos os idiomas</option>
-                <option value="en">Inglês</option>
-                <option value="pt">Português</option>
-                <option value="es">Espanhol</option>
-                <option value="fr">Francês</option>
-                <option value="de">Alemão</option>
+                <option value="">🌍 Todos os idiomas</option>
+                <option value="pt">🇧🇷 Português</option>
+                <option value="en">🇺🇸 Inglês</option>
+                <option value="es">🇪🇸 Espanhol</option>
+                <option value="fr">🇫🇷 Francês</option>
+                <option value="de">🇩🇪 Alemão</option>
+                <option value="it">🇮🇹 Italiano</option>
+                <option value="ja">🇯🇵 Japonês</option>
+              </select>
+              {/* Category */}
+              <select
+                value={podcastCategory}
+                onChange={e => setPodcastCategory(e.target.value)}
+                className={cn("px-3 py-1.5 rounded-full text-xs font-medium border focus:outline-none flex-shrink-0 transition-all",
+                  podcastCategory ? "bg-accent/20 text-accent border-accent/40" : "bg-secondary text-muted-foreground border-border focus:border-primary"
+                )}
+              >
+                <option value="">🎙️ Todas as categorias</option>
+                <option value="tecnologia">💻 Tecnologia</option>
+                <option value="negócios">💼 Negócios</option>
+                <option value="educação">📚 Educação</option>
+                <option value="entretenimento">🎭 Entretenimento</option>
+                <option value="esportes">⚽ Esportes</option>
+                <option value="saúde">❤️ Saúde & Bem-estar</option>
+                <option value="notícias">📰 Notícias</option>
+                <option value="ciência">🔬 Ciência</option>
+                <option value="história">🏛️ História</option>
+                <option value="true crime">🔍 True Crime</option>
+                <option value="comédia">😂 Comédia</option>
+                <option value="política">🗳️ Política</option>
               </select>
             </div>
           </div>
@@ -363,10 +406,24 @@ export default function Explore() {
         {tab === 'podcasts' && (
           <div className="space-y-2">
             {!search.trim() && !podcastLoading && podcastResults.length === 0 && (
-              <div className="text-center py-16 text-muted-foreground">
-                <p className="text-5xl mb-4">🎙️</p>
-                <p className="font-medium text-foreground">Busque qualquer podcast</p>
-                <p className="text-sm mt-1">Resultados de todo o mundo via Podcast Index</p>
+              <div className="py-6 text-muted-foreground">
+                <div className="text-center mb-6">
+                  <p className="text-5xl mb-3">🎙️</p>
+                  <p className="font-semibold text-foreground text-base">Descubra novos podcasts</p>
+                  <p className="text-xs mt-1 text-muted-foreground">Pesquise por nome, tema ou assunto</p>
+                </div>
+                <p className="text-xs text-muted-foreground mb-2 px-1">Sugestões populares</p>
+                <div className="flex flex-wrap gap-2">
+                  {['tecnologia', 'true crime', 'notícias', 'saúde', 'negócios', 'história', 'esportes', 'ciência', 'comédia', 'política', 'educação', 'entretenimento'].map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setSearch(s)}
+                      className="px-3 py-1.5 rounded-full text-xs bg-secondary border border-border hover:border-primary/40 hover:text-primary transition-all capitalize"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
             {podcastLoading && (
