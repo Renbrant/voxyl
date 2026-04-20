@@ -251,7 +251,7 @@ export default function PlaylistDetail() {
                 <h1 className="text-2xl font-grotesk font-bold text-white leading-tight">{playlist.name}</h1>
                 <VisibilityBadge visibility={playlist.visibility || 'public'} withLabel />
               </div>
-              <p className="text-sm text-white/70">por {playlist.creator_username ? `@${playlist.creator_username}` : (playlist.creator_hidden ? 'Usuário' : playlist.creator_name)} • {playlist.rss_feeds?.length || 0} feeds</p>
+              <p className="text-sm text-white/70">por {playlist.creator_username ? `@${playlist.creator_username}` : 'Usuário'} • {playlist.rss_feeds?.length || 0} feeds</p>
               {playlist.description && <p className="text-xs text-white/60 mt-1 line-clamp-2">{playlist.description}</p>}
             </>
           ) : (
