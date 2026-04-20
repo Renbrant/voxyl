@@ -423,7 +423,7 @@ export default function Explore() {
                 </div>
                 <p className="text-xs text-muted-foreground mb-2 px-1">Sugestões populares</p>
                 <div className="flex flex-wrap gap-2">
-                  {['tecnologia', 'true crime', 'notícias', 'saúde', 'negócios', 'história', 'esportes', 'ciência', 'comédia', 'política', 'educação', 'entretenimento'].map(s => (
+                  {['tecnologia', 'notícias', 'saúde', 'negócios', 'história', 'esportes', 'ciência', 'comédia', 'política', 'educação', 'entretenimento', 'cristianismo'].map(s => (
                     <button
                       key={s}
                       onClick={() => setSearch(s)}
