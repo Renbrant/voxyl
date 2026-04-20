@@ -4,10 +4,15 @@ import { useNavigate } from 'react-router-dom';
 
 export default function LikedPodcastCard({ podcastLike, onUnlike }) {
   const navigate = useNavigate();
+  const handleCardClick = (e) => {
+    if (e.target.closest('button')) return;
+    navigate(`/podcast/${encodeURIComponent(podcastLike.feed_url)}`);
+  };
+
   return (
     <div
       className="flex gap-3 p-3 rounded-2xl bg-card border border-border items-center cursor-pointer hover:border-primary/40 transition-all active:scale-95"
-      onClick={() => navigate(`/podcast/${encodeURIComponent(podcastLike.feed_url)}`)}
+      onClick={handleCardClick}
     >
       {podcastLike.podcast_image ? (
         <img
@@ -21,8 +26,8 @@ export default function LikedPodcastCard({ podcastLike, onUnlike }) {
         </div>
       )}
 
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold text-sm text-foreground truncate">{podcastLike.podcast_title}</p>
+      <div className="flex-1 min-w-0" onClick={() => navigate(`/podcast/${encodeURIComponent(podcastLike.feed_url)}`)}>
+        <p className="font-semibold text-sm text-foreground truncate cursor-pointer hover:text-primary transition-colors">{podcastLike.podcast_title}</p>
         {podcastLike.podcast_author && (
           <p className="text-xs text-primary truncate mt-0.5">{podcastLike.podcast_author}</p>
         )}
