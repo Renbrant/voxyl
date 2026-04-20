@@ -7,18 +7,20 @@ Deno.serve(async (req) => {
 
   if (!userId) return Response.json({ error: 'userId required' }, { status: 400 });
 
-  // Fetch all playlists of that user using service role (bypasses RLS)
-  const allPlaylists = await base44.asServiceRole.entities.Playlist.filter({ creator_id: userId }, '-created_date', 50);
+  // Direct get by known ID to test service role bypass
+  const testPlaylist = await base44.asServiceRole.entities.Playlist.get('69e328795289df204e8630cf').catch(e => ({ error: e.message }));
+  
+  // Fetch all playlists — list all and filter manually to ensure RLS bypass works
+  const allPlaylistsRaw = await base44.asServiceRole.entities.Playlist.list('-created_date', 200);
+  const allPlaylists = allPlaylistsRaw.filter(p => p.creator_id === userId);
 
   // Check if currentUser follows the target user (accepted)
+  // Fetch all follows by currentUser and filter in-memory to avoid multi-field filter issues
   let isFollowing = false;
   if (currentUserId && currentUserId !== userId) {
-    const follows = await base44.asServiceRole.entities.Follow.filter({
-      follower_id: currentUserId,
-      following_id: userId,
-      status: 'accepted',
-    });
-    isFollowing = follows.length > 0;
+    const allFollows = await base44.asServiceRole.entities.Follow.list('-created_date', 500);
+    const match = allFollows.find(f => f.follower_id === currentUserId && f.following_id === userId);
+    isFollowing = match?.status === 'accepted';
   }
 
   const isOwner = currentUserId === userId;
@@ -31,5 +33,5 @@ Deno.serve(async (req) => {
     return false;
   });
 
-  return Response.json({ playlists: visible, isFollowing });
+  return Response.json({ playlists: visible, isFollowing, debug: { testPlaylist: testPlaylist?.name || testPlaylist?.error, totalRaw: allPlaylistsRaw.length, afterFilter: allPlaylists.length } });
 });
