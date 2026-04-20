@@ -50,13 +50,16 @@ function parseItems(xml) {
 
 function parseFeedMeta(xml) {
   const channelMatch = xml.match(/<channel[\s>]([\s\S]*?)<\/channel>/i);
-  if (!channelMatch) return { title: '', image: '' };
+  if (!channelMatch) return { title: '', image: '', author: '', description: '' };
   const channel = channelMatch[1];
   const title = getTagValue(channel, 'title') || '';
   const itunesImgMatch = channel.match(/<itunes:image[^>]*href=["']([^"']+)["'][^>]*>/i);
   const imgTagMatch = channel.match(/<image[\s>][\s\S]*?<url>([\s\S]*?)<\/url>/i);
   const image = itunesImgMatch?.[1] || imgTagMatch?.[1]?.trim() || '';
-  return { title, image };
+  const author = getTagValue(channel, 'itunes:author') || getTagValue(channel, 'managingEditor') || '';
+  const descRaw = getTagValue(channel, 'description') || getTagValue(channel, 'itunes:summary') || '';
+  const description = descRaw.replace(/<[^>]*>/g, '').slice(0, 300).trim();
+  return { title, image, author, description };
 }
 
 Deno.serve(async (req) => {
@@ -84,7 +87,7 @@ Deno.serve(async (req) => {
       feedTitle: meta.title,
     }));
 
-    return Response.json({ title: meta.title, image: meta.image, items });
+    return Response.json({ title: meta.title, image: meta.image, author: meta.author, description: meta.description, items });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
