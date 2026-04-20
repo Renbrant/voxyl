@@ -96,16 +96,7 @@
       "data.creator_id": "{{user.id}}",
       "data.creator_email": "{{user.email}}"
     },
-    "read": {
-      "$or": [
-        {
-          "data.creator_id": "{{user.id}}"
-        },
-        {
-          "data.visibility": "public"
-        }
-      ]
-    },
+    "read": {},
     "update": {
       "data.creator_id": "{{user.id}}"
     },

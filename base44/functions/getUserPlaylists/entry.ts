@@ -7,9 +7,6 @@ Deno.serve(async (req) => {
 
   if (!userId) return Response.json({ error: 'userId required' }, { status: 400 });
 
-  // Direct get by known ID to test service role bypass
-  const testPlaylist = await base44.asServiceRole.entities.Playlist.get('69e328795289df204e8630cf').catch(e => ({ error: e.message }));
-  
   // Fetch all playlists — list all and filter manually to ensure RLS bypass works
   const allPlaylistsRaw = await base44.asServiceRole.entities.Playlist.list('-created_date', 200);
   const allPlaylists = allPlaylistsRaw.filter(p => p.creator_id === userId);
@@ -33,5 +30,5 @@ Deno.serve(async (req) => {
     return false;
   });
 
-  return Response.json({ playlists: visible, isFollowing, debug: { testPlaylist: testPlaylist?.name || testPlaylist?.error, totalRaw: allPlaylistsRaw.length, afterFilter: allPlaylists.length } });
+  return Response.json({ playlists: visible, isFollowing });
 });
