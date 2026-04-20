@@ -97,9 +97,7 @@
       "data.creator_email": "{{user.email}}"
     },
     "read": {},
-    "update": {
-      "data.creator_id": "{{user.id}}"
-    },
+    "update": {},
     "delete": {
       "data.creator_id": "{{user.id}}"
     }
