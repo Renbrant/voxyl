@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { appParams } from '@/lib/app-params';
 import { X, Mail, Copy, Check, CheckCircle2, Loader2, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
+// Use the configured app base URL (production URL), fallback to current origin
+const APP_BASE_URL = (appParams.appBaseUrl || window.location.origin).replace(/\/$/, '');
+
 function buildInviteLink(inviterId) {
-  return `${window.location.origin}?ref=${inviterId}`;
+  return `${APP_BASE_URL}?ref=${inviterId}`;
 }
 
 function buildShareText(inviterName, inviteLink) {
@@ -146,7 +150,7 @@ export default function InviteFriendModal({ onClose, playlistId = null }) {
 
   useEffect(() => { base44.auth.me().then(setUser).catch(() => {}); }, []);
 
-  const inviteLink = user ? buildInviteLink(user.id) : window.location.origin;
+  const inviteLink = user ? buildInviteLink(user.id) : APP_BASE_URL;
   const inviterName = user?.full_name || user?.email?.split('@')[0] || 'Um amigo';
 
   const handleSendEmail = async () => {
