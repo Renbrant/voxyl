@@ -268,8 +268,10 @@ export default function Explore() {
                 className="px-3 py-1.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground border border-border focus:outline-none focus:border-primary flex-shrink-0"
               >
                 <option value="relevance">🔍 Relevância</option>
-                <option value="newest">🆕 Mais recentes</option>
                 <option value="popularity">🔥 Populares</option>
+                <option value="episodes">📦 Mais episódios</option>
+                <option value="recent">🕐 Episódio recente</option>
+                <option value="frequency">📅 Mais frequentes</option>
               </select>
               {/* Language */}
               <select

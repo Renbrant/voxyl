@@ -95,11 +95,34 @@ function buildQueries(query, category) {
 
 async function searchByTerm(query, sortBy, headers) {
   let url = `https://api.podcastindex.org/api/1.0/search/byterm?q=${encodeURIComponent(query)}&max=1000&fulltext&similar`;
+  // API-native sorts
   if (sortBy === 'newest') url += '&sort=newestepisode';
   else if (sortBy === 'popularity') url += '&sort=score';
   const res = await fetch(url, { headers });
   const data = await res.json();
   return data.feeds || [];
+}
+
+function sortFeeds(feeds, sortBy) {
+  if (sortBy === 'episodes') {
+    return [...feeds].sort((a, b) => (b.episodeCount || 0) - (a.episodeCount || 0));
+  }
+  if (sortBy === 'recent') {
+    return [...feeds].sort((a, b) => (b.lastUpdateTime || 0) - (a.lastUpdateTime || 0));
+  }
+  if (sortBy === 'frequency') {
+    // Frequency = episodeCount / days since feed was first seen (approximated by lastUpdateTime - newestItemPublishTime)
+    return [...feeds].sort((a, b) => {
+      const freqA = a.episodeCount && a.newestItemPublishTime && a.oldestItemPublishTime
+        ? a.episodeCount / Math.max(1, (a.newestItemPublishTime - a.oldestItemPublishTime) / 86400)
+        : 0;
+      const freqB = b.episodeCount && b.newestItemPublishTime && b.oldestItemPublishTime
+        ? b.episodeCount / Math.max(1, (b.newestItemPublishTime - b.oldestItemPublishTime) / 86400)
+        : 0;
+      return freqB - freqA;
+    });
+  }
+  return feeds;
 }
 
 Deno.serve(async (req) => {
@@ -176,6 +199,12 @@ Deno.serve(async (req) => {
       feeds = filtered.filter(Boolean);
     }
 
+    // Client-side sorts (not supported natively by API)
+    const clientSorts = ['episodes', 'recent', 'frequency'];
+    if (clientSorts.includes(sortBy)) {
+      feeds = sortFeeds(feeds, sortBy);
+    }
+
     return Response.json({
       results: feeds.slice(0, 50).map(f => ({
         id: f.id,
@@ -187,6 +216,7 @@ Deno.serve(async (req) => {
         episodeCount: f.episodeCount,
         language: f.language,
         categories: f.categories,
+        lastUpdateTime: f.lastUpdateTime,
       }))
     });
   } catch (error) {
