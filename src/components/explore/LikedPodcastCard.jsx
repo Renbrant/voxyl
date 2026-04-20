@@ -1,18 +1,11 @@
+import { Link } from 'react-router-dom';
 import { Mic, Heart, Play } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useNavigate } from 'react-router-dom';
 
 export default function LikedPodcastCard({ podcastLike, onUnlike }) {
-  const navigate = useNavigate();
-  const handleCardClick = (e) => {
-    if (e.target.closest('button')) return;
-    navigate(`/podcast/${encodeURIComponent(podcastLike.feed_url)}`);
-  };
-
   return (
-    <div
-      className="flex gap-3 p-3 rounded-2xl bg-card border border-border items-center cursor-pointer hover:border-primary/40 transition-all active:scale-95"
-      onClick={handleCardClick}
+    <Link
+      to={`/podcast/${encodeURIComponent(podcastLike.feed_url)}`}
+      className="flex gap-3 p-3 rounded-2xl bg-card border border-border items-center cursor-pointer hover:border-primary/40 transition-all active:scale-95 no-underline"
     >
       {podcastLike.podcast_image ? (
         <img
@@ -26,8 +19,8 @@ export default function LikedPodcastCard({ podcastLike, onUnlike }) {
         </div>
       )}
 
-      <div className="flex-1 min-w-0" onClick={() => navigate(`/podcast/${encodeURIComponent(podcastLike.feed_url)}`)}>
-        <p className="font-semibold text-sm text-foreground truncate cursor-pointer hover:text-primary transition-colors">{podcastLike.podcast_title}</p>
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-sm text-foreground truncate">{podcastLike.podcast_title}</p>
         {podcastLike.podcast_author && (
           <p className="text-xs text-primary truncate mt-0.5">{podcastLike.podcast_author}</p>
         )}
@@ -41,12 +34,12 @@ export default function LikedPodcastCard({ podcastLike, onUnlike }) {
           <Play size={14} fill="currentColor" />
         </div>
         <button
-          onClick={e => { e.stopPropagation(); onUnlike(); }}
+          onClick={e => { e.preventDefault(); e.stopPropagation(); onUnlike(); }}
           className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center text-red-400 hover:bg-red-500/20 transition-colors"
         >
           <Heart size={15} fill="currentColor" />
         </button>
       </div>
-    </div>
+    </Link>
   );
 }
