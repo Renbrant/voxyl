@@ -4,10 +4,8 @@ import { X, Mail, Copy, Check, CheckCircle2, Loader2, Link2 } from 'lucide-react
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
-const APP_URL = 'https://voxyl.base44.app';
-
 function buildInviteLink(inviterId) {
-  return `${APP_URL}?ref=${inviterId}`;
+  return `${window.location.origin}?ref=${inviterId}`;
 }
 
 function buildShareText(inviterName, inviteLink) {
@@ -148,7 +146,7 @@ export default function InviteFriendModal({ onClose, playlistId = null }) {
 
   useEffect(() => { base44.auth.me().then(setUser).catch(() => {}); }, []);
 
-  const inviteLink = user ? buildInviteLink(user.id) : APP_URL;
+  const inviteLink = user ? buildInviteLink(user.id) : window.location.origin;
   const inviterName = user?.full_name || user?.email?.split('@')[0] || 'Um amigo';
 
   const handleSendEmail = async () => {
