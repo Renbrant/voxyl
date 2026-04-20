@@ -45,8 +45,8 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <p className="font-semibold text-sm truncate">{playlist.name}</p>
+              <div className="flex items-center gap-1.5 mb-0.5 min-w-0">
+                <p className="font-semibold text-sm truncate flex-1 min-w-0">{playlist.name}</p>
                 <VisibilityBadge visibility={playlist.visibility || 'public'} />
               </div>
               <p className="text-xs text-muted-foreground truncate">
@@ -92,7 +92,7 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
                 <img src={playlist.cover_image} alt="" className="absolute inset-0 w-full h-full object-cover" />
               )}
               <div className="absolute inset-0 bg-black/20" />
-              <div className="absolute top-3 left-3 right-3">
+              <div className="absolute top-2 right-2">
                 <VisibilityBadge visibility={playlist.visibility || 'public'} />
               </div>
               <div className="absolute bottom-3 left-3 right-3">
@@ -116,7 +116,7 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
               </div>
             </div>
             <div className="p-3">
-              <p className="font-semibold text-sm line-clamp-2 mb-0.5">{playlist.name}</p>
+              <p className="font-semibold text-sm line-clamp-1 mb-0.5">{playlist.name}</p>
               <p className="text-xs text-muted-foreground mb-1">
                 {playlist.creator_username ? `@${playlist.creator_username}` : (playlist.creator_hidden ? 'Usuário' : playlist.creator_name)}
               </p>

@@ -24,9 +24,8 @@ export default function VisibilityBadge({ visibility }) {
   const Icon = config.icon;
 
   return (
-    <span className={cn('inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium', config.color)}>
-      <Icon size={12} />
-      {config.label}
+    <span className={cn('inline-flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0', config.color)} title={config.label}>
+      <Icon size={11} />
     </span>
   );
 }
