@@ -62,16 +62,9 @@ export default function Feed() {
   const handleLike = async (playlist) => {
     if (!user) return;
     const liked = likes.includes(playlist.id);
-    if (liked) {
-      const records = await base44.entities.PlaylistLike.filter({ playlist_id: playlist.id, user_id: user.id });
-      if (records[0]) await base44.entities.PlaylistLike.delete(records[0].id);
-      setLikes(prev => prev.filter(id => id !== playlist.id));
-      await base44.entities.Playlist.update(playlist.id, { likes_count: Math.max(0, (playlist.likes_count || 1) - 1) });
-    } else {
-      await base44.entities.PlaylistLike.create({ playlist_id: playlist.id, user_id: user.id, user_email: user.email });
-      setLikes(prev => [...prev, playlist.id]);
-      await base44.entities.Playlist.update(playlist.id, { likes_count: (playlist.likes_count || 0) + 1 });
-    }
+    // Optimistic update
+    setLikes(prev => liked ? prev.filter(id => id !== playlist.id) : [...prev, playlist.id]);
+    await base44.functions.invoke('togglePlaylistLike', { playlist_id: playlist.id });
   };
 
   const visiblePlaylists = playlists.filter(p => {

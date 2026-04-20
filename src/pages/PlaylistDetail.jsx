@@ -50,16 +50,8 @@ export default function PlaylistDetail() {
     e.preventDefault();
     e.stopPropagation();
     if (!user || !playlist) return;
-    if (liked) {
-      const records = await base44.entities.PlaylistLike.filter({ playlist_id: id, user_id: user.id });
-      if (records[0]) await base44.entities.PlaylistLike.delete(records[0].id);
-      setLiked(false);
-      await base44.entities.Playlist.update(id, { likes_count: Math.max(0, (playlist.likes_count || 1) - 1) });
-    } else {
-      await base44.entities.PlaylistLike.create({ playlist_id: id, user_id: user.id, user_email: user.email });
-      setLiked(true);
-      await base44.entities.Playlist.update(id, { likes_count: (playlist.likes_count || 0) + 1 });
-    }
+    setLiked(v => !v);
+    await base44.functions.invoke('togglePlaylistLike', { playlist_id: id });
   };
 
   useEffect(() => {
