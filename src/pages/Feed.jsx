@@ -85,34 +85,9 @@ export default function Feed() {
     queryKey: ['top-podcasts'],
     queryFn: async () => {
       try {
-        // Get all podcast plays (episodes with >50% reproduzido)
-        const allPlays = await base44.asServiceRole.entities.PodcastPlay.list('-created_date', 5000);
-        
-        // Group by feed_url and count plays
-        const feedMap = {};
-        allPlays.forEach(play => {
-          const url = play.feed_url;
-          if (!url) return;
-          
-          if (!feedMap[url]) {
-            feedMap[url] = {
-              feedUrl: url,
-              title: play.podcast_title || 'Sem título',
-              image: play.podcast_image || '',
-              author: play.podcast_title || 'Unknown',
-              description: '',
-              playCount: 0
-            };
-          }
-          feedMap[url].playCount += 1;
-        });
-
-        const sorted = Object.values(feedMap)
-          .sort((a, b) => b.playCount - a.playCount);
-        
-        return sorted;
+        const res = await base44.functions.invoke('getTopPodcastsByPlayback', {});
+        return res.data || [];
       } catch (err) {
-        // If PodcastPlay table is empty, return empty array
         return [];
       }
     },
