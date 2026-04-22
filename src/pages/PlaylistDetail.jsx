@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
 import { getFeedFromCache, saveFeedToCache } from '@/lib/feedCache';
+import { getPlaylistEpisodes, saveFreshEpisodes, clearCache } from '@/lib/playlistCacheManager';
 import { usePlayer } from '@/lib/PlayerContext';
 import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward, Pencil, CheckCircle2, Heart, UserPlus, UserCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -134,7 +135,7 @@ export default function PlaylistDetail() {
   }, [user, playlist, isOwner]);
 
   useEffect(() => {
-    if (!playlist?.rss_feeds?.length) return;
+    if (!playlist?.rss_feeds?.length || !id) return;
 
     const feedSkipMap = {};
     (playlist.rss_feeds || []).forEach(f => {
@@ -169,47 +170,55 @@ export default function PlaylistDetail() {
             if (age > timeFilterMs) return false;
           }
           return true;
-        })
-        .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+        });
     };
 
-    // Load from cache first (instant display)
-    const cached = playlist.rss_feeds.map(f => getFeedFromCache(f.url));
-    const allCached = cached.every(c => c !== null);
-    
-    if (allCached) {
-      // Show cached data immediately, no loading spinner
-      setEpisodes(processResults(cached));
-    } else {
-      // Only show loading if cache is incomplete
-      setLoadingEps(true);
-    }
+    const sortEpisodes = (eps) => {
+      return [...eps].sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+    };
 
-    // Always fetch all feeds in background (always check for new episodes)
-    Promise.allSettled(
-      playlist.rss_feeds.map((f, idx) =>
-        base44.functions.invoke('fetchRSSFeed', { url: f.url, count: 50 })
-          .then(r => {
-            const fresh = r.data;
-            saveFeedToCache(f.url, fresh);
-            return fresh;
-          })
-      )
-    ).then(results => {
-      const freshData = results
-        .filter(r => r.status === 'fulfilled')
-        .map(r => r.value);
-
-      // Use fresh data directly, merging with cache only if fresh is incomplete
-      const mergedData = freshData.map((freshFeed, i) => {
-        if (freshFeed?.items?.length) return freshFeed;
-        // Fallback to cache only if fresh feed has no items
-        return cached[i] || freshFeed;
-      });
+    const loadEpisodes = async () => {
+      // Load from dual cache system
+      const cacheResult = await getPlaylistEpisodes(id);
       
-      setEpisodes(processResults(mergedData));
-    }).finally(() => setLoadingEps(false));
-  }, [playlist]);
+      if (cacheResult.episodes.length) {
+        // Have cached data, show immediately
+        setEpisodes(sortEpisodes(processResults([{ items: cacheResult.episodes }])));
+      } else {
+        setLoadingEps(true);
+      }
+
+      // Fetch fresh data from feeds in background
+      Promise.allSettled(
+        playlist.rss_feeds.map((f, idx) =>
+          base44.functions.invoke('fetchRSSFeed', { url: f.url, count: 50 })
+            .then(r => {
+              const fresh = r.data;
+              saveFeedToCache(f.url, fresh);
+              return fresh;
+            })
+        )
+      ).then(results => {
+        const freshData = results
+          .filter(r => r.status === 'fulfilled')
+          .map(r => r.value);
+
+        // Flatten and process all episodes
+        const allFreshEpisodes = freshData
+          .filter(r => r?.items)
+          .flatMap(r => r.items);
+
+        // Save to cache system
+        saveFreshEpisodes(id, allFreshEpisodes);
+
+        // Process and sort
+        const processed = processResults(freshData);
+        setEpisodes(sortEpisodes(processed));
+      }).finally(() => setLoadingEps(false));
+    };
+
+    loadEpisodes();
+  }, [playlist, id]);
 
   const handleShare = async () => {
     const url = `${window.location.origin}/share/${id}`;
