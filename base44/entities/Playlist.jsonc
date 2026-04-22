@@ -85,6 +85,15 @@
       "description": "Only show episodes published within this many hours (0 = no limit)",
       "default": 0
     },
+    "episodes_sort_order": {
+      "type": "string",
+      "enum": [
+        "newest_first",
+        "oldest_first"
+      ],
+      "default": "newest_first",
+      "description": "Order to display episodes by publication date"
+    },
     "share_token": {
       "type": "string",
       "description": "Unique token for sharing"

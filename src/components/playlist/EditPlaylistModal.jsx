@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { X, Plus, Trash2, GripVertical, Loader2, Clock, Save, Image as ImageIcon, Lock, Globe, Users, ChevronDown, ChevronUp, Timer } from 'lucide-react';
+import { X, Plus, Trash2, GripVertical, Loader2, Clock, Save, Image as ImageIcon, Lock, Globe, Users, ChevronDown, ChevronUp, Timer, ArrowDown, ArrowUp } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +28,7 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
   const [description, setDescription] = useState(playlist.description || '');
   const [maxDuration, setMaxDuration] = useState(playlist.max_duration || 0);
   const [timeFilterHours, setTimeFilterHours] = useState(playlist.time_filter_hours || 0);
+  const [sortOrder, setSortOrder] = useState(playlist.episodes_sort_order || 'newest_first');
   const [feeds, setFeeds] = useState((playlist.rss_feeds || []).map(f => ({
     ...f,
     skip_start_seconds: f.skip_start_seconds || 0,
@@ -90,6 +91,7 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
       description,
       max_duration: maxDuration,
       time_filter_hours: timeFilterHours,
+      episodes_sort_order: sortOrder,
       rss_feeds: feeds,
       cover_image: coverImage,
       visibility,
@@ -202,26 +204,60 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
           </div>
 
           {/* Time Filter */}
-          <div>
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1.5 flex items-center gap-1">
-              <Timer size={11} /> Episódios publicados
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {TIME_FILTER_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  onClick={() => setTimeFilterHours(opt.value)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                    timeFilterHours === opt.value
-                      ? 'bg-primary/20 text-primary border-primary/40'
-                      : 'bg-secondary text-muted-foreground border-border'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
+           <div>
+             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1.5 flex items-center gap-1">
+               <Timer size={11} /> Episódios publicados
+             </label>
+             <div className="flex flex-wrap gap-2">
+               {TIME_FILTER_OPTIONS.map(opt => (
+                 <button
+                   key={opt.value}
+                   onClick={() => setTimeFilterHours(opt.value)}
+                   className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                     timeFilterHours === opt.value
+                       ? 'bg-primary/20 text-primary border-primary/40'
+                       : 'bg-secondary text-muted-foreground border-border'
+                   }`}
+                 >
+                   {opt.label}
+                 </button>
+               ))}
+             </div>
+           </div>
+
+           {/* Episodes Sort Order */}
+           <div>
+             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1.5 flex items-center gap-1">
+               <ArrowDown size={11} /> Ordem dos episódios
+             </label>
+             <p className="text-xs text-muted-foreground mb-2.5">Como exibir os episódios por data de publicação</p>
+             <div className="flex gap-2">
+               <button
+                 onClick={() => setSortOrder('newest_first')}
+                 className={cn(
+                   'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-medium text-sm transition-all border',
+                   sortOrder === 'newest_first'
+                     ? 'bg-primary/20 text-primary border-primary/40'
+                     : 'bg-secondary text-muted-foreground border-border'
+                 )}
+               >
+                 <ArrowDown size={14} />
+                 Mais recentes
+               </button>
+               <button
+                 onClick={() => setSortOrder('oldest_first')}
+                 className={cn(
+                   'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-medium text-sm transition-all border',
+                   sortOrder === 'oldest_first'
+                     ? 'bg-primary/20 text-primary border-primary/40'
+                     : 'bg-secondary text-muted-foreground border-border'
+                 )}
+               >
+                 <ArrowUp size={14} />
+                 Mais antigos
+               </button>
+             </div>
+           </div>
 
           {/* Cover Image */}
           <div>

@@ -174,7 +174,13 @@ export default function PlaylistDetail() {
     };
 
     const sortEpisodes = (eps) => {
-      return [...eps].sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+      const sortOrder = playlist?.episodes_sort_order || 'newest_first';
+      const sorted = [...eps].sort((a, b) => {
+        const dateA = new Date(a.pubDate);
+        const dateB = new Date(b.pubDate);
+        return sortOrder === 'newest_first' ? dateB - dateA : dateA - dateB;
+      });
+      return sorted;
     };
 
     const loadEpisodes = async () => {
