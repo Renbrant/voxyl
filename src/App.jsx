@@ -29,7 +29,7 @@ const AuthenticatedApp = () => {
       <div className="fixed inset-0 flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-2xl overflow-hidden">
-            <img src="https://media.base44.com/images/public/69e2ae13aa773b21002b1fe4/e5abd7d4b_logo.png" alt="Voxyl" className="w-full h-full object-contain" />
+            <img src="https://media.base44.com/images/public/69e2ae13aa773b21002b1fe4/26d262763_voxyllogo.png" alt="Voxyl" className="w-full h-full object-contain" />
           </div>
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
