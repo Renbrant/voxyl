@@ -24,7 +24,7 @@ export default function Explore() {
   const [selectedPodcast, setSelectedPodcast] = useState(null);
   const [voxylSearch, setVoxylSearch] = useState('');
   const [userSearch, setUserSearch] = useState('');
-  const [userFilter, setUserFilter] = useState('all');
+  const [userFilter, setUserFilter] = useState('followers');
   const [likes, setLikes] = useState([]);
   const [blockedIds, setBlockedIds] = useState([]);
   const [followStatuses, setFollowStatuses] = useState({});
@@ -324,10 +324,8 @@ export default function Explore() {
         )}
         {tab === 'users' && (
           <div className="space-y-3">
-            <PodcastSearchBar value={userSearch} onChange={setUserSearch} loading={usersLoading} placeholder="Buscar por @usuário exato..." />
             <div className="flex gap-2 overflow-x-auto no-scrollbar">
               {[
-                { key: 'all', label: 'Buscar' },
                 { key: 'followers', label: 'Seguidores' },
                 { key: 'following', label: 'Seguindo' },
                 { key: 'pending', label: 'Aguardando' },
@@ -384,12 +382,9 @@ export default function Explore() {
                 <div className="text-center py-16 text-muted-foreground">
                   <p className="text-4xl mb-3">👤</p>
                   <p className="text-sm">
-                    {debouncedUserSearch
-                      ? `Nenhum usuário encontrado para "@${debouncedUserSearch}"`
-                      : userFilter === 'followers' ? 'Ninguém te segue ainda'
-                      : userFilter === 'following' ? 'Você não segue ninguém ainda'
-                      : userFilter === 'pending' ? 'Nenhuma solicitação pendente'
-                      : 'Digite um @usuário exato para buscar'}
+                    {userFilter === 'followers' ? 'Ninguém te segue ainda'
+                    : userFilter === 'following' ? 'Você não segue ninguém ainda'
+                    : 'Nenhuma solicitação pendente'}
                   </p>
                 </div>
               ) : (
