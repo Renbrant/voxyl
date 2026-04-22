@@ -15,10 +15,10 @@ import { getDownloads } from '@/lib/downloads';
 import { getCache, setCache, invalidateCache, TTL_5MIN } from '@/lib/appCache';
 
 const TABS = [
-  { key: 'playlists', label: 'Playlists', icon: ListMusic },
-  { key: 'podcasts', label: 'Podcasts', icon: Mic },
-  { key: 'downloads', label: 'Baixados', icon: Download },
-];
+{ key: 'playlists', label: 'Playlists', icon: ListMusic },
+{ key: 'podcasts', label: 'Podcasts', icon: Mic },
+{ key: 'downloads', label: 'Baixados', icon: Download }];
+
 
 export default function Playlists() {
   const [user, setUser] = useState(null);
@@ -54,7 +54,7 @@ export default function Playlists() {
       setCache(cacheKey, data, TTL_5MIN);
       return data;
     },
-    initialData: () => user ? getCache(`my-playlists-${user.id}`) || undefined : undefined,
+    initialData: () => user ? getCache(`my-playlists-${user.id}`) || undefined : undefined
   });
 
   // Liked playlist IDs
@@ -69,11 +69,11 @@ export default function Playlists() {
       setCache(cacheKey, data, TTL_5MIN);
       return data;
     },
-    initialData: () => user ? getCache(`liked-playlists-${user.id}`) || undefined : undefined,
+    initialData: () => user ? getCache(`liked-playlists-${user.id}`) || undefined : undefined
   });
 
-  const likedPlaylistIds = likedPlaylistRecords.map(r => r.playlist_id);
-  const myPlaylistIds = new Set(myPlaylists.map(p => p.id));
+  const likedPlaylistIds = likedPlaylistRecords.map((r) => r.playlist_id);
+  const myPlaylistIds = new Set(myPlaylists.map((p) => p.id));
 
   // Liked playlists data (excluding ones I own, since they already appear above)
   const { data: likedPlaylists = [] } = useQuery({
@@ -81,12 +81,12 @@ export default function Playlists() {
     enabled: likedPlaylistIds.length > 0,
     queryFn: async () => {
       const results = await Promise.all(
-        likedPlaylistIds
-          .filter(id => !myPlaylistIds.has(id))
-          .map(id => base44.entities.Playlist.filter({ id }).then(r => r[0]).catch(() => null))
+        likedPlaylistIds.
+        filter((id) => !myPlaylistIds.has(id)).
+        map((id) => base44.entities.Playlist.filter({ id }).then((r) => r[0]).catch(() => null))
       );
       return results.filter(Boolean);
-    },
+    }
   });
 
   // Liked podcasts
@@ -101,7 +101,7 @@ export default function Playlists() {
       setCache(cacheKey, data, TTL_5MIN);
       return data;
     },
-    initialData: () => user ? getCache(`liked-podcasts-${user.id}`) || undefined : undefined,
+    initialData: () => user ? getCache(`liked-podcasts-${user.id}`) || undefined : undefined
   });
 
   const handleUnlikePodcast = async (podcastLike) => {
@@ -122,136 +122,136 @@ export default function Playlists() {
         title="Curtidas"
         subtitle="Suas playlists e podcasts salvos"
         right={
-          tab === 'playlists' && (
-            <button
-              onClick={() => setShowCreate(true)}
-              className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center glow-primary"
-              style={{ WebkitTapHighlightColor: 'transparent' }}
-            >
+        tab === 'playlists' &&
+        <button
+          onClick={() => setShowCreate(true)}
+          className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center glow-primary"
+          style={{ WebkitTapHighlightColor: 'transparent' }}>
+          
               <Plus size={18} className="text-white" />
             </button>
-          )
-        }
-      />
+
+        } />
+      
 
       {/* Tabs */}
       <div className="flex gap-2 px-4 mb-4">
-        {TABS.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={cn(
-              'flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all flex-shrink-0',
-              tab === key ? 'gradient-primary text-white glow-primary' : 'bg-secondary text-muted-foreground'
-            )}
-          >
+        {TABS.map(({ key, label, icon: Icon }) =>
+        <button
+          key={key}
+          onClick={() => setTab(key)}
+          className={cn(
+            'flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all flex-shrink-0',
+            tab === key ? 'gradient-primary text-white glow-primary' : 'bg-secondary text-muted-foreground'
+          )}>
+          
             <Icon size={14} />
             {label}
           </button>
-        ))}
+        )}
       </div>
 
       <div className="px-4 space-y-2">
         {/* Playlists tab: mine first, then liked */}
-        {tab === 'playlists' && (
-          <>
+        {tab === 'playlists' &&
+        <>
             {/* My playlists */}
-            {myPlaylists.length > 0 && (
-              <>
+            {myPlaylists.length > 0 &&
+          <>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium pb-1">Minhas playlists</p>
-                {myPlaylists.map((pl, i) => (
-                  <motion.div key={pl.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+                {myPlaylists.map((pl, i) =>
+            <motion.div key={pl.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                     <PlaylistCard
-                      playlist={pl}
-                      compact
-                      liked={likedPlaylistIds.includes(pl.id)}
-                      currentUser={user}
-                      onEdited={refetchMine}
-                    />
+                playlist={pl}
+                compact
+                liked={likedPlaylistIds.includes(pl.id)}
+                currentUser={user}
+                onEdited={refetchMine} />
+              
                   </motion.div>
-                ))}
-              </>
             )}
+              </>
+          }
 
             {/* Liked playlists from others */}
-            {likedPlaylists.length > 0 && (
-              <>
+            {likedPlaylists.length > 0 &&
+          <>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium pt-3 pb-1">Playlists curtidas</p>
-                {likedPlaylists.map((pl, i) => (
-                  <motion.div key={pl.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+                {likedPlaylists.map((pl, i) =>
+            <motion.div key={pl.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                     <PlaylistCard
-                      playlist={pl}
-                      compact
-                      liked
-                      onLike={handleLikePlaylist}
-                      currentUser={user}
-                    />
+                playlist={pl}
+                compact
+                liked
+                onLike={handleLikePlaylist}
+                currentUser={user} />
+              
                   </motion.div>
-                ))}
-              </>
             )}
+              </>
+          }
 
-            {myPlaylists.length === 0 && likedPlaylists.length === 0 && (
-              <div className="text-center py-16 text-muted-foreground">
+            {myPlaylists.length === 0 && likedPlaylists.length === 0 &&
+          <div className="text-center py-16 text-muted-foreground">
                 <p className="text-4xl mb-3">🎵</p>
                 <p className="font-medium text-foreground">Nenhuma playlist ainda</p>
                 <p className="text-sm mt-1">Crie ou curta playlists para vê-las aqui!</p>
               </div>
-            )}
+          }
           </>
-        )}
+        }
 
         {/* Downloads tab */}
         {tab === 'downloads' && (
-          downloads.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
+        downloads.length === 0 ?
+        <div className="text-center py-16 text-muted-foreground">
               <p className="text-4xl mb-3">📥</p>
               <p className="font-medium text-foreground">Nenhum episódio baixado</p>
-              <p className="text-sm mt-1">Abra um episódio e toque em "Baixar" para salvá-lo aqui.</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {downloads.map((ep, i) => (
-                <motion.div key={ep.audioUrl} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+              <p className="text-sm mt-1">Funcionalidade ainda não implementada.</p>
+            </div> :
+
+        <div className="space-y-2">
+              {downloads.map((ep, i) =>
+          <motion.div key={ep.audioUrl} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                   <DownloadedEpisodeCard
-                    episode={ep}
-                    onRemoved={() => setDownloads(getDownloads())}
-                  />
+              episode={ep}
+              onRemoved={() => setDownloads(getDownloads())} />
+            
                 </motion.div>
-              ))}
-            </div>
-          )
-        )}
+          )}
+            </div>)
+
+        }
 
         {/* Podcasts tab */}
         {tab === 'podcasts' && (
-          likedPodcasts.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
+        likedPodcasts.length === 0 ?
+        <div className="text-center py-16 text-muted-foreground">
               <p className="text-4xl mb-3">🎙️</p>
               <p className="font-medium text-foreground">Nenhum podcast curtido</p>
               <p className="text-sm mt-1">Explore e curta podcasts para salvá-los aqui!</p>
-            </div>
-          ) : (
-            likedPodcasts.map((like, i) => (
-              <motion.div key={like.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+            </div> :
+
+        likedPodcasts.map((like, i) =>
+        <motion.div key={like.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                 <LikedPodcastCard
-                  podcastLike={like}
-                  onUnlike={() => handleUnlikePodcast(like)}
-                />
+            podcastLike={like}
+            onUnlike={() => handleUnlikePodcast(like)} />
+          
               </motion.div>
-            ))
-          )
-        )}
+        ))
+
+        }
       </div>
 
-      {showCreate && user && (
-        <CreatePlaylistModal
-          user={user}
-          playlistCount={myPlaylists.length}
-          onClose={() => setShowCreate(false)}
-          onCreated={() => { setShowCreate(false); invalidateCache(`my-playlists-${user?.id}`); refetchMine(); }}
-        />
-      )}
-    </div>
-  );
+      {showCreate && user &&
+      <CreatePlaylistModal
+        user={user}
+        playlistCount={myPlaylists.length}
+        onClose={() => setShowCreate(false)}
+        onCreated={() => {setShowCreate(false);invalidateCache(`my-playlists-${user?.id}`);refetchMine();}} />
+
+      }
+    </div>);
+
 }
