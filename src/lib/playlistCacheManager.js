@@ -49,7 +49,7 @@ export function saveLocalCache(playlistId, episodes) {
 // Get cloud cache
 export async function getCloudCache(playlistId) {
   try {
-    const records = await base44.asServiceRole.entities.PlaylistEpisodesCache.filter({ playlist_id: playlistId });
+    const records = await base44.entities.PlaylistEpisodesCache.filter({ playlist_id: playlistId });
     if (!records[0]) return null;
     
     const record = records[0];
@@ -70,16 +70,16 @@ export async function updateCloudCache(playlistId, episodes) {
     const data = JSON.stringify(episodes);
     const now = new Date().toISOString();
     
-    const existing = await base44.asServiceRole.entities.PlaylistEpisodesCache.filter({ playlist_id: playlistId });
+    const existing = await base44.entities.PlaylistEpisodesCache.filter({ playlist_id: playlistId });
     
     if (existing[0]) {
-      await base44.asServiceRole.entities.PlaylistEpisodesCache.update(existing[0].id, {
+      await base44.entities.PlaylistEpisodesCache.update(existing[0].id, {
         episodes_hash: hash,
         episodes_data: data,
         last_updated: now
       });
     } else {
-      await base44.asServiceRole.entities.PlaylistEpisodesCache.create({
+      await base44.entities.PlaylistEpisodesCache.create({
         playlist_id: playlistId,
         episodes_hash: hash,
         episodes_data: data,
