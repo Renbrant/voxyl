@@ -95,7 +95,7 @@ export default function Explore() {
   // Fetch Voxyl playlists
   const { data: playlists = [], isLoading: playlistsLoading } = useQuery({
     queryKey: ['explore-playlists'],
-    queryFn: () => base44.entities.Playlist.list('-created_date', 100),
+    queryFn: () => base44.entities.Playlist.list('-plays_count', 100),
   });
 
   // Followers: users who follow me (accepted)
