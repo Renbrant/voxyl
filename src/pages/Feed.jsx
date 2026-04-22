@@ -84,24 +84,8 @@ export default function Feed() {
   const { data: topPodcasts = [] } = useQuery({
     queryKey: ['top-podcasts'],
     queryFn: async () => {
-      const allLikes = await base44.entities.PodcastLike.list('-created_date', 1000);
-      const podcastMap = {};
-      allLikes.forEach(like => {
-        if (!podcastMap[like.feed_url]) {
-          podcastMap[like.feed_url] = {
-            feedUrl: like.feed_url,
-            title: like.podcast_title || 'Sem título',
-            image: like.podcast_image || '',
-            author: like.podcast_author || '',
-            description: like.podcast_description || '',
-            likeCount: 0,
-          };
-        }
-        podcastMap[like.feed_url].likeCount++;
-      });
-      return Object.values(podcastMap)
-        .sort((a, b) => b.likeCount - a.likeCount)
-        .slice(0, 100);
+      const result = await base44.functions.invoke('getTopPodcastsByPlayback', {});
+      return result.data?.podcasts || [];
     },
   });
 
@@ -225,24 +209,19 @@ export default function Feed() {
 
              {/* Hero Podcast */}
              {topPodcasts[0] && (
-               <Link to={`/podcast/${encodeURIComponent(topPodcasts[0].feedUrl)}`}>
-                 <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-5 relative rounded-3xl overflow-hidden h-48 bg-gradient-to-br from-purple-800 via-primary/60 to-cyan-600">
-                   {topPodcasts[0].image && (
-                     <img src={topPodcasts[0].image} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                   )}
-                   <div className="absolute inset-0 bg-black/40" />
-                   <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
-                     <div className="flex-1 min-w-0 mr-3">
-                       <p className="text-xs text-white/70 mb-0.5 font-medium">❤️ Mais curtido agora</p>
-                       <h2 className="text-xl font-grotesk font-bold text-white truncate">{topPodcasts[0].title}</h2>
-                       <p className="text-sm text-white/70 truncate">{topPodcasts[0].author} • {topPodcasts[0].likeCount || 0} favoritos</p>
-                     </div>
-                     <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center glow-primary flex-shrink-0">
-                       <Play size={20} fill="white" className="text-white ml-0.5" />
-                     </div>
+               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-5 relative rounded-3xl overflow-hidden h-48 bg-gradient-to-br from-purple-800 via-primary/60 to-cyan-600">
+                 <div className="absolute inset-0 bg-black/40" />
+                 <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
+                   <div className="flex-1 min-w-0 mr-3">
+                     <p className="text-xs text-white/70 mb-0.5 font-medium">🔥 Mais tocado agora</p>
+                     <h2 className="text-xl font-grotesk font-bold text-white truncate">Podcast mais reproduzido</h2>
+                     <p className="text-sm text-white/70 truncate">{topPodcasts[0].playCount || 0} reproduções</p>
                    </div>
-                 </motion.div>
-               </Link>
+                   <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center glow-primary flex-shrink-0">
+                     <Play size={20} fill="white" className="text-white ml-0.5" />
+                   </div>
+                 </div>
+               </motion.div>
              )}
 
              {/* Grid de Podcasts */}
@@ -250,21 +229,15 @@ export default function Feed() {
                <div>
                  <div className="grid grid-cols-2 gap-3 mb-3">
                    {displayedPodcasts.slice(1).map((podcast, i) => (
-                     <motion.div key={podcast.feedUrl} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                       <Link to={`/podcast/${encodeURIComponent(podcast.feedUrl)}`}>
-                         <div className="flex flex-col gap-2 p-2 rounded-2xl border border-border bg-card hover:border-primary/30 transition-all active:scale-95 h-full">
-                           <div className="w-full aspect-square rounded-lg overflow-hidden bg-secondary flex-shrink-0">
-                             {podcast.image && (
-                               <img src={podcast.image} alt="" className="w-full h-full object-cover" />
-                             )}
-                           </div>
-                           <div className="min-w-0 px-1 flex-1">
-                             <p className="text-xs font-medium line-clamp-2 text-foreground">{podcast.title}</p>
-                             <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{podcast.author}</p>
-                             <p className="text-xs text-primary mt-1">❤️ {podcast.likeCount}</p>
-                           </div>
+                     <motion.div key={podcast.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                       <div className="flex flex-col gap-2 p-2 rounded-2xl border border-border bg-card hover:border-primary/30 transition-all active:scale-95 h-full">
+                         <div className="w-full aspect-square rounded-lg overflow-hidden bg-secondary flex-shrink-0" />
+                         <div className="min-w-0 px-1 flex-1">
+                           <p className="text-xs font-medium line-clamp-2 text-foreground">Podcast {i + 2}</p>
+                           <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">Carregando...</p>
+                           <p className="text-xs text-primary mt-1">▶️ {podcast.playCount} reproduções</p>
                          </div>
-                       </Link>
+                       </div>
                      </motion.div>
                    ))}
                  </div>
