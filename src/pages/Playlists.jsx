@@ -93,7 +93,15 @@ export default function Playlists() {
   const { data: likedPodcasts = [], refetch: refetchPodcasts } = useQuery({
     queryKey: ['liked-podcasts', user?.id],
     enabled: !!user && tab === 'podcasts',
-    queryFn: () => base44.entities.PodcastLike.filter({ user_id: user.id }, '-created_date', 100),
+    queryFn: async () => {
+      const cacheKey = `liked-podcasts-${user.id}`;
+      const cached = getCache(cacheKey);
+      if (cached) return cached;
+      const data = await base44.entities.PodcastLike.filter({ user_id: user.id }, '-created_date', 100);
+      setCache(cacheKey, data, TTL_5MIN);
+      return data;
+    },
+    initialData: () => user ? getCache(`liked-podcasts-${user.id}`) || undefined : undefined,
   });
 
   const handleUnlikePodcast = async (podcastLike) => {
@@ -241,11 +249,7 @@ export default function Playlists() {
           user={user}
           playlistCount={myPlaylists.length}
           onClose={() => setShowCreate(false)}
-          onCreated={() => {
-            invalidateCache(`my-playlists-${user.id}`);
-            setShowCreate(false);
-            refetchMine();
-          }}
+          onCreated={() => { setShowCreate(false); invalidateCache(`my-playlists-${user?.id}`); refetchMine(); }}
         />
       )}
     </div>
