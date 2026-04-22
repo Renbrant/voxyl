@@ -24,7 +24,7 @@ export default function Explore() {
   const [selectedPodcast, setSelectedPodcast] = useState(null);
   const [voxylSearch, setVoxylSearch] = useState('');
   const [userSearch, setUserSearch] = useState('');
-  const [userFilter, setUserFilter] = useState('followers');
+  const [userFilter, setUserFilter] = useState('connections');
   const [likes, setLikes] = useState([]);
   const [blockedIds, setBlockedIds] = useState([]);
   const [followStatuses, setFollowStatuses] = useState({});
@@ -198,21 +198,22 @@ export default function Explore() {
       return searchedUsers.filter(u => u.username && u.username.toLowerCase() === q);
     }
 
-    if (userFilter === 'followers') {
-      return followersList.map(f => ({
+    if (userFilter === 'connections') {
+      const followers = followersList.map(f => ({
         id: f.follower_id,
         username: f.follower_username,
         email: f.follower_email,
         full_name: f.follower_name,
+        type: 'follower',
       }));
-    }
-    if (userFilter === 'following') {
-      return followingList.map(f => ({
+      const following = followingList.map(f => ({
         id: f.following_id,
         username: f._profile?.username || f.following_username || null,
         email: f.following_email,
         full_name: f._profile?.full_name || f.following_name || '',
+        type: 'following',
       }));
+      return [...followers, ...following];
     }
     if (userFilter === 'pending') {
       return pendingList.map(f => ({
@@ -220,10 +221,10 @@ export default function Explore() {
         username: f._profile?.username || f.following_username || null,
         email: f.following_email,
         full_name: f._profile?.full_name || f.following_name || '',
+        type: 'pending',
       }));
     }
 
-    // 'all' without search: show nothing
     return [];
   })();
 
@@ -326,8 +327,7 @@ export default function Explore() {
           <div className="space-y-3">
             <div className="flex gap-2 overflow-x-auto no-scrollbar">
               {[
-                { key: 'followers', label: 'Seguidores' },
-                { key: 'following', label: 'Seguindo' },
+                { key: 'connections', label: 'Conexões' },
                 { key: 'pending', label: 'Aguardando' },
               ].map(({ key, label }) => (
                 <button
@@ -377,30 +377,89 @@ export default function Explore() {
               {[...Array(5)].map((_, i) => <div key={i} className="h-16 rounded-2xl bg-secondary animate-pulse" />)}
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {filteredUsers.length === 0 ? (
                 <div className="text-center py-16 text-muted-foreground">
                   <p className="text-4xl mb-3">👤</p>
                   <p className="text-sm">
-                    {userFilter === 'followers' ? 'Ninguém te segue ainda'
-                    : userFilter === 'following' ? 'Você não segue ninguém ainda'
+                    {userFilter === 'connections' ? 'Nenhuma conexão ainda'
                     : 'Nenhuma solicitação pendente'}
                   </p>
                 </div>
+              ) : userFilter === 'connections' ? (
+                <>
+                  {followersList.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-muted-foreground mb-2">👥 Seguidores ({followersList.length})</h3>
+                      <div className="space-y-2">
+                        {followersList.map((f, i) => (
+                          <UserSearchCard
+                            key={f.follower_id}
+                            user={{
+                              id: f.follower_id,
+                              username: f.follower_username,
+                              email: f.follower_email,
+                              full_name: f.follower_name,
+                            }}
+                            index={i}
+                            currentUser={user}
+                            followStatus={followStatuses[f.follower_id] || null}
+                            theyFollowMe={theyFollowMeIds.has(f.follower_id)}
+                            onStatusChange={(status) =>
+                              setFollowStatuses(prev => ({ ...prev, [f.follower_id]: status }))
+                            }
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {followingList.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-muted-foreground mb-2">➡️ Seguindo ({followingList.length})</h3>
+                      <div className="space-y-2">
+                        {followingList.map((f, i) => (
+                          <UserSearchCard
+                            key={f.following_id}
+                            user={{
+                              id: f.following_id,
+                              username: f._profile?.username || f.following_username || null,
+                              email: f.following_email,
+                              full_name: f._profile?.full_name || f.following_name || '',
+                            }}
+                            index={i}
+                            currentUser={user}
+                            followStatus={followStatuses[f.following_id] || null}
+                            theyFollowMe={theyFollowMeIds.has(f.following_id)}
+                            onStatusChange={(status) =>
+                              setFollowStatuses(prev => ({ ...prev, [f.following_id]: status }))
+                            }
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
-                filteredUsers.map((u, i) => (
-                  <UserSearchCard
-                    key={u.id}
-                    user={u}
-                    index={i}
-                    currentUser={user}
-                    followStatus={followStatuses[u.id] || null}
-                    theyFollowMe={theyFollowMeIds.has(u.id)}
-                    onStatusChange={(status) =>
-                      setFollowStatuses(prev => ({ ...prev, [u.id]: status }))
-                    }
-                  />
-                ))
+                <div className="space-y-2">
+                  {pendingList.map((f, i) => (
+                    <UserSearchCard
+                      key={f.following_id}
+                      user={{
+                        id: f.following_id,
+                        username: f._profile?.username || f.following_username || null,
+                        email: f.following_email,
+                        full_name: f._profile?.full_name || f.following_name || '',
+                      }}
+                      index={i}
+                      currentUser={user}
+                      followStatus={followStatuses[f.following_id] || null}
+                      theyFollowMe={theyFollowMeIds.has(f.following_id)}
+                      onStatusChange={(status) =>
+                        setFollowStatuses(prev => ({ ...prev, [f.following_id]: status }))
+                      }
+                    />
+                  ))}
+                </div>
               )}
             </div>
           )
