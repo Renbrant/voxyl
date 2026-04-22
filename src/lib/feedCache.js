@@ -1,9 +1,24 @@
 const CACHE_KEY_PREFIX = 'voxyl_feed_';
+const INDEX_KEY = 'voxyl_feed_index';
 const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const MAX_CACHE_ENTRIES = 100;
 
 function getCacheKey(url) {
   return CACHE_KEY_PREFIX + btoa(url).replace(/[^a-zA-Z0-9]/g, '').slice(0, 40);
+}
+
+function getIndex() {
+  try {
+    return JSON.parse(localStorage.getItem(INDEX_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveIndex(index) {
+  try {
+    localStorage.setItem(INDEX_KEY, JSON.stringify(index));
+  } catch {}
 }
 
 export function getFeedFromCache(url) {
@@ -24,9 +39,17 @@ export function getFeedFromCache(url) {
 
 export function saveFeedToCache(url, data) {
   try {
-    pruneOldEntries();
     const key = getCacheKey(url);
+    const index = getIndex();
+    index[key] = Date.now();
+    
+    // Check if we need to prune
+    if (Object.keys(index).length >= MAX_CACHE_ENTRIES) {
+      pruneOldEntries(index);
+    }
+    
     localStorage.setItem(key, JSON.stringify({ cachedAt: Date.now(), data }));
+    saveIndex(index);
   } catch {
     // Storage full — ignore
   }
@@ -38,14 +61,13 @@ export function invalidateFeedCache(url) {
   } catch {}
 }
 
-function pruneOldEntries() {
+function pruneOldEntries(index) {
   try {
-    const keys = Object.keys(localStorage).filter(k => k.startsWith(CACHE_KEY_PREFIX));
-    if (keys.length < MAX_CACHE_ENTRIES) return;
-    // Remove oldest entries
-    const entries = keys.map(k => {
-      try { return { k, cachedAt: JSON.parse(localStorage.getItem(k)).cachedAt }; } catch { return { k, cachedAt: 0 }; }
-    }).sort((a, b) => a.cachedAt - b.cachedAt);
-    entries.slice(0, Math.floor(MAX_CACHE_ENTRIES / 2)).forEach(e => localStorage.removeItem(e.k));
+    const entries = Object.entries(index).sort((a, b) => a[1] - b[1]);
+    const toRemove = entries.slice(0, Math.floor(MAX_CACHE_ENTRIES / 2));
+    toRemove.forEach(([key]) => {
+      localStorage.removeItem(key);
+      delete index[key];
+    });
   } catch {}
 }

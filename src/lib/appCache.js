@@ -43,5 +43,8 @@ export function invalidateCachePrefix(prefix) {
 }
 
 // TTL constants
-export const TTL_5MIN  = 5  * 60 * 1000;
-export const TTL_1HOUR = 60 * 60 * 1000;
+export const TTL_5MIN   = 5  * 60 * 1000;
+export const TTL_15MIN  = 15 * 60 * 1000;
+export const TTL_1HOUR  = 60 * 60 * 1000;
+export const TTL_4HOUR  = 4  * 60 * 60 * 1000;
+export const TTL_1DAY   = 24 * 60 * 60 * 1000;

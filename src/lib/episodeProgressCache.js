@@ -10,12 +10,20 @@ const TTL_MS = 60 * 24 * 60 * 60 * 1000; // 60 days
 const MIN_SAVE_POSITION = 10; // don't save positions under 10s (considered "not started")
 const FINISH_THRESHOLD = 0.93; // >93% = finished
 
+// ─── In-memory cache (faster than repeated JSON parse) ──────────────────────────
+let memoryCache = null;
+
 // ─── Local cache helpers ──────────────────────────────────────────────────────
 
 function readCache() {
+  if (memoryCache) return memoryCache;
+  
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return {};
+    if (!raw) {
+      memoryCache = {};
+      return memoryCache;
+    }
     const data = JSON.parse(raw);
     const now = Date.now();
     // Prune expired entries
@@ -28,15 +36,18 @@ function readCache() {
       }
     }
     if (pruned) writeCache(data);
+    memoryCache = data;
     return data;
   } catch {
-    return {};
+    memoryCache = {};
+    return memoryCache;
   }
 }
 
 function writeCache(data) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    memoryCache = data;
   } catch {}
 }
 
