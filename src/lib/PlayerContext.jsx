@@ -37,6 +37,7 @@ export function PlayerProvider({ children }) {
   const currentEpisodeRef = useRef(null);
   const localSaveTimerRef = useRef(null);
   const dbSaveTimerRef = useRef(null);
+  const podcastPlayRecordedRef = useRef(new Set()); // Track which episodes already recorded as plays
 
   // ─── Mark episode as finished ────────────────────────────────────────────
   const markFinished = useCallback((audioUrl) => {
@@ -45,6 +46,31 @@ export function PlayerProvider({ children }) {
     const audio = audioRef.current;
     setCachedProgress(audioUrl, audio?.currentTime || 0, audio?.duration || 0, true);
     if (user) saveProgressToDB(base44, user.id, audioUrl).catch(() => {});
+  }, [user]);
+
+  // ─── Record podcast play when >50% reached ──────────────────────────────
+  const recordPodcastPlay = useCallback(() => {
+    const ep = currentEpisodeRef.current;
+    const audio = audioRef.current;
+    if (!ep?.audioUrl || !audio || !user) return;
+
+    // Only record once per episode per session
+    if (podcastPlayRecordedRef.current.has(ep.audioUrl)) return;
+
+    const dur = isNaN(audio.duration) ? 0 : audio.duration;
+    const pos = audio.currentTime;
+    const playPercent = dur > 0 ? (pos / dur) : 0;
+
+    if (playPercent >= 0.5) {
+      podcastPlayRecordedRef.current.add(ep.audioUrl);
+      base44.functions.invoke('recordPodcastPlay', {
+        feed_url: ep.feedUrl || ep.id || '',
+        podcast_title: ep.feedTitle || '',
+        podcast_image: ep.image || '',
+        audio_url: ep.audioUrl,
+        episode_title: ep.title || '',
+      }).catch(() => {});
+    }
   }, [user]);
 
   // ─── Save current position to cache (and optionally DB) ──────────────────
@@ -64,10 +90,13 @@ export function PlayerProvider({ children }) {
       setFinishedUrls(prev => new Set([...prev, ep.audioUrl]));
     }
 
+    // Record podcast play if >50% reached
+    recordPodcastPlay();
+
     if (forcDB && user) {
       saveProgressToDB(base44, user.id, ep.audioUrl).catch(() => {});
     }
-  }, [user]);
+  }, [user, recordPodcastPlay]);
 
   // ─── Periodic save timers ─────────────────────────────────────────────────
   const startSaveTimers = useCallback(() => {

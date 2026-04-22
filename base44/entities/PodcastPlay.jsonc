@@ -1,0 +1,61 @@
+{
+  "name": "PodcastPlay",
+  "type": "object",
+  "properties": {
+    "feed_url": {
+      "type": "string",
+      "description": "RSS feed URL identifier"
+    },
+    "podcast_title": {
+      "type": "string",
+      "description": "Podcast title"
+    },
+    "podcast_image": {
+      "type": "string",
+      "description": "Podcast cover image"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "User who played the episode"
+    },
+    "audio_url": {
+      "type": "string",
+      "description": "Episode audio URL"
+    },
+    "episode_title": {
+      "type": "string",
+      "description": "Episode title"
+    },
+    "played_at": {
+      "type": "string",
+      "description": "ISO timestamp when episode was played"
+    }
+  },
+  "required": [
+    "feed_url",
+    "user_id",
+    "audio_url"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

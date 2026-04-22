@@ -84,23 +84,31 @@ export default function Feed() {
   const { data: topPodcasts = [] } = useQuery({
     queryKey: ['top-podcasts'],
     queryFn: async () => {
-      // Return top playlists as "podcasts" since we don't have actual RSS feed level plays
-      const allPlaylists = await base44.entities.Playlist.list('-plays_count', 100);
+      // Get unique podcasts (feeds) and count their plays from PodcastPlay
+      const allPlays = await base44.asServiceRole.entities.PodcastPlay.list('-created_date', 1000);
       
-      const podcasts = allPlaylists
-        .filter(p => p.visibility !== 'private' && !blockedIds.includes(p.creator_id))
-        .map(pl => ({
-          feedUrl: pl.id, // Use playlist ID as identifier
-          title: pl.name,
-          image: pl.cover_image || '',
-          author: pl.creator_username || 'Usuário',
-          description: pl.description || '',
-          playCount: pl.plays_count || 0
-        }))
-        .filter(p => p.playCount > 0)
+      const feedMap = {};
+      allPlays.forEach(play => {
+        if (!play.feed_url) return;
+        
+        if (!feedMap[play.feed_url]) {
+          feedMap[play.feed_url] = {
+            feedUrl: play.feed_url,
+            title: play.podcast_title || 'Sem título',
+            image: play.podcast_image || '',
+            author: play.podcast_title || '',
+            description: '',
+            playCount: 0
+          };
+        }
+        feedMap[play.feed_url].playCount += 1;
+      });
+
+      const sorted = Object.values(feedMap)
+        .sort((a, b) => b.playCount - a.playCount)
         .slice(0, 100);
       
-      return podcasts;
+      return sorted;
     },
   });
 
