@@ -173,14 +173,16 @@ export default function PlaylistDetail() {
         .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
     };
 
-    // Always show loading state initially
-    setLoadingEps(true);
-    
     // Load from cache first (instant display)
     const cached = playlist.rss_feeds.map(f => getFeedFromCache(f.url));
     const allCached = cached.every(c => c !== null);
+    
     if (allCached) {
+      // Show cached data immediately, no loading spinner
       setEpisodes(processResults(cached));
+    } else {
+      // Only show loading if cache is incomplete
+      setLoadingEps(true);
     }
 
     // Always fetch all feeds in background (always check for new episodes)
