@@ -253,10 +253,10 @@ export default function Feed() {
             )}
 
             {/* Grid de Podcasts (8 cards) */}
-            {topPodcasts.length > 1 && (
+            {topPodcasts.length > 0 && (
               <div>
                 <div className="grid grid-cols-2 gap-3 mb-3">
-                  {displayedPodcasts.slice(1).map((podcast, i) => (
+                  {displayedPodcasts.slice(1, 9).map((podcast, i) => (
                     <motion.div key={podcast.feedUrl} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
                       <div className="flex flex-col gap-2 p-2 rounded-2xl border border-border bg-card hover:border-primary/30 transition-all active:scale-95 h-full">
                         <div className="w-full aspect-square rounded-lg overflow-hidden bg-secondary flex-shrink-0">
