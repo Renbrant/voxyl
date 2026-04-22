@@ -237,7 +237,7 @@ export default function PlaylistDetail() {
 
   const handlePlayEpisode = (ep) => {
     if (currentEpisode?.audioUrl === ep.audioUrl) { togglePlay(); return; }
-    play(ep, episodes);
+    play(ep, episodes, { type: 'playlist', id });
     setPlayedUrls(prev => new Set([...prev, ep.audioUrl]));
     base44.entities.Playlist.update(id, { plays_count: (playlist?.plays_count || 0) + 1 });
   };

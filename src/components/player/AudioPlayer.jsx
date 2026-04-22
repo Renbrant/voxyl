@@ -1,9 +1,22 @@
 import { usePlayer } from '@/lib/PlayerContext';
+import { useNavigate } from 'react-router-dom';
 import { Play, Pause, SkipBack, SkipForward, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatDuration } from '@/lib/rssUtils';
 
 export default function AudioPlayer() {
-  const { currentEpisode, isPlaying, isLoading, currentTime, duration, togglePlay, seek, playNext, playPrev, playerMinimized: minimized, setPlayerMinimized: setMinimized } = usePlayer();
+  const navigate = useNavigate();
+  const { currentEpisode, isPlaying, isLoading, currentTime, duration, togglePlay, seek, playNext, playPrev, playerMinimized: minimized, setPlayerMinimized: setMinimized, episodeSource } = usePlayer();
+
+  const handlePlayerClick = (e) => {
+    // Don't navigate if clicking on buttons
+    if (e.target.closest('button') || e.currentTarget.querySelector('button')?.contains(e.target)) return;
+    
+    if (episodeSource?.type === 'playlist' && episodeSource?.id) {
+      navigate(`/playlist/${episodeSource.id}`);
+    } else if (episodeSource?.type === 'podcast' && episodeSource?.id) {
+      navigate(`/podcast/${encodeURIComponent(episodeSource.id)}`);
+    }
+  };
 
   if (!currentEpisode) return null;
 
@@ -13,7 +26,7 @@ export default function AudioPlayer() {
     <div className="fixed left-1/2 -translate-x-1/2 w-full max-w-md z-40 px-3 animate-slide-up select-none"
       style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4rem)' }}
     >
-      <div className="bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
+      <div className="bg-card border border-border rounded-2xl shadow-2xl overflow-hidden cursor-pointer" onClick={handlePlayerClick}>
         {/* Progress bar always visible */}
         <div className="h-1 bg-border relative overflow-hidden">
           {isLoading ? (
@@ -25,7 +38,7 @@ export default function AudioPlayer() {
 
         {minimized ? (
           /* Minimized bar */
-          <div className="flex items-center gap-3 px-3 py-2">
+          <div className="flex items-center gap-3 px-3 py-2" onClick={(e) => e.stopPropagation()}>
             <div className="w-7 h-7 rounded-lg overflow-hidden flex-shrink-0 bg-secondary">
               {currentEpisode.image
                 ? <img src={currentEpisode.image} alt="" className="w-full h-full object-cover" />
@@ -41,7 +54,7 @@ export default function AudioPlayer() {
           </div>
         ) : (
           /* Full player */
-          <div className="p-3">
+          <div className="p-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-secondary">
                 {currentEpisode.image

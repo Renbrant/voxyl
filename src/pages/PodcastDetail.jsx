@@ -89,7 +89,7 @@ export default function PodcastDetail() {
 
   const handlePlayEpisode = (ep) => {
     if (currentEpisode?.audioUrl === ep.audioUrl) { togglePlay(); return; }
-    play(ep, episodes);
+    play(ep, episodes, { type: 'podcast', id: feedUrl });
   };
 
   const handleLike = async () => {

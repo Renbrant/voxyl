@@ -28,6 +28,7 @@ export function PlayerProvider({ children }) {
   const [isLoading, setIsLoading] = useState(false);
   const [finishedUrls, setFinishedUrls] = useState(new Set());
   const [user, setUser] = useState(null);
+  const [episodeSource, setEpisodeSource] = useState(null); // { type: 'playlist'|'podcast', id: string }
 
   const audioRef = useRef(null);
   const playNextRef = useRef(null);
@@ -195,8 +196,9 @@ export function PlayerProvider({ children }) {
   currentEpisodeRef.current = currentEpisode;
 
   // ─── play() ──────────────────────────────────────────────────────────────
-  const play = (episode, newQueue = []) => {
+  const play = (episode, newQueue = [], source = null) => {
     if (newQueue.length > 0) setQueue(newQueue);
+    if (source) setEpisodeSource(source);
 
     if (currentEpisode?.audioUrl === episode.audioUrl) {
       audioRef.current?.play().then(() => setIsPlaying(true)).catch(() => {});
@@ -278,6 +280,7 @@ export function PlayerProvider({ children }) {
       playerMinimized, setPlayerMinimized,
       finishedUrls, setFinishedUrls, markFinished,
       getCachedProgress,
+      episodeSource, setEpisodeSource,
     }}>
       {children}
     </PlayerContext.Provider>
