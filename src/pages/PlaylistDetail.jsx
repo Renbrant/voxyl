@@ -181,25 +181,46 @@ export default function PlaylistDetail() {
       setLoadingEps(true);
     }
 
-    // Fetch only stale/missing feeds in background
-    const staleFeedUrls = playlist.rss_feeds.filter((f, i) => cached[i] === null);
-    if (staleFeedUrls.length === 0) return;
-
+    // Fetch all feeds in background (to detect new episodes)
     Promise.allSettled(
-      staleFeedUrls.map(f =>
-        base44.functions.invoke('fetchRSSFeed', { url: f.url, count: 30 }).then(r => {
-          saveFeedToCache(f.url, r.data);
-          return r.data;
-        })
+      playlist.rss_feeds.map((f, idx) =>
+        base44.functions.invoke('fetchRSSFeed', { url: f.url, count: 30 })
+          .then(r => {
+            const fresh = r.data;
+            const oldCached = cached[idx];
+            saveFeedToCache(f.url, fresh);
+            
+            // Return only NEW episodes (those not in the cached version)
+            if (!oldCached) return fresh; // All new if wasn't cached
+            
+            const oldUrls = new Set(oldCached.items?.map(e => e.link) || []);
+            const newItems = fresh.items?.filter(e => !oldUrls.has(e.link)) || [];
+            return { ...fresh, items: newItems };
+          })
       )
     ).then(results => {
       const freshData = results
         .filter(r => r.status === 'fulfilled')
         .map(r => r.value);
 
-      // Merge fresh with already-cached
-      const allData = playlist.rss_feeds.map((f, i) => cached[i] || freshData.shift());
-      setEpisodes(processResults(allData));
+      // Merge: cached feeds + new episodes from fresh fetches
+      const mergedData = playlist.rss_feeds.map((f, i) => {
+        const cachedFeed = cached[i];
+        const freshFeed = freshData[i];
+        
+        if (!cachedFeed) return freshFeed; // Not cached, use full fresh
+        if (!freshFeed?.items?.length) return cachedFeed; // No new items, use cached
+        
+        // Merge: new items first, then existing cached items
+        const newUrls = new Set(freshFeed.items.map(e => e.link));
+        const existingItems = cachedFeed.items?.filter(e => !newUrls.has(e.link)) || [];
+        return {
+          ...cachedFeed,
+          items: [...freshFeed.items, ...existingItems],
+        };
+      });
+      
+      setEpisodes(processResults(mergedData));
     }).finally(() => setLoadingEps(false));
   }, [playlist]);
 

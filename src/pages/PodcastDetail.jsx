@@ -57,16 +57,31 @@ export default function PodcastDetail() {
     const cached = getFeedFromCache(feedUrl);
     if (cached) {
       applyData(cached);
-      return;
+    } else {
+      setLoading(true);
     }
 
-    // Fetch from network if not cached
-    setLoading(true);
-    setEpisodes([]);
+    // Fetch in background and update only new episodes
     base44.functions.invoke('fetchRSSFeed', { url: feedUrl, count: 100 })
       .then(res => {
-        saveFeedToCache(feedUrl, res.data);
-        applyData(res.data);
+        const fresh = res.data;
+        saveFeedToCache(feedUrl, fresh);
+        
+        // If nothing was cached, show all fresh episodes
+        if (!cached) {
+          applyData(fresh);
+        } else {
+          // Only update with new episodes
+          const oldUrls = new Set(cached.items?.map(e => e.link) || []);
+          const newItems = fresh.items?.filter(e => !oldUrls.has(e.link)) || [];
+          if (newItems.length > 0) {
+            const merged = {
+              ...cached,
+              items: [...newItems, ...cached.items],
+            };
+            applyData(merged);
+          }
+        }
       })
       .finally(() => setLoading(false));
   }, [feedUrl, user]);
