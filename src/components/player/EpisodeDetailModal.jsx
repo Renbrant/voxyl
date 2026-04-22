@@ -1,4 +1,5 @@
-import { X, Play, Pause, Calendar, Clock, ArrowLeft } from 'lucide-react';
+import { X, Play, Pause, Calendar, Clock, ArrowLeft, List } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { formatDuration } from '@/lib/rssUtils';
@@ -6,6 +7,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export default function EpisodeDetailModal({ episode, isActive, isPlaying, onPlay, onClose, gradient }) {
+  const navigate = useNavigate();
   const formattedDate = episode.pubDate
     ? format(new Date(episode.pubDate), "d 'de' MMMM 'de' yyyy", { locale: ptBR })
     : null;
@@ -50,16 +52,18 @@ export default function EpisodeDetailModal({ episode, isActive, isPlaying, onPla
         )}
       </div>
 
-      {/* Play button */}
-      <div className="px-5 pt-4 flex-shrink-0">
-        <button
-          onClick={() => { onPlay(episode); onClose(); }}
-          className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl gradient-primary text-white font-semibold"
-        >
-          {isActive && isPlaying ? <Pause size={16} fill="white" /> : <Play size={16} fill="white" />}
-          {isActive && isPlaying ? 'Pausar' : 'Ouvir episódio'}
-        </button>
-      </div>
+      {/* Podcast episodes button */}
+      {episode.feedUrl && (
+        <div className="px-5 pt-4 flex-shrink-0">
+          <button
+            onClick={() => { onClose(); navigate(`/podcast/${encodeURIComponent(episode.feedUrl)}`); }}
+            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl gradient-primary text-white font-semibold"
+          >
+            <List size={16} />
+            Ver todos os episódios
+          </button>
+        </div>
+      )}
 
       {/* Description */}
       {episode.description && (
