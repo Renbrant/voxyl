@@ -299,7 +299,7 @@ export default function Explore() {
         {tab === 'podcasts' && (
           <div className="space-y-3">
             <PodcastSearchBar value={search} onChange={setSearch} loading={podcastLoading} placeholder="Ex: tecnologia, true crime, notícias..." />
-            <div className="flex gap-2 overflow-x-auto no-scrollbar">
+            <div className="flex gap-2 flex-wrap">
               <SelectBottomSheet
                 value={podcastSortBy}
                 onChange={setPodcastSortBy}
