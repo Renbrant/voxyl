@@ -4,78 +4,69 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Fetch all episode progress records
-    const allProgress = await base44.entities.EpisodeProgress.list('-updated_date', 10000);
-
-    // Map to count by domain (simple grouping by hostname)
-    const domainMap = {};
-
-    allProgress.forEach(progress => {
-      // Count if marked as finished OR played 70%+
-      const isMarkedFinished = progress.finished;
-      const isPlayed70Plus = progress.duration_seconds > 0 && 
-        (progress.position_seconds / progress.duration_seconds) >= 0.7;
-
-      if (!isMarkedFinished && !isPlayed70Plus) return;
-
-      // Extract hostname from audio URL
-      const audioUrl = progress.audio_url || '';
-      if (!audioUrl) return;
-
-      try {
-        const urlObj = new URL(audioUrl);
-        const hostname = urlObj.hostname;
-        
-        if (!domainMap[hostname]) {
-          domainMap[hostname] = { playCount: 0, sampleUrl: audioUrl };
-        }
-        domainMap[hostname].playCount++;
-      } catch {
-        // Skip invalid URLs
-      }
-    });
-
-    // Now fetch all playlists to match domains with podcast info
+    // Fetch all playlists to get podcast feeds
     const allPlaylists = await base44.entities.Playlist.list('', 1000);
-    const hostnameToPodcast = {};
+    const podcastMap = {};
 
     allPlaylists.forEach(playlist => {
       if (!playlist.rss_feeds) return;
-      
       playlist.rss_feeds.forEach(feed => {
-        try {
-          const feedUrl = new URL(feed.url);
-          const hostname = feedUrl.hostname;
-          
-          // Store first matching podcast info for each hostname
-          if (!hostnameToPodcast[hostname]) {
-            hostnameToPodcast[hostname] = {
-              feedUrl: feed.url,
-              title: feed.title || 'Sem título',
-              image: feed.image || '',
-              description: feed.description || '',
-            };
-          }
-        } catch {
-          // Skip invalid URLs
+        if (!podcastMap[feed.url]) {
+          podcastMap[feed.url] = {
+            feedUrl: feed.url,
+            title: feed.title || 'Sem título',
+            image: feed.image || '',
+            description: feed.description || '',
+            playCount: 0,
+            episodes: []
+          };
         }
       });
     });
 
-    // Combine: add podcast info to play counts
-    const podcasts = [];
-    for (const hostname of Object.keys(domainMap)) {
-      const podcastInfo = hostnameToPodcast[hostname];
-      if (podcastInfo) {
-        podcasts.push({
-          ...podcastInfo,
-          playCount: domainMap[hostname].playCount
+    // Fetch episodes for each podcast and cache audio URLs
+    for (const feedUrl of Object.keys(podcastMap)) {
+      try {
+        const feedResult = await base44.functions.invoke('fetchRSSFeed', { 
+          url: feedUrl, 
+          count: 200 
         });
+        
+        const episodes = feedResult.data?.items || [];
+        podcastMap[feedUrl].episodes = episodes.map(e => e.audioUrl).filter(Boolean);
+      } catch {
+        // Feed fetch failed
       }
     }
 
-    // Sort by play count and return top 100
-    const sorted = podcasts
+    // Fetch all episode progress records
+    const allProgress = await base44.entities.EpisodeProgress.list('-updated_date', 10000);
+    
+    // Count plays per podcast
+    allProgress.forEach(progress => {
+      const audioUrl = progress.audio_url;
+      if (!audioUrl) return;
+
+      // Count if marked as finished OR played 70%+
+      const isFinished = progress.finished === true;
+      const isPct70 = progress.duration_seconds && progress.position_seconds 
+        ? (progress.position_seconds / progress.duration_seconds) >= 0.7 
+        : false;
+
+      if (!isFinished && !isPct70) return;
+
+      // Find which podcast this audio belongs to
+      for (const feedUrl of Object.keys(podcastMap)) {
+        if (podcastMap[feedUrl].episodes.includes(audioUrl)) {
+          podcastMap[feedUrl].playCount++;
+          break;
+        }
+      }
+    });
+
+    // Filter and sort
+    const sorted = Object.values(podcastMap)
+      .filter(p => p.playCount > 0)
       .sort((a, b) => b.playCount - a.playCount)
       .slice(0, 100);
 
