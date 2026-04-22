@@ -1,11 +1,12 @@
-import { getFeedFromCache } from '@/lib/feedCache';
+import { getFeedFromCache, saveFeedToCache, getRSSCacheFromCloud } from '@/lib/feedCache';
+import { base44 } from '@/api/base44Client';
 
 /**
  * Get cover image for playlist
  * If playlist has cover_image, return it
  * Otherwise, get the image from the podcast with most episodes
  */
-export function getPlaylistCoverImage(playlist) {
+export async function getPlaylistCoverImage(playlist) {
   if (playlist?.cover_image) {
     return playlist.cover_image;
   }
@@ -17,15 +18,40 @@ export function getPlaylistCoverImage(playlist) {
   let maxEpisodeCount = 0;
   let coverImage = null;
 
-  feeds.forEach(feed => {
-    const cached = getFeedFromCache(feed.url);
-    const episodeCount = cached?.items?.length || 0;
+  // Try to get feed data from cache or cloud/API
+  for (const feed of feeds) {
+    let feedData = getFeedFromCache(feed.url);
+    
+    // If not in local cache, try cloud cache
+    if (!feedData) {
+      feedData = await getRSSCacheFromCloud(feed.url).catch(() => null);
+    }
+    
+    // If still not found, fetch from API
+    if (!feedData) {
+      try {
+        const res = await base44.functions.invoke('fetchRSSFeed', { url: feed.url, count: 10 });
+        feedData = res.data;
+        if (feedData) {
+          saveFeedToCache(feed.url, feedData);
+        }
+      } catch (err) {
+        // Silent fail, use feed.image fallback
+      }
+    }
 
+    const episodeCount = feedData?.items?.length || 0;
+    
     if (episodeCount > maxEpisodeCount) {
       maxEpisodeCount = episodeCount;
-      coverImage = cached?.image || feed.image || null;
+      coverImage = feedData?.image || feed.image;
     }
-  });
+  }
+
+  // If no feed image found, use first feed's image as fallback
+  if (!coverImage && feeds.length > 0) {
+    coverImage = feeds[0].image;
+  }
 
   return coverImage;
 }

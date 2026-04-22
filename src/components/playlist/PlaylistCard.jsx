@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Play, Heart, Share2, Lock, MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -17,9 +17,13 @@ const GRADIENT_COLORS = [
 
 export default function PlaylistCard({ playlist, onLike, liked, compact = false, currentUser, onBlocked, onEdited }) {
   const [editingPlaylist, setEditingPlaylist] = useState(false);
+  const [coverImage, setCoverImage] = useState(null);
   const gradient = GRADIENT_COLORS[playlist.id?.charCodeAt(0) % GRADIENT_COLORS.length] || GRADIENT_COLORS[0];
   const isOwner = currentUser && currentUser.id === playlist.creator_id;
-  const coverImage = getPlaylistCoverImage(playlist);
+
+  useEffect(() => {
+    getPlaylistCoverImage(playlist).then(img => setCoverImage(img));
+  }, [playlist]);
 
   const handleShare = async (e) => {
     e.preventDefault();

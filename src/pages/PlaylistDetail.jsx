@@ -248,8 +248,14 @@ export default function PlaylistDetail() {
     base44.entities.Playlist.update(id, { plays_count: (playlist?.plays_count || 0) + 1 });
   };
 
+  const [coverImage, setCoverImage] = useState(null);
   const gradient = GRADIENT_COLORS[id?.charCodeAt(0) % GRADIENT_COLORS.length];
-  const coverImage = playlist ? getPlaylistCoverImage(playlist) : null;
+
+  useEffect(() => {
+    if (playlist) {
+      getPlaylistCoverImage(playlist).then(img => setCoverImage(img));
+    }
+  }, [playlist]);
 
   return (
     <>
