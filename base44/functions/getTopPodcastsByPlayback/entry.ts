@@ -4,32 +4,11 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Fetch all playlists to map audio URLs to podcast feeds
-    const allPlaylists = await base44.entities.Playlist.list('', 1000);
-    
-    // Build a map of audio URLs to podcast info
-    const urlToPodcastMap = {};
-    
-    allPlaylists.forEach(playlist => {
-      if (!playlist.rss_feeds) return;
-      
-      playlist.rss_feeds.forEach(feed => {
-        if (urlToPodcastMap[feed.url]) return; // Already mapped
-        urlToPodcastMap[feed.url] = {
-          feedUrl: feed.url,
-          title: feed.title || 'Sem título',
-          image: feed.image || '',
-          description: feed.description || '',
-          playCount: 0
-        };
-      });
-    });
-
     // Fetch all episode progress records
     const allProgress = await base44.entities.EpisodeProgress.list('-updated_date', 10000);
 
-    // Count by feed URL
-    const podcastMap = {};
+    // Map to count by domain (simple grouping by hostname)
+    const domainMap = {};
 
     allProgress.forEach(progress => {
       // Count if marked as finished OR played 70%+
@@ -39,33 +18,64 @@ Deno.serve(async (req) => {
 
       if (!isMarkedFinished && !isPlayed70Plus) return;
 
-      // Find which podcast feed this audio URL belongs to
-      // by matching against feeds in playlists
-      let matchedFeed = null;
-      
-      for (const feedUrl of Object.keys(urlToPodcastMap)) {
-        // Check if this audio URL likely belongs to this feed
-        // We do a simple domain matching as a heuristic
-        if (progress.audio_url && progress.audio_url.includes(feedUrl.split('/')[2])) {
-          matchedFeed = feedUrl;
-          break;
+      // Extract hostname from audio URL
+      const audioUrl = progress.audio_url || '';
+      if (!audioUrl) return;
+
+      try {
+        const urlObj = new URL(audioUrl);
+        const hostname = urlObj.hostname;
+        
+        if (!domainMap[hostname]) {
+          domainMap[hostname] = { playCount: 0, sampleUrl: audioUrl };
         }
+        domainMap[hostname].playCount++;
+      } catch {
+        // Skip invalid URLs
       }
-
-      if (!matchedFeed) return; // Skip if can't determine podcast
-
-      if (!podcastMap[matchedFeed]) {
-        podcastMap[matchedFeed] = {
-          ...urlToPodcastMap[matchedFeed],
-          playCount: 0
-        };
-      }
-      podcastMap[matchedFeed].playCount++;
     });
 
+    // Now fetch all playlists to match domains with podcast info
+    const allPlaylists = await base44.entities.Playlist.list('', 1000);
+    const hostnameToPodcast = {};
+
+    allPlaylists.forEach(playlist => {
+      if (!playlist.rss_feeds) return;
+      
+      playlist.rss_feeds.forEach(feed => {
+        try {
+          const feedUrl = new URL(feed.url);
+          const hostname = feedUrl.hostname;
+          
+          // Store first matching podcast info for each hostname
+          if (!hostnameToPodcast[hostname]) {
+            hostnameToPodcast[hostname] = {
+              feedUrl: feed.url,
+              title: feed.title || 'Sem título',
+              image: feed.image || '',
+              description: feed.description || '',
+            };
+          }
+        } catch {
+          // Skip invalid URLs
+        }
+      });
+    });
+
+    // Combine: add podcast info to play counts
+    const podcasts = [];
+    for (const hostname of Object.keys(domainMap)) {
+      const podcastInfo = hostnameToPodcast[hostname];
+      if (podcastInfo) {
+        podcasts.push({
+          ...podcastInfo,
+          playCount: domainMap[hostname].playCount
+        });
+      }
+    }
+
     // Sort by play count and return top 100
-    const sorted = Object.values(podcastMap)
-      .filter(p => p.playCount > 0)
+    const sorted = podcasts
       .sort((a, b) => b.playCount - a.playCount)
       .slice(0, 100);
 
