@@ -221,7 +221,7 @@ export default function Settings() {
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl border-t border-border p-6"
-              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)' }}
+              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}
             >
               <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">Escolher Tema</p>
               <div className="space-y-2">
