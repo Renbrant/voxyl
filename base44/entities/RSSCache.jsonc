@@ -1,0 +1,21 @@
+{
+  "name": "RSSCache",
+  "type": "object",
+  "properties": {
+    "feed_url": {
+      "type": "string",
+      "description": "RSS feed URL (cache key)"
+    },
+    "data": {
+      "type": "string",
+      "description": "JSON stringified feed data"
+    },
+    "cached_at": {
+      "type": "string",
+      "description": "ISO timestamp of when cache was stored"
+    }
+  },
+  "required": [
+    "feed_url"
+  ]
+}

@@ -62,6 +62,8 @@ function parseFeedMeta(xml) {
   return { title, image, author, description };
 }
 
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -71,6 +73,19 @@ Deno.serve(async (req) => {
     const { url, count = 30 } = await req.json();
     if (!url) return Response.json({ error: 'Missing url' }, { status: 400 });
 
+    // Check cache
+    const cached = await base44.asServiceRole.entities.RSSCache.filter({ feed_url: url });
+    if (cached.length > 0) {
+      const entry = cached[0];
+      const age = Date.now() - new Date(entry.cached_at).getTime();
+      if (age < CACHE_TTL_MS) {
+        const data = JSON.parse(entry.data);
+        const items = data.items.slice(0, count);
+        return Response.json({ ...data, items });
+      }
+    }
+
+    // Fetch fresh
     const res = await fetch(url, {
       headers: { 'User-Agent': 'Voxyl/1.0 RSS Reader' },
       redirect: 'follow',
@@ -81,14 +96,24 @@ Deno.serve(async (req) => {
     const meta = parseFeedMeta(xml);
     const allItems = parseItems(xml);
 
-    const items = allItems.slice(0, count).map(item => ({
+    const items = allItems.slice(0, 100).map(item => ({
       ...item,
       image: item.image || meta.image,
       feedTitle: meta.title,
       feedUrl: url,
     }));
 
-    return Response.json({ title: meta.title, image: meta.image, author: meta.author, description: meta.description, items });
+    const payload = { title: meta.title, image: meta.image, author: meta.author, description: meta.description, items };
+
+    // Save/update cache (fire and forget)
+    const now = new Date().toISOString();
+    if (cached.length > 0) {
+      base44.asServiceRole.entities.RSSCache.update(cached[0].id, { data: JSON.stringify(payload), cached_at: now });
+    } else {
+      base44.asServiceRole.entities.RSSCache.create({ feed_url: url, data: JSON.stringify(payload), cached_at: now });
+    }
+
+    return Response.json({ ...payload, items: items.slice(0, count) });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
