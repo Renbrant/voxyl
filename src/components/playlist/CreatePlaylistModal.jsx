@@ -5,10 +5,20 @@ import { Button } from '@/components/ui/button';
 import { generateShareToken } from '@/lib/rssUtils';
 import { cn } from '@/lib/utils';
 
-const MAX_PLAYLISTS = 2;
-const MAX_FEEDS = 5;
+const BASE_MAX_PLAYLISTS = 2;
+const BASE_MAX_FEEDS = 5;
+const EGG_BONUS = 5;
+
+function getLimits() {
+  const unlocked = localStorage.getItem('voxyl_egg_unlocked') === 'true';
+  return {
+    MAX_PLAYLISTS: BASE_MAX_PLAYLISTS + (unlocked ? EGG_BONUS : 0),
+    MAX_FEEDS: BASE_MAX_FEEDS + (unlocked ? EGG_BONUS : 0),
+  };
+}
 
 export default function CreatePlaylistModal({ user, onClose, onCreated, playlistCount = 0 }) {
+  const { MAX_PLAYLISTS, MAX_FEEDS } = getLimits();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState('public');

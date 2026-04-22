@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import VoxylHeader from '@/components/common/VoxylHeader';
@@ -23,18 +23,48 @@ export default function Profile() {
   const [pendingCount, setPendingCount] = useState(0);
   const [showUsernameModal, setShowUsernameModal] = useState(false);
   const [hidingProfile, setHidingProfile] = useState(false);
+  const [eggProgress, setEggProgress] = useState(0); // 0–1
+  const [eggUnlocked, setEggUnlocked] = useState(false);
+  const [showEggToast, setShowEggToast] = useState(false);
+  const eggTimerRef = useRef(null);
+  const eggIntervalRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     base44.auth.me().then((u) => {
       setUser(u);
-      // Show username setup if not set yet
       if (!u.username) setShowUsernameModal(true);
-      base44.entities.Follow.filter({ following_id: u.id, status: 'pending' }).
-      then((reqs) => setPendingCount(reqs.length)).
-      catch(() => {});
+      base44.entities.Follow.filter({ following_id: u.id, status: 'pending' })
+        .then((reqs) => setPendingCount(reqs.length))
+        .catch(() => {});
     }).catch(() => {});
+    // Check if already unlocked
+    if (localStorage.getItem('voxyl_egg_unlocked') === 'true') setEggUnlocked(true);
   }, []);
+
+  const startEggPress = () => {
+    if (eggUnlocked) return;
+    setEggProgress(0);
+    const start = Date.now();
+    eggIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - start;
+      setEggProgress(Math.min(elapsed / 5000, 1));
+    }, 50);
+    eggTimerRef.current = setTimeout(() => {
+      clearInterval(eggIntervalRef.current);
+      setEggProgress(1);
+      setEggUnlocked(true);
+      localStorage.setItem('voxyl_egg_unlocked', 'true');
+      setShowEggToast(true);
+      setTimeout(() => setShowEggToast(false), 4000);
+    }, 5000);
+  };
+
+  const cancelEggPress = () => {
+    clearTimeout(eggTimerRef.current);
+    clearInterval(eggIntervalRef.current);
+    setEggProgress(0);
+  };
 
   const handleToggleHidden = async () => {
     if (!user) return;
@@ -65,16 +95,38 @@ export default function Profile() {
 
   return (
     <div className="bg-background pb-24">
-      <VoxylHeader
-        title="Perfil"
-        right={
+      <div
+        className="flex items-center justify-between px-4 pb-4 select-none"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 3rem)' }}
+      >
+        <div>
+          <p className="text-xs text-muted-foreground mb-0.5">Sua conta</p>
+          <h1
+            className="text-2xl font-grotesk font-bold text-foreground relative inline-block cursor-pointer"
+            onMouseDown={startEggPress}
+            onMouseUp={cancelEggPress}
+            onMouseLeave={cancelEggPress}
+            onTouchStart={startEggPress}
+            onTouchEnd={cancelEggPress}
+            onTouchCancel={cancelEggPress}
+          >
+            Perfil
+            {/* Progress ring */}
+            {eggProgress > 0 && !eggUnlocked && (
+              <span
+                className="absolute inset-0 rounded-lg bg-primary/20 transition-all"
+                style={{ width: `${eggProgress * 100}%`, opacity: eggProgress }}
+              />
+            )}
+          </h1>
+        </div>
         <button
           onClick={() => navigate('/settings')}
-          className="p-2 rounded-full hover:bg-secondary transition-colors">
-          
-            <Settings size={20} className="text-primary" />
-          </button>
-        } />
+          className="p-2 rounded-full hover:bg-secondary transition-colors"
+        >
+          <Settings size={20} className="text-primary" />
+        </button>
+      </div>
       
 
       <div className="px-4">
@@ -248,6 +300,22 @@ export default function Profile() {
         {showShare &&
         <ShareAppModal onClose={() => setShowShare(false)} />
         }
+      </AnimatePresence>
+
+      {/* Easter egg toast */}
+      <AnimatePresence>
+        {showEggToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 60 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 60 }}
+            className="fixed bottom-28 left-4 right-4 z-50 bg-card border border-primary/40 rounded-2xl p-4 shadow-xl"
+          >
+            <p className="text-2xl mb-1">🎉</p>
+            <p className="font-grotesk font-bold text-foreground">Easter egg encontrado!</p>
+            <p className="text-sm text-muted-foreground mt-0.5">+5 playlists e +5 podcasts por playlist desbloqueados!</p>
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>);
 
