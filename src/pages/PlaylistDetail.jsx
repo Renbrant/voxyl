@@ -185,28 +185,13 @@ export default function PlaylistDetail() {
     };
 
     const loadEpisodes = async () => {
-      // Load from dual cache system
-      const cacheResult = await getPlaylistEpisodes(id);
-      
-      if (cacheResult.episodes.length) {
-        // Have cached data, show immediately
-        setEpisodes(sortEpisodes(processResults([{ items: cacheResult.episodes }])));
-      } else {
-        setLoadingEps(true);
-      }
+      setLoadingEps(true);
 
-      // Fetch fresh data from feeds in background (with cloud cache fallback)
+      // Always fetch fresh data from feeds (no cache-first strategy)
       Promise.allSettled(
         playlist.rss_feeds.map(async (f) => {
-          // Try cloud cache first
-          const cloudCached = await getRSSCacheFromCloud(f.url).catch(() => null);
-          if (cloudCached) {
-            saveFeedToCache(f.url, cloudCached);
-            return cloudCached;
-          }
-          
-          // Fall back to API
-          const fresh = await base44.functions.invoke('fetchRSSFeed', { url: f.url, count: 50 }).then(r => r.data);
+          // Always fetch fresh from API
+          const fresh = await base44.functions.invoke('fetchRSSFeed', { url: f.url, count: 100 }).then(r => r.data);
           saveFeedToCache(f.url, fresh);
           return fresh;
         })
