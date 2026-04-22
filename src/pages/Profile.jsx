@@ -343,7 +343,8 @@ export default function Profile() {
             <motion.div
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl p-5 pb-10 border-t border-border"
+              className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl p-5 border-t border-border"
+              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}
             >
               <p className="text-base font-grotesk font-bold mb-4">Foto de perfil</p>
               <div className="space-y-2">
