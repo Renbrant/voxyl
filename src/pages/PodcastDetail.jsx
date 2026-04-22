@@ -18,7 +18,7 @@ export default function PodcastDetail() {
   const feedUrl = decodeURIComponent(encodedFeedUrl);
   const navigate = useNavigate();
   const [episodes, setEpisodes] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [podcastMeta, setPodcastMeta] = useState(null);
   const [selectedEpisode, setSelectedEpisode] = useState(null);
   const [liked, setLiked] = useState(false);
@@ -38,6 +38,7 @@ export default function PodcastDetail() {
   useEffect(() => {
     if (!feedUrl || !user) return;
     setLoading(true);
+    setEpisodes([]);
     base44.functions.invoke('fetchRSSFeed', { url: feedUrl, count: 100 })
       .then(res => {
         const data = res.data;
