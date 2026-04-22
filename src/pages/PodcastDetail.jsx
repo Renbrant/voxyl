@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { usePlayer } from '@/lib/PlayerContext';
 import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
-import { ArrowLeft, Play, Pause, Loader2, ListMusic, Heart } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Loader2, ListMusic, Heart, Info, X } from 'lucide-react';
 import PageTransition from '@/components/common/PageTransition';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,6 +23,7 @@ export default function PodcastDetail() {
   const [selectedEpisode, setSelectedEpisode] = useState(null);
   const [liked, setLiked] = useState(false);
   const [user, setUser] = useState(null);
+  const [showInfo, setShowInfo] = useState(false);
   const { play, currentEpisode, isPlaying, togglePlay, seek, currentTime, duration, finishedUrls, setFinishedUrls } = usePlayer();
 
   useEffect(() => {
@@ -99,12 +100,20 @@ export default function PodcastDetail() {
             >
               <ArrowLeft size={18} className="text-white" />
             </button>
-            <button
-              onClick={handleLike}
-              className={cn("w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center", liked ? "text-red-400" : "text-white")}
-            >
-              <Heart size={16} fill={liked ? "currentColor" : "none"} />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowInfo(true)}
+                className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white"
+              >
+                <Info size={16} />
+              </button>
+              <button
+                onClick={handleLike}
+                className={cn("w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center", liked ? "text-red-400" : "text-white")}
+              >
+                <Heart size={16} fill={liked ? "currentColor" : "none"} />
+              </button>
+            </div>
           </div>
           <div className="absolute bottom-4 left-4 right-4 z-10">
             {podcastMeta ? (
@@ -226,6 +235,57 @@ export default function PodcastDetail() {
             </div>
           )}
         </div>
+
+        <AnimatePresence>
+          {showInfo && podcastMeta && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/60 z-40"
+                onClick={() => setShowInfo(false)}
+              />
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl border-t border-border p-6"
+                style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)', maxHeight: '80vh', overflowY: 'auto' }}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    {podcastMeta.image && (
+                      <img src={podcastMeta.image} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+                    )}
+                    <div className="min-w-0">
+                      <h3 className="font-grotesk font-bold text-foreground leading-tight line-clamp-2">{podcastMeta.title}</h3>
+                      {podcastMeta.author && <p className="text-sm text-primary mt-0.5">{podcastMeta.author}</p>}
+                    </div>
+                  </div>
+                  <button onClick={() => setShowInfo(false)} className="p-2 rounded-full hover:bg-secondary transition-colors flex-shrink-0 ml-2">
+                    <X size={18} className="text-muted-foreground" />
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <ListMusic size={14} className="text-primary flex-shrink-0" />
+                    <span>{episodes.length} episódios disponíveis</span>
+                  </div>
+                  {podcastMeta.description && (
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Sobre o podcast</p>
+                      <p className="text-sm text-foreground/80 leading-relaxed">
+                        {podcastMeta.description.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         <AnimatePresence>
           {selectedEpisode && (

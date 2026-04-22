@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
 import { usePlayer } from '@/lib/PlayerContext';
 import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward, Pencil, CheckCircle2, Heart, UserPlus, UserCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import PageTransition from '@/components/common/PageTransition';
 import VisibilityBadge from '@/components/playlist/VisibilityBadge';
 import { useLongPress } from '@/hooks/useLongPress';
@@ -181,8 +182,8 @@ export default function PlaylistDetail() {
     <PageTransition>
     <div className="min-h-screen bg-background">
       <div className={cn("relative h-56 bg-gradient-to-br", gradient)}>
-        {playlist?.cover_image && (
-          <img src={playlist.cover_image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        {(playlist?.cover_image || (!playlist?.cover_image && episodes[0]?.image)) && (
+          <img src={playlist?.cover_image || episodes[0]?.image} alt="" className="absolute inset-0 w-full h-full object-cover" />
         )}
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute top-12 left-4 right-4 flex items-center justify-between z-10">
@@ -338,7 +339,17 @@ export default function PlaylistDetail() {
                         {ep.title}
                       </p>
                       <div className="flex flex-wrap items-center gap-x-2 mt-1">
-                        <span className="text-xs text-muted-foreground">{ep.feedTitle}</span>
+                        {ep.feedUrl ? (
+                          <Link
+                            to={`/podcast/${encodeURIComponent(ep.feedUrl)}`}
+                            onClick={e => e.stopPropagation()}
+                            className="text-xs text-primary/80 hover:text-primary transition-colors underline-offset-2 hover:underline"
+                          >
+                            {ep.feedTitle}
+                          </Link>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">{ep.feedTitle}</span>
+                        )}
                         {ep.duration && <span className="text-xs text-muted-foreground">• {ep.duration}</span>}
                         {ep.pubDate && (
                           <span className="text-xs text-muted-foreground">

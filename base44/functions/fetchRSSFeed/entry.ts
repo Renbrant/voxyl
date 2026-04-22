@@ -85,6 +85,7 @@ Deno.serve(async (req) => {
       ...item,
       image: item.image || meta.image,
       feedTitle: meta.title,
+      feedUrl: url,
     }));
 
     return Response.json({ title: meta.title, image: meta.image, author: meta.author, description: meta.description, items });
