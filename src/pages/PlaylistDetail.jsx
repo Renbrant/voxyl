@@ -38,7 +38,7 @@ export default function PlaylistDetail() {
   const [liked, setLiked] = useState(false);
   const [following, setFollowing] = useState(false);
   const [followingLoader, setFollowingLoader] = useState(false);
-  const { play, currentEpisode, isPlaying, togglePlay, seek, currentTime, duration, autoplay, setAutoplay, finishedUrls, setFinishedUrls } = usePlayer();
+  const { play, currentEpisode, isPlaying, togglePlay, seek, currentTime, duration, autoplay, setAutoplay, finishedUrls, setFinishedUrls, markFinished, getCachedProgress } = usePlayer();
 
   useEffect(() => {
     if (!user || !id) return;
@@ -320,6 +320,10 @@ export default function PlaylistDetail() {
               const hasBeenPlayed = playedUrls.has(ep.audioUrl) && !isActive;
               const isFinished = finishedUrls.has(ep.audioUrl) && !isActive;
               const progress = isActive && duration ? (currentTime / duration) * 100 : 0;
+              const savedProgress = !isActive ? getCachedProgress(ep.audioUrl) : null;
+              const savedProgressPct = savedProgress && savedProgress.duration_seconds > 0 && !savedProgress.finished
+                ? (savedProgress.position_seconds / savedProgress.duration_seconds) * 100
+                : 0;
               return (
                 <motion.div
                   key={i}
@@ -329,7 +333,7 @@ export default function PlaylistDetail() {
                 >
                 <SwipeableEpisodeRow
                   isFinished={isFinished}
-                  onMarkFinished={() => setFinishedUrls(prev => new Set([...prev, ep.audioUrl]))}
+                  onMarkFinished={() => markFinished(ep.audioUrl)}
                   onMarkUnfinished={() => setFinishedUrls(prev => { const s = new Set(prev); s.delete(ep.audioUrl); return s; })}
                 >
                 <button
@@ -386,10 +390,22 @@ export default function PlaylistDetail() {
                       isCurrentlyPlaying={isCurrentlyPlaying}
                       isFinished={isFinished}
                       onShortPress={() => handlePlayEpisode(ep)}
-                      onMarkFinished={() => setFinishedUrls(prev => new Set([...prev, ep.audioUrl]))}
+                      onMarkFinished={() => markFinished(ep.audioUrl)}
                       onMarkUnfinished={() => setFinishedUrls(prev => { const s = new Set(prev); s.delete(ep.audioUrl); return s; })}
                     />
                   </div>
+
+                  {/* Saved progress bar — for non-active episodes with partial progress */}
+                  {!isActive && savedProgressPct > 1 && (
+                    <div className="mt-2 px-0.5">
+                      <div className="h-1 bg-border rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-primary/50"
+                          style={{ width: `${savedProgressPct}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   {/* Progress bar — only for the active episode */}
                   {isActive && (

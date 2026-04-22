@@ -1,7 +1,21 @@
-import { createContext, useContext, useState, useRef, useEffect } from 'react';
+import { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
+import {
+  getCachedProgress,
+  setCachedProgress,
+  getAllFinishedFromCache,
+  loadProgressFromDB,
+  saveProgressToDB,
+  FINISH_THRESHOLD,
+  MIN_SAVE_POSITION,
+} from '@/lib/episodeProgressCache';
 
 const PlayerContext = createContext(null);
+
+// How often (ms) to sync current position to localStorage while playing
+const LOCAL_SAVE_INTERVAL_MS = 5000;
+// How often (ms) to push to DB while playing
+const DB_SAVE_INTERVAL_MS = 30000;
 
 export function PlayerProvider({ children }) {
   const [currentEpisode, setCurrentEpisode] = useState(null);
@@ -14,14 +28,59 @@ export function PlayerProvider({ children }) {
   const [isLoading, setIsLoading] = useState(false);
   const [finishedUrls, setFinishedUrls] = useState(new Set());
   const [user, setUser] = useState(null);
-  const [initialized, setInitialized] = useState(false);
+
   const audioRef = useRef(null);
   const playNextRef = useRef(null);
   const playPrevRef = useRef(null);
   const playInitiatedRef = useRef(false);
   const currentEpisodeRef = useRef(null);
+  const localSaveTimerRef = useRef(null);
+  const dbSaveTimerRef = useRef(null);
 
-  // Unlock audio on first user gesture (required by iOS Safari)
+  // ─── Mark episode as finished ────────────────────────────────────────────
+  const markFinished = useCallback((audioUrl) => {
+    if (!audioUrl) return;
+    setFinishedUrls(prev => new Set([...prev, audioUrl]));
+    const audio = audioRef.current;
+    setCachedProgress(audioUrl, audio?.currentTime || 0, audio?.duration || 0, true);
+    if (user) saveProgressToDB(base44, user.id, audioUrl).catch(() => {});
+  }, [user]);
+
+  // ─── Save current position to cache (and optionally DB) ──────────────────
+  const saveCurrentProgress = useCallback((forcDB = false) => {
+    const ep = currentEpisodeRef.current;
+    const audio = audioRef.current;
+    if (!ep?.audioUrl || !audio) return;
+
+    const pos = audio.currentTime;
+    const dur = isNaN(audio.duration) ? 0 : audio.duration;
+    if (pos < MIN_SAVE_POSITION) return;
+
+    const finished = dur > 0 && pos / dur >= FINISH_THRESHOLD;
+    setCachedProgress(ep.audioUrl, pos, dur, finished);
+
+    if (finished) {
+      setFinishedUrls(prev => new Set([...prev, ep.audioUrl]));
+    }
+
+    if (forcDB && user) {
+      saveProgressToDB(base44, user.id, ep.audioUrl).catch(() => {});
+    }
+  }, [user]);
+
+  // ─── Periodic save timers ─────────────────────────────────────────────────
+  const startSaveTimers = useCallback(() => {
+    stopSaveTimers();
+    localSaveTimerRef.current = setInterval(() => saveCurrentProgress(false), LOCAL_SAVE_INTERVAL_MS);
+    dbSaveTimerRef.current = setInterval(() => saveCurrentProgress(true), DB_SAVE_INTERVAL_MS);
+  }, [saveCurrentProgress]);
+
+  const stopSaveTimers = useCallback(() => {
+    clearInterval(localSaveTimerRef.current);
+    clearInterval(dbSaveTimerRef.current);
+  }, []);
+
+  // ─── Audio element setup ──────────────────────────────────────────────────
   useEffect(() => {
     const audio = new Audio();
     audio.preload = 'none';
@@ -29,6 +88,7 @@ export function PlayerProvider({ children }) {
 
     audio.addEventListener('timeupdate', () => {
       setCurrentTime(audio.currentTime);
+
       const ep = currentEpisodeRef.current;
       const skipEnd = ep?.skip_end_seconds || 0;
       if (skipEnd > 0 && audio.duration && !isNaN(audio.duration)) {
@@ -36,33 +96,42 @@ export function PlayerProvider({ children }) {
         if (audio.currentTime >= stopAt) {
           audio.pause();
           setIsPlaying(false);
-          setFinishedUrls(prev => new Set([...prev, ep.audioUrl]));
+          markFinished(ep?.audioUrl);
           playNextRef.current?.();
         }
       }
     });
-    audio.addEventListener('durationchange', () => setDuration(isNaN(audio.duration) ? 0 : audio.duration));
+
+    audio.addEventListener('durationchange', () => {
+      setDuration(isNaN(audio.duration) ? 0 : audio.duration);
+    });
+
     audio.addEventListener('waiting', () => setIsLoading(true));
-    audio.addEventListener('playing', () => setIsLoading(false));
+    audio.addEventListener('playing', () => { setIsLoading(false); startSaveTimers(); });
     audio.addEventListener('canplay', () => setIsLoading(false));
+    audio.addEventListener('pause', () => {
+      stopSaveTimers();
+      saveCurrentProgress(true);
+    });
     audio.addEventListener('ended', () => {
       setIsPlaying(false);
-      if (currentEpisodeRef.current?.audioUrl) {
-        setFinishedUrls(prev => new Set([...prev, currentEpisodeRef.current.audioUrl]));
-      }
+      stopSaveTimers();
+      markFinished(currentEpisodeRef.current?.audioUrl);
       playNextRef.current?.();
     });
 
     return () => {
       audio.pause();
       audio.src = '';
+      stopSaveTimers();
     };
-  }, []);
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ─── MediaSession metadata ────────────────────────────────────────────────
   useEffect(() => {
     if (!currentEpisode || !audioRef.current) return;
     const audio = audioRef.current;
-    // If play() already set src and started playing, skip to avoid interruption
+
     if (playInitiatedRef.current) {
       playInitiatedRef.current = false;
     } else {
@@ -94,7 +163,7 @@ export function PlayerProvider({ children }) {
     }
   }, [currentEpisode]);
 
-  // Keep position state in sync for lock screen scrubber
+  // ─── Lock screen scrubber position state ─────────────────────────────────
   useEffect(() => {
     if (!('mediaSession' in navigator) || !duration) return;
     try {
@@ -106,87 +175,59 @@ export function PlayerProvider({ children }) {
     } catch (_) {}
   }, [currentTime, duration]);
 
-  // Load finished episodes on mount
+  // ─── Load user + progress on mount ───────────────────────────────────────
   useEffect(() => {
-    base44.auth.me().then(u => {
+    base44.auth.me().then(async u => {
       setUser(u);
       if (u) {
-        base44.entities.EpisodeProgress.filter({ user_id: u.id }).then(records => {
-          setFinishedUrls(new Set(records.map(r => r.audio_url)));
-          setInitialized(true);
-        }).catch(() => {
-          try {
-            const stored = localStorage.getItem('voxyl_finished_urls');
-            setFinishedUrls(stored ? new Set(JSON.parse(stored)) : new Set());
-          } catch {}
-          setInitialized(true);
-        });
-      } else {
         try {
-          const stored = localStorage.getItem('voxyl_finished_urls');
-          setFinishedUrls(stored ? new Set(JSON.parse(stored)) : new Set());
+          await loadProgressFromDB(base44, u.id);
         } catch {}
-        setInitialized(true);
       }
+      // Seed finishedUrls from cache (fast, no DB needed)
+      setFinishedUrls(getAllFinishedFromCache());
     }).catch(() => {
-      try {
-        const stored = localStorage.getItem('voxyl_finished_urls');
-        setFinishedUrls(stored ? new Set(JSON.parse(stored)) : new Set());
-      } catch {}
-      setInitialized(true);
+      setFinishedUrls(getAllFinishedFromCache());
     });
   }, []);
 
-  // Persist finishedUrls to localStorage and database
-  useEffect(() => {
-    try {
-      localStorage.setItem('voxyl_finished_urls', JSON.stringify([...finishedUrls]));
-    } catch {}
-    
-    if (user && initialized) {
-      base44.entities.EpisodeProgress.filter({ user_id: user.id }).then(records => {
-        const dbUrls = new Set(records.map(r => r.audio_url));
-        const toAdd = [...finishedUrls].filter(url => !dbUrls.has(url));
-        const toRemove = [...dbUrls].filter(url => !finishedUrls.has(url));
-        
-        if (toAdd.length > 0) {
-          base44.entities.EpisodeProgress.bulkCreate(toAdd.map(url => ({ user_id: user.id, audio_url: url })));
-        }
-        if (toRemove.length > 0) {
-          toRemove.forEach(url => {
-            const record = records.find(r => r.audio_url === url);
-            if (record) base44.entities.EpisodeProgress.delete(record.id);
-          });
-        }
-      }).catch(() => {});
-    }
-  }, [finishedUrls, user, initialized]);
-
-  // Keep ref in sync so the 'ended' listener always has the latest episode
+  // ─── Keep ref in sync ────────────────────────────────────────────────────
   currentEpisodeRef.current = currentEpisode;
 
+  // ─── play() ──────────────────────────────────────────────────────────────
   const play = (episode, newQueue = []) => {
     if (newQueue.length > 0) setQueue(newQueue);
+
     if (currentEpisode?.audioUrl === episode.audioUrl) {
-      // Same episode — just play it
       audioRef.current?.play().then(() => setIsPlaying(true)).catch(() => {});
-    } else {
-      const audio = audioRef.current;
-      if (audio) {
-        playInitiatedRef.current = true;
-        setIsLoading(true);
-        audio.src = episode.audioUrl;
-        const skipStart = episode.skip_start_seconds || 0;
-        if (skipStart > 0) {
-          audio.addEventListener('loadedmetadata', function onMeta() {
-            audio.currentTime = skipStart;
-            audio.removeEventListener('loadedmetadata', onMeta);
-          });
-        }
-        audio.play().then(() => setIsPlaying(true)).catch(() => {});
-      }
-      setCurrentEpisode(episode);
+      return;
     }
+
+    // Save progress for the outgoing episode before switching
+    saveCurrentProgress(true);
+
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    playInitiatedRef.current = true;
+    setIsLoading(true);
+    audio.src = episode.audioUrl;
+
+    // Resume from saved position (skip_start_seconds takes priority if no saved progress)
+    const savedProgress = getCachedProgress(episode.audioUrl);
+    const resumeAt = savedProgress && savedProgress.position_seconds > MIN_SAVE_POSITION && !savedProgress.finished
+      ? savedProgress.position_seconds
+      : (episode.skip_start_seconds || 0);
+
+    if (resumeAt > 0) {
+      audio.addEventListener('loadedmetadata', function onMeta() {
+        audio.currentTime = resumeAt;
+        audio.removeEventListener('loadedmetadata', onMeta);
+      });
+    }
+
+    audio.play().then(() => setIsPlaying(true)).catch(() => {});
+    setCurrentEpisode(episode);
   };
 
   const togglePlay = () => {
@@ -205,8 +246,7 @@ export function PlayerProvider({ children }) {
   };
 
   const playNext = () => {
-    if (!currentEpisode || queue.length === 0) return;
-    if (!autoplay) return;
+    if (!currentEpisode || queue.length === 0 || !autoplay) return;
     const idx = queue.findIndex(e => e.audioUrl === currentEpisode.audioUrl);
     if (idx < queue.length - 1) setCurrentEpisode(queue[idx + 1]);
   };
@@ -217,7 +257,6 @@ export function PlayerProvider({ children }) {
     if (idx > 0) setCurrentEpisode(queue[idx - 1]);
   };
 
-  // Keep refs updated so ended listener and MediaSession always use latest version
   playNextRef.current = playNext;
   playPrevRef.current = playPrev;
 
@@ -227,7 +266,8 @@ export function PlayerProvider({ children }) {
       queue, play, togglePlay, seek, playNext, playPrev,
       autoplay, setAutoplay,
       playerMinimized, setPlayerMinimized,
-      finishedUrls, setFinishedUrls
+      finishedUrls, setFinishedUrls, markFinished,
+      getCachedProgress,
     }}>
       {children}
     </PlayerContext.Provider>

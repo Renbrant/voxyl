@@ -9,6 +9,25 @@
     "audio_url": {
       "type": "string",
       "description": "Episode audio URL (unique identifier)"
+    },
+    "position_seconds": {
+      "type": "number",
+      "description": "Last playback position in seconds",
+      "default": 0
+    },
+    "duration_seconds": {
+      "type": "number",
+      "description": "Total episode duration in seconds",
+      "default": 0
+    },
+    "finished": {
+      "type": "boolean",
+      "description": "Whether the episode was fully listened to",
+      "default": false
+    },
+    "last_played_at": {
+      "type": "string",
+      "description": "ISO timestamp of last playback"
     }
   },
   "required": [
