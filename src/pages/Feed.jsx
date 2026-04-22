@@ -84,31 +84,37 @@ export default function Feed() {
   const { data: topPodcasts = [] } = useQuery({
     queryKey: ['top-podcasts'],
     queryFn: async () => {
-      // Get unique podcasts (feeds) and count their plays from PodcastPlay
-      const allPlays = await base44.asServiceRole.entities.PodcastPlay.list('-created_date', 1000);
-      
-      const feedMap = {};
-      allPlays.forEach(play => {
-        if (!play.feed_url) return;
+      try {
+        // Get all podcast plays (episodes with >50% reproduzido)
+        const allPlays = await base44.asServiceRole.entities.PodcastPlay.list('-created_date', 5000);
         
-        if (!feedMap[play.feed_url]) {
-          feedMap[play.feed_url] = {
-            feedUrl: play.feed_url,
-            title: play.podcast_title || 'Sem título',
-            image: play.podcast_image || '',
-            author: play.podcast_title || '',
-            description: '',
-            playCount: 0
-          };
-        }
-        feedMap[play.feed_url].playCount += 1;
-      });
+        // Group by feed_url and count plays
+        const feedMap = {};
+        allPlays.forEach(play => {
+          const url = play.feed_url;
+          if (!url) return;
+          
+          if (!feedMap[url]) {
+            feedMap[url] = {
+              feedUrl: url,
+              title: play.podcast_title || 'Sem título',
+              image: play.podcast_image || '',
+              author: play.podcast_title || 'Unknown',
+              description: '',
+              playCount: 0
+            };
+          }
+          feedMap[url].playCount += 1;
+        });
 
-      const sorted = Object.values(feedMap)
-        .sort((a, b) => b.playCount - a.playCount)
-        .slice(0, 100);
-      
-      return sorted;
+        const sorted = Object.values(feedMap)
+          .sort((a, b) => b.playCount - a.playCount);
+        
+        return sorted;
+      } catch (err) {
+        // If PodcastPlay table is empty, return empty array
+        return [];
+      }
     },
   });
 
