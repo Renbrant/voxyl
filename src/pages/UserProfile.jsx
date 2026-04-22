@@ -138,8 +138,14 @@ export default function UserProfile() {
       </div>
 
       <div className="flex flex-col items-center py-4 px-4 mb-4">
-        <div className="w-16 h-16 rounded-full gradient-primary flex items-center justify-center mb-2">
-          <UserCircle2 size={32} className="text-white" />
+        <div className="w-16 h-16 rounded-full mb-2 overflow-hidden flex-shrink-0">
+          {playlists[0]?.creator_picture ? (
+            <img src={playlists[0].creator_picture} alt={displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+          ) : (
+            <div className="w-full h-full gradient-primary flex items-center justify-center">
+              <UserCircle2 size={32} className="text-white" />
+            </div>
+          )}
         </div>
         <h2 className="text-lg font-grotesk font-bold">{displayName}</h2>
         <p className="text-sm text-muted-foreground mb-3">{followersCount} seguidores · {playlists.length} playlists</p>

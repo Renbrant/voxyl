@@ -31,6 +31,10 @@
       "default": false,
       "description": "Whether creator's profile is hidden"
     },
+    "creator_picture": {
+      "type": "string",
+      "description": "Profile picture URL of creator"
+    },
     "rss_feeds": {
       "type": "array",
       "description": "List of RSS feed URLs",

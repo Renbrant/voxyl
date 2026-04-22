@@ -69,12 +69,18 @@ export default function Profile() {
     setEggProgress(0);
   };
 
+  const syncPictureToPlaylists = async (pictureUrl) => {
+    const myPlaylists = await base44.entities.Playlist.filter({ creator_id: user.id }).catch(() => []);
+    await Promise.all(myPlaylists.map(p => base44.entities.Playlist.update(p.id, { creator_picture: pictureUrl })));
+  };
+
   const handleUseLoginPhoto = async () => {
     const loginPhoto = user.picture || user.avatar_url || user.photo_url;
     if (!loginPhoto) return;
     await base44.auth.updateMe({ profile_picture: loginPhoto });
     setUser(prev => ({ ...prev, profile_picture: loginPhoto }));
     setShowAvatarSheet(false);
+    syncPictureToPlaylists(loginPhoto);
   };
 
   const handleUploadPhoto = async (e) => {
@@ -86,6 +92,7 @@ export default function Profile() {
     if (res?.file_url) {
       await base44.auth.updateMe({ profile_picture: res.file_url });
       setUser(prev => ({ ...prev, profile_picture: res.file_url }));
+      syncPictureToPlaylists(res.file_url);
     }
     setUploadingPhoto(false);
   };
