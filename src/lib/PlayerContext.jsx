@@ -248,7 +248,17 @@ export function PlayerProvider({ children }) {
   const playNext = () => {
     if (!currentEpisode || queue.length === 0 || !autoplay) return;
     const idx = queue.findIndex(e => e.audioUrl === currentEpisode.audioUrl);
-    if (idx < queue.length - 1) setCurrentEpisode(queue[idx + 1]);
+    
+    // Find next unfinished episode
+    for (let i = idx + 1; i < queue.length; i++) {
+      const nextEp = queue[i];
+      if (!finishedUrls.has(nextEp.audioUrl)) {
+        // Play next episode (will resume from saved position if partial)
+        play(nextEp, queue);
+        return;
+      }
+    }
+    // All remaining episodes are finished
   };
 
   const playPrev = () => {
