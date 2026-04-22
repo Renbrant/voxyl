@@ -9,7 +9,7 @@ import AddToPlaylistModal from '@/components/explore/AddToPlaylistModal';
 import UserSearchCard from '@/components/explore/UserSearchCard';
 import SelectBottomSheet from '@/components/common/SelectBottomSheet';
 import PullToRefreshIndicator from '@/components/common/PullToRefreshIndicator';
-import { Compass, Radio, Users, Flame } from 'lucide-react';
+import { Compass, Radio, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -33,8 +33,6 @@ export default function Explore() {
   const [podcastLanguage, setPodcastLanguage] = useState('');
   const [podcastCategory, setPodcastCategory] = useState('');
   const [likedFeedUrls, setLikedFeedUrls] = useState(new Set());
-  const [expandedPlaylists, setExpandedPlaylists] = useState(false);
-  const [expandedPodcasts, setExpandedPodcasts] = useState(false);
 
   const debouncedQuery = useDebounce(search, 600);
   const debouncedUserSearch = useDebounce(userSearch, 400);
@@ -44,7 +42,6 @@ export default function Explore() {
   const { pullProgress, refreshing } = usePullToRefresh(() => {
     queryClient.invalidateQueries({ queryKey: ['explore-playlists'] });
     queryClient.invalidateQueries({ queryKey: ['my-likes'] });
-    queryClient.invalidateQueries({ queryKey: ['top-podcasts'] });
   }, containerRef);
 
   useEffect(() => {
@@ -95,36 +92,10 @@ export default function Explore() {
     await base44.functions.invoke('togglePlaylistLike', { playlist_id: playlist.id });
   };
 
-  // Fetch all playlists
+  // Fetch Voxyl playlists
   const { data: playlists = [], isLoading: playlistsLoading } = useQuery({
     queryKey: ['explore-playlists'],
-    queryFn: () => base44.entities.Playlist.list('-plays_count', 500),
-  });
-
-  // Fetch top podcasts (based on PodcastLike count)
-  const { data: topPodcasts = [], isLoading: podcastsLoading } = useQuery({
-    queryKey: ['top-podcasts'],
-    queryFn: async () => {
-      const allLikes = await base44.entities.PodcastLike.list('-created_date', 1000);
-      // Group by feed_url and count
-      const podcastMap = {};
-      allLikes.forEach(like => {
-        if (!podcastMap[like.feed_url]) {
-          podcastMap[like.feed_url] = {
-            feedUrl: like.feed_url,
-            title: like.podcast_title || 'Sem título',
-            image: like.podcast_image || '',
-            author: like.podcast_author || '',
-            description: like.podcast_description || '',
-            likeCount: 0,
-          };
-        }
-        podcastMap[like.feed_url].likeCount++;
-      });
-      return Object.values(podcastMap)
-        .sort((a, b) => b.likeCount - a.likeCount)
-        .slice(0, 100);
-    },
+    queryFn: () => base44.entities.Playlist.list('-created_date', 100),
   });
 
   // Followers: users who follow me (accepted)
@@ -134,12 +105,13 @@ export default function Explore() {
     queryFn: () => base44.entities.Follow.filter({ following_id: user.id, status: 'accepted' }),
   });
 
-  // Following: users I follow (accepted)
+  // Following: users I follow (accepted) - enrich with user profiles to get username
   const { data: followingList = [] } = useQuery({
     queryKey: ['explore-following', user?.id],
     enabled: !!user && tab === 'users',
     queryFn: async () => {
       const follows = await base44.entities.Follow.filter({ follower_id: user.id, status: 'accepted' });
+      // Fetch usernames from searchUsers for enrichment
       const profiles = await base44.functions.invoke('searchUsers', { query: '' }).then(r => r.data?.users || []).catch(() => []);
       const profileMap = {};
       profiles.forEach(p => { profileMap[p.id] = p; });
@@ -147,7 +119,7 @@ export default function Explore() {
     },
   });
 
-  // Pending: requests I sent that are still pending
+  // Pending: requests I sent that are still pending - enrich with user profiles
   const { data: pendingList = [] } = useQuery({
     queryKey: ['explore-pending', user?.id],
     enabled: !!user && tab === 'users',
@@ -217,21 +189,12 @@ export default function Explore() {
       p.creator_name?.toLowerCase().includes(voxylSearch.toLowerCase());
   });
 
-  // Sort by plays_count (last 7 days logic would require timestamp tracking)
-  const sortedTrendingPlaylists = filteredPlaylists
-    .sort((a, b) => (b.plays_count || 0) - (a.plays_count || 0));
-
-  // Hero + top 9, expand for more
-  const heroPlaylist = sortedTrendingPlaylists[0];
-  const trendingPlaylistsShown = expandedPlaylists 
-    ? sortedTrendingPlaylists 
-    : sortedTrendingPlaylists.slice(0, 10);
-
   // Build user list based on active filter
   const filteredUsers = (() => {
     const q = debouncedUserSearch.trim().toLowerCase();
 
     if (q) {
+      // Exact username match only
       return searchedUsers.filter(u => u.username && u.username.toLowerCase() === q);
     }
 
@@ -260,11 +223,12 @@ export default function Explore() {
       }));
     }
 
+    // 'all' without search: show nothing
     return [];
   })();
 
   const TABS = [
-    { key: 'playlists', label: 'Em Alta', icon: Flame },
+    { key: 'playlists', label: 'Playlists', icon: Compass },
     { key: 'podcasts', label: 'Podcasts', icon: Radio },
     { key: 'users', label: 'Usuários', icon: Users },
   ];
@@ -385,105 +349,19 @@ export default function Explore() {
       </div>
 
       <div className="px-4">
-        {/* Playlists in Alta tab */}
+        {/* Playlists tab */}
         {tab === 'playlists' && (
           playlistsLoading ? (
             <div className="space-y-3">
               {[...Array(5)].map((_, i) => <div key={i} className="h-20 rounded-2xl bg-secondary animate-pulse" />)}
             </div>
           ) : (
-            <div className="space-y-4">
-              {/* Hero Playlist */}
-              {heroPlaylist && (
-                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-                  <PlaylistCard playlist={heroPlaylist} liked={likes.includes(heroPlaylist.id)} onLike={handleLike} currentUser={user} onBlocked={id => setBlockedIds(prev => [...prev, id])} />
+            <div className="space-y-2">
+              {filteredPlaylists.map((pl, i) => (
+                <motion.div key={pl.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+                  <PlaylistCard playlist={pl} compact liked={likes.includes(pl.id)} onLike={handleLike} currentUser={user} onBlocked={id => setBlockedIds(prev => [...prev, id])} />
                 </motion.div>
-              )}
-
-              {/* Trending Playlists Grid (compact) */}
-              {trendingPlaylistsShown.length > 1 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-1">Mais tocadas</h3>
-                  <div className="grid grid-cols-1 gap-2">
-                    {trendingPlaylistsShown.slice(1, expandedPlaylists ? undefined : 9).map((pl, i) => (
-                      <motion.div key={pl.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}>
-                        <PlaylistCard playlist={pl} compact liked={likes.includes(pl.id)} onLike={handleLike} currentUser={user} onBlocked={id => setBlockedIds(prev => [...prev, id])} />
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Expand button */}
-              {trendingPlaylistsShown.length > 9 && (
-                <motion.button
-                  onClick={() => setExpandedPlaylists(!expandedPlaylists)}
-                  className="w-full py-3 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground font-medium transition-colors text-sm"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  {expandedPlaylists ? '← Ver menos' : '+ Ver mais'}
-                </motion.button>
-              )}
-
-              {/* Top Podcasts Section */}
-              {topPodcasts.length > 0 && (
-                <div className="mt-8">
-                  <h2 className="text-lg font-grotesk font-bold text-foreground mb-3">Podcasts em Alta</h2>
-                  
-                  {/* Hero Podcast */}
-                  {topPodcasts[0] && (
-                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mb-3">
-                      <PodcastResultCard
-                        podcast={topPodcasts[0]}
-                        index={0}
-                        onAdd={setSelectedPodcast}
-                        onLike={handleLikePodcast}
-                        liked={likedFeedUrls.has(topPodcasts[0].feedUrl)}
-                      />
-                    </motion.div>
-                  )}
-
-                  {/* Top 8 Podcasts Grid (compact) */}
-                  {topPodcasts.length > 1 && (
-                    <div>
-                      <div className="grid grid-cols-2 gap-2 mb-3">
-                        {topPodcasts.slice(1, expandedPodcasts ? undefined : 9).map((podcast, i) => (
-                          <motion.div key={podcast.feedUrl} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}>
-                            <button
-                              onClick={() => setSelectedPodcast(podcast)}
-                              className="flex flex-col gap-2 p-2 rounded-2xl border border-border bg-card hover:border-primary/30 transition-all active:scale-95"
-                            >
-                              <div className="w-full aspect-square rounded-lg overflow-hidden bg-secondary">
-                                {podcast.image && (
-                                  <img src={podcast.image} alt="" className="w-full h-full object-cover" />
-                                )}
-                              </div>
-                              <div className="min-w-0 px-1">
-                                <p className="text-xs font-medium line-clamp-1 text-foreground">{podcast.title}</p>
-                                <p className="text-xs text-muted-foreground line-clamp-1">{podcast.author}</p>
-                              </div>
-                            </button>
-                          </motion.div>
-                        ))}
-                      </div>
-
-                      {/* Expand Podcasts button */}
-                      {topPodcasts.length > 9 && (
-                        <motion.button
-                          onClick={() => setExpandedPodcasts(!expandedPodcasts)}
-                          className="w-full py-3 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground font-medium transition-colors text-sm"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                        >
-                          {expandedPodcasts ? '← Ver menos' : '+ Ver mais'}
-                        </motion.button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
+              ))}
               {filteredPlaylists.length === 0 && (
                 <div className="text-center py-16 text-muted-foreground">
                   <p className="text-4xl mb-3">🔍</p>
