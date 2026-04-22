@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import EpisodeDetailModal from '@/components/player/EpisodeDetailModal';
 import EpisodeActionButton from '@/components/player/EpisodeActionButton';
+import SwipeableEpisodeRow from '@/components/player/SwipeableEpisodeRow';
 
 import ReportBlockMenu from '@/components/moderation/ReportBlockMenu';
 import { format } from 'date-fns';
@@ -375,7 +376,13 @@ export default function PlaylistDetail() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.02 }}
                 >
-                <button
+                {!isActive ? (
+                  <SwipeableEpisodeRow
+                    isFinished={isFinished}
+                    onMarkFinished={() => markFinished(ep.audioUrl)}
+                    onMarkUnfinished={() => setFinishedUrls(prev => { const s = new Set(prev); s.delete(ep.audioUrl); return s; })}
+                  >
+                    <button
                   onClick={() => handlePlayEpisode(ep)}
                   className={cn(
                     "w-full text-left flex flex-col gap-0 p-3 rounded-2xl border transition-all",
@@ -480,12 +487,120 @@ export default function PlaylistDetail() {
                     </div>
                   )}
                 </button>
+                  </SwipeableEpisodeRow>
+                ) : (
+                    <button
+                      onClick={() => handlePlayEpisode(ep)}
+                      className={cn(
+                        "w-full text-left flex flex-col gap-0 p-3 rounded-2xl border transition-all",
+                        isActive
+                          ? "border-primary/60 bg-primary/10"
+                          : hasBeenPlayed
+                          ? "border-border bg-muted/40"
+                          : "border-border bg-card hover:border-primary/30"
+                      )}
+                    >
+                      <div className="flex gap-3">
+                        <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-secondary">
+                          {ep.image
+                            ? <img src={ep.image} alt="" className={cn("w-full h-full object-cover", hasBeenPlayed && "opacity-50")} />
+                            : <div className={cn("w-full h-full bg-gradient-to-br", gradient, hasBeenPlayed && "opacity-50")} />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className={cn(
+                              "text-sm font-medium line-clamp-2 underline-offset-2 hover:underline cursor-pointer",
+                              isActive ? "text-primary" : hasBeenPlayed ? "text-muted-foreground" : "text-foreground"
+                            )}
+                            onClick={e => { e.stopPropagation(); setSelectedEpisode(ep); }}
+                          >
+                            {ep.title}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-x-2 mt-1">
+                            {ep.feedUrl ? (
+                              <Link
+                                to={`/podcast/${encodeURIComponent(ep.feedUrl)}`}
+                                onClick={e => e.stopPropagation()}
+                                className="text-xs text-primary/80 hover:text-primary transition-colors underline-offset-2 hover:underline"
+                              >
+                                {ep.feedTitle}
+                              </Link>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">{ep.feedTitle}</span>
+                            )}
+                            {ep.duration && <span className="text-xs text-muted-foreground">• {ep.duration}</span>}
+                            {ep.pubDate && (
+                              <span className="text-xs text-muted-foreground">
+                                • {format(new Date(ep.pubDate), "d MMM yyyy", { locale: ptBR })}
+                              </span>
+                            )}
+                            {hasBeenPlayed && <span className="text-xs text-muted-foreground/60 italic">• ouvido</span>}
+                          </div>
+                        </div>
+                        <EpisodeActionButton
+                          ep={ep}
+                          isActive={isActive}
+                          isCurrentlyPlaying={isCurrentlyPlaying}
+                          isFinished={isFinished}
+                          onShortPress={() => handlePlayEpisode(ep)}
+                          onMarkFinished={() => markFinished(ep.audioUrl)}
+                          onMarkUnfinished={() => setFinishedUrls(prev => { const s = new Set(prev); s.delete(ep.audioUrl); return s; })}
+                        />
+                      </div>
+
+                      {/* Saved progress bar — for non-active episodes with partial progress */}
+                      {!isActive && savedProgressPct > 1 && (
+                        <div className="mt-2 px-0.5">
+                          <div className="h-1 bg-border rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-primary/50"
+                              style={{ width: `${savedProgressPct}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Progress bar — only for the active episode */}
+                      {isActive && (
+                        <div className="mt-2.5 px-0.5">
+                          <div
+                            className="relative h-2 bg-border rounded-full overflow-hidden cursor-pointer"
+                            onClick={e => {
+                              e.stopPropagation();
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              seek(((e.clientX - rect.left) / rect.width) * duration);
+                            }}
+                            onTouchEnd={e => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const touch = e.changedTouches[0];
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              seek(((touch.clientX - rect.left) / rect.width) * duration);
+                            }}
+                          >
+                            <div
+                              className="absolute top-0 left-0 h-full rounded-full gradient-primary transition-all duration-300"
+                              style={{ width: `${progress}%` }}
+                            />
+                            <div
+                              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-primary shadow-lg shadow-primary/50 transition-all"
+                              style={{ left: `${progress}%`, transform: 'translate(-50%, -50%)' }}
+                            />
+                          </div>
+                          <div className="flex justify-between mt-1">
+                            <span className="text-xs text-primary/80">{formatDuration(Math.floor(currentTime))}</span>
+                            <span className="text-xs text-muted-foreground">{formatDuration(Math.floor(duration))}</span>
+                          </div>
+                        </div>
+                      )}
+                    </button>
+                )}
                 </motion.div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                );
+                })}
+                </div>
+                )}
+                </div>
       <AnimatePresence>
         {selectedEpisode && (
           <EpisodeDetailModal
