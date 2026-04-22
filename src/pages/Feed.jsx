@@ -171,56 +171,58 @@ export default function Feed() {
         ))}
       </div>
 
-      {/* Hero Playlist */}
-      {!isLoading && heroPlaylist && (
-        <div className="px-4 mb-5">
-          <Link to={`/playlist/${heroPlaylist.id}`}>
-            <div className="relative rounded-3xl overflow-hidden h-48 bg-gradient-to-br from-purple-800 via-primary/60 to-cyan-600">
-              {heroPlaylist.cover_image && (
-                <img src={heroPlaylist.cover_image} alt="" className="absolute inset-0 w-full h-full object-cover" />
-              )}
-              <div className="absolute inset-0 bg-black/40" />
-              <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
-                <div className="flex-1 min-w-0 mr-3">
-                  <p className="text-xs text-white/70 mb-0.5 font-medium">🔥 Mais tocada agora</p>
-                  <h2 className="text-xl font-grotesk font-bold text-white truncate">{heroPlaylist.name}</h2>
-                  <p className="text-sm text-white/70 truncate">por {heroPlaylist.creator_username ? `@${heroPlaylist.creator_username}` : 'Usuário'} • {heroPlaylist.plays_count || 0} plays</p>
-                </div>
-                <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center glow-primary flex-shrink-0">
-                  <Play size={20} fill="white" className="text-white ml-0.5" />
-                </div>
-              </div>
-            </div>
-          </Link>
-        </div>
-      )}
+
 
       {/* Content Grid */}
       <div className="px-4 pb-24">
         {/* Playlists em Alta */}
-        {!isLoading && trendingPlaylists.length > 0 && (
+        {!isLoading && heroPlaylist && (
           <div className="mb-8">
             <h2 className="text-base font-semibold mb-3 text-foreground">Playlists em Alta</h2>
 
-            {/* Grid de Playlists */}
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              {displayedTrendingPlaylists.map((pl, i) => (
-                <motion.div key={pl.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                  <PlaylistCard playlist={pl} liked={likes.includes(pl.id)} onLike={handleLike} currentUser={user} onBlocked={id => setBlockedIds(prev => [...prev, id])} />
-                </motion.div>
-              ))}
-            </div>
+            {/* Hero Playlist */}
+            <Link to={`/playlist/${heroPlaylist.id}`}>
+              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-4 relative rounded-3xl overflow-hidden h-48 bg-gradient-to-br from-purple-800 via-primary/60 to-cyan-600">
+                {heroPlaylist.cover_image && (
+                  <img src={heroPlaylist.cover_image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                )}
+                <div className="absolute inset-0 bg-black/40" />
+                <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
+                  <div className="flex-1 min-w-0 mr-3">
+                    <p className="text-xs text-white/70 mb-0.5 font-medium">🔥 Mais tocada agora</p>
+                    <h2 className="text-xl font-grotesk font-bold text-white truncate">{heroPlaylist.name}</h2>
+                    <p className="text-sm text-white/70 truncate">por {heroPlaylist.creator_username ? `@${heroPlaylist.creator_username}` : 'Usuário'} • {heroPlaylist.plays_count || 0} plays</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center glow-primary flex-shrink-0">
+                    <Play size={20} fill="white" className="text-white ml-0.5" />
+                  </div>
+                </div>
+              </motion.div>
+            </Link>
 
-            {/* Expand Playlists */}
-            {trendingPlaylists.length > 8 && (
-              <motion.button
-                onClick={() => setExpandedPlaylists(!expandedPlaylists)}
-                className="w-full py-3 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground font-medium transition-colors text-sm"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
-                {expandedPlaylists ? '← Ver menos' : '+ Ver mais'}
-              </motion.button>
+            {/* Grid de Playlists (8 cards) */}
+            {trendingPlaylists.length > 0 && (
+              <div>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  {displayedTrendingPlaylists.map((pl, i) => (
+                    <motion.div key={pl.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                      <PlaylistCard playlist={pl} liked={likes.includes(pl.id)} onLike={handleLike} currentUser={user} onBlocked={id => setBlockedIds(prev => [...prev, id])} />
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Expand Playlists */}
+                {trendingPlaylists.length > 8 && (
+                  <motion.button
+                    onClick={() => setExpandedPlaylists(!expandedPlaylists)}
+                    className="w-full py-3 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground font-medium transition-colors text-sm"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    {expandedPlaylists ? '← Ver menos' : '+ Ver mais'}
+                  </motion.button>
+                )}
+              </div>
             )}
           </div>
         )}
