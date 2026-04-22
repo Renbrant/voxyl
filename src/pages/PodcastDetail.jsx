@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import EpisodeDetailModal from '@/components/player/EpisodeDetailModal';
 import EpisodeActionButton from '@/components/player/EpisodeActionButton';
-import SwipeableEpisodeRow from '@/components/player/SwipeableEpisodeRow';
+
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -194,11 +194,6 @@ export default function PodcastDetail() {
                   : 0;
                 return (
                   <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.02, 0.4) }}>
-                    <SwipeableEpisodeRow
-                      isFinished={isFinished}
-                      onMarkFinished={() => markFinished(ep.audioUrl)}
-                      onMarkUnfinished={() => setFinishedUrls(prev => { const s = new Set(prev); s.delete(ep.audioUrl); return s; })}
-                    >
                       <button
                         onClick={() => handlePlayEpisode(ep)}
                         className={cn(
@@ -251,25 +246,28 @@ export default function PodcastDetail() {
                         )}
 
                         {isActive && (
-                          <div className="mt-2.5 px-0.5">
-                            <div
-                              className="relative h-2 bg-border rounded-full overflow-hidden cursor-pointer"
-                              onClick={e => {
-                                e.stopPropagation();
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                seek(((e.clientX - rect.left) / rect.width) * duration);
-                              }}
-                            >
-                              <div className="absolute top-0 left-0 h-full rounded-full gradient-primary transition-all duration-300" style={{ width: `${progress}%` }} />
-                            </div>
-                            <div className="flex justify-between mt-1">
-                              <span className="text-xs text-primary/80">{formatDuration(Math.floor(currentTime))}</span>
-                              <span className="text-xs text-muted-foreground">{formatDuration(Math.floor(duration))}</span>
-                            </div>
-                          </div>
-                        )}
+                           <div className="mt-2.5 px-0.5">
+                             <div
+                               className="relative h-2 bg-border rounded-full overflow-hidden cursor-pointer"
+                               onClick={e => {
+                                 e.stopPropagation();
+                                 const rect = e.currentTarget.getBoundingClientRect();
+                                 seek(((e.clientX - rect.left) / rect.width) * duration);
+                               }}
+                             >
+                               <div className="absolute top-0 left-0 h-full rounded-full gradient-primary transition-all duration-300" style={{ width: `${progress}%` }} />
+                               <div
+                                 className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-primary shadow-lg shadow-primary/50 transition-all"
+                                 style={{ left: `${progress}%`, transform: 'translate(-50%, -50%)' }}
+                               />
+                             </div>
+                             <div className="flex justify-between mt-1">
+                               <span className="text-xs text-primary/80">{formatDuration(Math.floor(currentTime))}</span>
+                               <span className="text-xs text-muted-foreground">{formatDuration(Math.floor(duration))}</span>
+                             </div>
+                           </div>
+                         )}
                       </button>
-                    </SwipeableEpisodeRow>
                   </motion.div>
                 );
               })}

@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import EpisodeDetailModal from '@/components/player/EpisodeDetailModal';
 import EpisodeActionButton from '@/components/player/EpisodeActionButton';
-import SwipeableEpisodeRow from '@/components/player/SwipeableEpisodeRow';
+
 import ReportBlockMenu from '@/components/moderation/ReportBlockMenu';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -370,15 +370,10 @@ export default function PlaylistDetail() {
                 : 0;
               return (
                 <motion.div
-                  key={i}
+                   key={i}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.02 }}
-                >
-                <SwipeableEpisodeRow
-                  isFinished={isFinished}
-                  onMarkFinished={() => markFinished(ep.audioUrl)}
-                  onMarkUnfinished={() => setFinishedUrls(prev => { const s = new Set(prev); s.delete(ep.audioUrl); return s; })}
                 >
                 <button
                   onClick={() => handlePlayEpisode(ep)}
@@ -473,6 +468,10 @@ export default function PlaylistDetail() {
                           className="absolute top-0 left-0 h-full rounded-full gradient-primary transition-all duration-300"
                           style={{ width: `${progress}%` }}
                         />
+                        <div
+                          className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-primary shadow-lg shadow-primary/50 transition-all"
+                          style={{ left: `${progress}%`, transform: 'translate(-50%, -50%)' }}
+                        />
                       </div>
                       <div className="flex justify-between mt-1">
                         <span className="text-xs text-primary/80">{formatDuration(Math.floor(currentTime))}</span>
@@ -481,7 +480,6 @@ export default function PlaylistDetail() {
                     </div>
                   )}
                 </button>
-                </SwipeableEpisodeRow>
                 </motion.div>
               );
             })}
