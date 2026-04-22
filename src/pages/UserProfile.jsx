@@ -61,10 +61,11 @@ export default function UserProfile() {
         setLoading(false);
         const first = (data.playlists || [])[0];
         if (first) {
-          setProfileUser({
-            username: first.creator_username || null,
-            full_name: first.creator_name || null,
-          });
+          setProfileUser(prev => ({
+            ...prev,
+            username: first.creator_username || prev?.username || null,
+            full_name: first.creator_name || prev?.full_name || null,
+          }));
         }
       })
       .catch(() => setLoading(false));
