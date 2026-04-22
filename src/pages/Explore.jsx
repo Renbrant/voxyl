@@ -275,7 +275,7 @@ export default function Explore() {
       <VoxylHeader title="Explorar" subtitle="Descubra podcasts e playlists" />
 
       {/* Tabs */}
-      <div className="flex gap-2 px-4 mb-4 overflow-x-auto no-scrollbar">
+      <div className="flex gap-2 px-4 overflow-x-auto no-scrollbar">
         {TABS.map(({ key, label, icon: TabIcon }) => (
           <button
             key={key}
@@ -294,7 +294,7 @@ export default function Explore() {
       </div>
 
       {/* Search bar and filters */}
-      <div className="px-4 mb-4">
+      <div className="px-4 mb-4 mt-3">
         {tab === 'playlists' && <PodcastSearchBar value={voxylSearch} onChange={setVoxylSearch} loading={false} placeholder="Buscar playlists..." />}
         {tab === 'podcasts' && (
           <div className="space-y-3">
