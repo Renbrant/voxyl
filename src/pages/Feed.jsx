@@ -228,67 +228,67 @@ export default function Feed() {
         )}
 
         {/* Podcasts em Alta */}
-         {topPodcasts.length > 0 && (
-           <div>
-             <h2 className="text-base font-semibold mb-3 text-foreground">Podcasts em Alta</h2>
+        {topPodcasts.length > 0 && (
+          <div>
+            <h2 className="text-base font-semibold mb-3 text-foreground">Podcasts em Alta</h2>
 
-             {/* Hero Podcast */}
-             {topPodcasts[0] && (
-               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-5 relative rounded-3xl overflow-hidden h-48 bg-gradient-to-br from-purple-800 via-primary/60 to-cyan-600">
-                 {topPodcasts[0].image && (
-                   <img src={topPodcasts[0].image} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                 )}
-                 <div className="absolute inset-0 bg-black/40" />
-                 <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
-                   <div className="flex-1 min-w-0 mr-3">
-                     <p className="text-xs text-white/70 mb-0.5 font-medium">🔥 Mais tocado agora</p>
-                     <h2 className="text-xl font-grotesk font-bold text-white truncate">{topPodcasts[0].title}</h2>
-                     <p className="text-sm text-white/70 truncate">{topPodcasts[0].playCount || 0} reproduções</p>
-                   </div>
-                   <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center glow-primary flex-shrink-0">
-                     <Play size={20} fill="white" className="text-white ml-0.5" />
-                   </div>
-                 </div>
-               </motion.div>
-             )}
+            {/* Hero Podcast */}
+            {topPodcasts[0] && (
+              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-4 relative rounded-3xl overflow-hidden h-48 bg-gradient-to-br from-purple-800 via-primary/60 to-cyan-600">
+                {topPodcasts[0].image && (
+                  <img src={topPodcasts[0].image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                )}
+                <div className="absolute inset-0 bg-black/40" />
+                <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
+                  <div className="flex-1 min-w-0 mr-3">
+                    <p className="text-xs text-white/70 mb-0.5 font-medium">🔥 Mais tocado agora</p>
+                    <h2 className="text-xl font-grotesk font-bold text-white truncate">{topPodcasts[0].title}</h2>
+                    <p className="text-sm text-white/70 truncate">{topPodcasts[0].playCount || 0} reproduções</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center glow-primary flex-shrink-0">
+                    <Play size={20} fill="white" className="text-white ml-0.5" />
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
-             {/* Grid de Podcasts */}
-             {topPodcasts.length > 1 && (
-               <div>
-                 <div className="grid grid-cols-2 gap-3 mb-3">
-                   {displayedPodcasts.slice(1).map((podcast, i) => (
-                     <motion.div key={podcast.feedUrl} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                       <div className="flex flex-col gap-2 p-2 rounded-2xl border border-border bg-card hover:border-primary/30 transition-all active:scale-95 h-full">
-                         <div className="w-full aspect-square rounded-lg overflow-hidden bg-secondary flex-shrink-0">
-                           {podcast.image && (
-                             <img src={podcast.image} alt="" className="w-full h-full object-cover" />
-                           )}
-                         </div>
-                         <div className="min-w-0 px-1 flex-1">
-                           <p className="text-xs font-medium line-clamp-2 text-foreground">{podcast.title}</p>
-                           <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{podcast.author || 'Podcast'}</p>
-                           <p className="text-xs text-primary mt-1">▶️ {podcast.playCount}</p>
-                         </div>
-                       </div>
-                     </motion.div>
-                   ))}
-                 </div>
+            {/* Grid de Podcasts (8 cards) */}
+            {topPodcasts.length > 1 && (
+              <div>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  {displayedPodcasts.slice(1).map((podcast, i) => (
+                    <motion.div key={podcast.feedUrl} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                      <div className="flex flex-col gap-2 p-2 rounded-2xl border border-border bg-card hover:border-primary/30 transition-all active:scale-95 h-full">
+                        <div className="w-full aspect-square rounded-lg overflow-hidden bg-secondary flex-shrink-0">
+                          {podcast.image && (
+                            <img src={podcast.image} alt="" className="w-full h-full object-cover" />
+                          )}
+                        </div>
+                        <div className="min-w-0 px-1 flex-1">
+                          <p className="text-xs font-medium line-clamp-2 text-foreground">{podcast.title}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{podcast.author || 'Podcast'}</p>
+                          <p className="text-xs text-primary mt-1">▶️ {podcast.playCount}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
 
-                 {/* Expand Podcasts */}
-                 {topPodcasts.length > 9 && (
-                   <motion.button
-                     onClick={() => setExpandedPodcasts(!expandedPodcasts)}
-                     className="w-full py-3 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground font-medium transition-colors text-sm"
-                     initial={{ opacity: 0 }}
-                     animate={{ opacity: 1 }}
-                   >
-                     {expandedPodcasts ? '← Ver menos' : '+ Ver mais'}
-                   </motion.button>
-                 )}
-               </div>
-             )}
-           </div>
-         )}
+                {/* Expand Podcasts */}
+                {topPodcasts.length > 9 && (
+                  <motion.button
+                    onClick={() => setExpandedPodcasts(!expandedPodcasts)}
+                    className="w-full py-3 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground font-medium transition-colors text-sm"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    {expandedPodcasts ? '← Ver menos' : '+ Ver mais'}
+                  </motion.button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {!isLoading && sortedPlaylists.length === 0 && (
           <div className="text-center py-16 text-muted-foreground">
