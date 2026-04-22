@@ -140,18 +140,39 @@ export default function PlaylistDetail() {
       )
     )
       .then(results => {
+        const feedSkipMap = {};
+        (playlist.rss_feeds || []).forEach(f => {
+          feedSkipMap[f.url] = {
+            skip_start_seconds: f.skip_start_seconds || 0,
+            skip_end_seconds: f.skip_end_seconds || 0,
+          };
+        });
+
+        const timeFilterMs = playlist.time_filter_hours ? playlist.time_filter_hours * 60 * 60 * 1000 : 0;
+        const now = Date.now();
+
         const allEpisodes = results
           .filter(r => r.status === 'fulfilled' && r.value?.items)
-          .flatMap(r => r.value.items.map(ep => ({
-            ...ep,
-            // Decode HTML entities in URLs (e.g. &amp; → &)
-            audioUrl: ep.audioUrl?.replace(/&amp;/g, '&'),
-            image: ep.image?.replace(/&amp;/g, '&'),
-          })))
+          .flatMap(r => r.value.items.map(ep => {
+            const skip = feedSkipMap[ep.feedUrl] || { skip_start_seconds: 0, skip_end_seconds: 0 };
+            return {
+              ...ep,
+              audioUrl: ep.audioUrl?.replace(/&amp;/g, '&'),
+              image: ep.image?.replace(/&amp;/g, '&'),
+              skip_start_seconds: skip.skip_start_seconds,
+              skip_end_seconds: skip.skip_end_seconds,
+            };
+          }))
           .filter(ep => {
-            if (!playlist.max_duration || playlist.max_duration === 0) return true;
-            const secs = parseDurationToSeconds(ep.duration);
-            return !secs || secs <= playlist.max_duration * 60;
+            if (playlist.max_duration && playlist.max_duration > 0) {
+              const secs = parseDurationToSeconds(ep.duration);
+              if (secs && secs > playlist.max_duration * 60) return false;
+            }
+            if (timeFilterMs > 0 && ep.pubDate) {
+              const age = now - new Date(ep.pubDate).getTime();
+              if (age > timeFilterMs) return false;
+            }
+            return true;
           })
           .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
         setEpisodes(allEpisodes);

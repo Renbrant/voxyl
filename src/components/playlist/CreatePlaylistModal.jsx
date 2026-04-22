@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { X, Plus, Trash2, Globe, Lock, Loader2, Image as ImageIcon, Sparkles, Users, Search } from 'lucide-react';
+import { X, Plus, Trash2, Globe, Lock, Loader2, Image as ImageIcon, Sparkles, Users, Search, Timer, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateShareToken } from '@/lib/rssUtils';
 import { cn } from '@/lib/utils';
@@ -23,7 +23,8 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState('public');
   const [maxDuration, setMaxDuration] = useState(0);
-  const [feeds, setFeeds] = useState([{ url: '' }]);
+  const [timeFilterHours, setTimeFilterHours] = useState(0);
+  const [feeds, setFeeds] = useState([{ url: '', skip_start_seconds: 0, skip_end_seconds: 0 }]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [coverImage, setCoverImage] = useState('');
@@ -57,8 +58,10 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
     setPodcastSearch('');
     setPodcastResults([]);
   };
+  const [expandedFeedIdx, setExpandedFeedIdx] = useState(null);
   const removeFeed = (i) => setFeeds(prev => prev.filter((_, idx) => idx !== i));
-  const updateFeed = (i, url) => setFeeds(prev => prev.map((f, idx) => idx === i ? { url } : f));
+  const updateFeed = (i, url) => setFeeds(prev => prev.map((f, idx) => idx === i ? { ...f, url } : f));
+  const updateFeedSkip = (i, field, value) => setFeeds(prev => prev.map((f, idx) => idx === i ? { ...f, [field]: Number(value) || 0 } : f));
 
   const handleGenerateImage = async () => {
     if (!name.trim()) { setError('Digite um nome para a playlist primeiro'); return; }
@@ -105,6 +108,7 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
       rss_feeds: validFeeds,
       visibility,
       max_duration: maxDuration,
+      time_filter_hours: timeFilterHours,
       cover_image: coverImage,
       share_token: generateShareToken(),
       likes_count: 0,
@@ -168,6 +172,33 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
               min={0}
               className="w-full px-4 py-3 rounded-2xl bg-secondary border border-border text-foreground text-sm focus:outline-none focus:border-primary"
             />
+          </div>
+
+          <div>
+            <label className="text-xs text-muted-foreground mb-1.5 block flex items-center gap-1"><Timer size={11} /> Episódios publicados</label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: 'Sem limite', value: 0 },
+                { label: 'Últimas 24h', value: 24 },
+                { label: 'Últimas 48h', value: 48 },
+                { label: 'Última semana', value: 168 },
+                { label: 'Último mês', value: 720 },
+                { label: 'Último ano', value: 8760 },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setTimeFilterHours(opt.value)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                    timeFilterHours === opt.value
+                      ? 'bg-primary/20 text-primary border-primary/40'
+                      : 'bg-secondary text-muted-foreground border-border'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>
@@ -266,17 +297,53 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
             {/* Manual RSS input */}
             <div className="space-y-2">
               {feeds.map((feed, i) => (
-                <div key={i} className="flex gap-2">
-                  <input
-                    value={feed.url}
-                    onChange={e => updateFeed(i, e.target.value)}
-                    placeholder="https://feed.exemplo.com/rss"
-                    className="flex-1 px-3 py-2.5 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-xs focus:outline-none focus:border-primary"
-                  />
-                  {feeds.length > 1 && (
-                    <button onClick={() => removeFeed(i)} className="p-2.5 rounded-xl bg-destructive/10 text-destructive">
-                      <Trash2 size={14} />
+                <div key={i} className="rounded-xl bg-secondary border border-border overflow-hidden">
+                  <div className="flex gap-2 p-2">
+                    <input
+                      value={feed.url}
+                      onChange={e => updateFeed(i, e.target.value)}
+                      placeholder="https://feed.exemplo.com/rss"
+                      className="flex-1 px-3 py-2 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground text-xs focus:outline-none focus:border-primary"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setExpandedFeedIdx(expandedFeedIdx === i ? null : i)}
+                      className="p-2 rounded-lg text-muted-foreground"
+                    >
+                      {expandedFeedIdx === i ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </button>
+                    {feeds.length > 1 && (
+                      <button onClick={() => removeFeed(i)} className="p-2 rounded-lg bg-destructive/10 text-destructive">
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                  {expandedFeedIdx === i && (
+                    <div className="px-3 pb-3 space-y-2 border-t border-border pt-2">
+                      <p className="text-xs text-muted-foreground font-medium flex items-center gap-1"><Timer size={10} /> Pular vinheta / silêncio</p>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <label className="text-xs text-muted-foreground block mb-1">Início (seg)</label>
+                          <input
+                            type="number"
+                            min={0}
+                            value={feed.skip_start_seconds || 0}
+                            onChange={e => updateFeedSkip(i, 'skip_start_seconds', e.target.value)}
+                            className="w-full px-2 py-1.5 rounded-lg bg-background border border-border text-foreground text-xs focus:outline-none focus:border-primary"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="text-xs text-muted-foreground block mb-1">Fim (seg)</label>
+                          <input
+                            type="number"
+                            min={0}
+                            value={feed.skip_end_seconds || 0}
+                            onChange={e => updateFeedSkip(i, 'skip_end_seconds', e.target.value)}
+                            className="w-full px-2 py-1.5 rounded-lg bg-background border border-border text-foreground text-xs focus:outline-none focus:border-primary"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
               ))}

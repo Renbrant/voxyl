@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { X, Plus, Trash2, GripVertical, Loader2, Clock, Save, Image as ImageIcon, Lock, Globe, Users } from 'lucide-react';
+import { X, Plus, Trash2, GripVertical, Loader2, Clock, Save, Image as ImageIcon, Lock, Globe, Users, ChevronDown, ChevronUp, Timer } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { cn } from '@/lib/utils';
 
@@ -14,11 +14,26 @@ const DURATION_OPTIONS = [
   { label: 'Até 90 min', value: 90 },
 ];
 
+const TIME_FILTER_OPTIONS = [
+  { label: 'Sem limite', value: 0 },
+  { label: 'Últimas 24h', value: 24 },
+  { label: 'Últimas 48h', value: 48 },
+  { label: 'Última semana', value: 168 },
+  { label: 'Último mês', value: 720 },
+  { label: 'Último ano', value: 8760 },
+];
+
 export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
   const [name, setName] = useState(playlist.name || '');
   const [description, setDescription] = useState(playlist.description || '');
   const [maxDuration, setMaxDuration] = useState(playlist.max_duration || 0);
-  const [feeds, setFeeds] = useState(playlist.rss_feeds || []);
+  const [timeFilterHours, setTimeFilterHours] = useState(playlist.time_filter_hours || 0);
+  const [feeds, setFeeds] = useState((playlist.rss_feeds || []).map(f => ({
+    ...f,
+    skip_start_seconds: f.skip_start_seconds || 0,
+    skip_end_seconds: f.skip_end_seconds || 0,
+  })));
+  const [expandedFeedIdx, setExpandedFeedIdx] = useState(null);
   const [newFeedUrl, setNewFeedUrl] = useState('');
   const [addingFeed, setAddingFeed] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -38,7 +53,7 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
     setFeedError('');
     const res = await base44.functions.invoke('fetchRSSFeed', { url, count: 1 }).then(r => r.data).catch(() => null);
     if (!res?.title) { setFeedError('URL inválida ou feed não encontrado'); setAddingFeed(false); return; }
-    setFeeds(prev => [...prev, { url, title: res.title, description: res.description || '', image: res.image || '' }]);
+    setFeeds(prev => [...prev, { url, title: res.title, description: res.description || '', image: res.image || '', skip_start_seconds: 0, skip_end_seconds: 0 }]);
     setNewFeedUrl('');
     setAddingFeed(false);
   };
@@ -64,12 +79,17 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
     }
   };
 
+  const handleUpdateFeedSkip = (idx, field, value) => {
+    setFeeds(prev => prev.map((f, i) => i === idx ? { ...f, [field]: Number(value) || 0 } : f));
+  };
+
   const handleSave = async () => {
     setSaving(true);
     await base44.entities.Playlist.update(playlist.id, {
       name: name.trim() || playlist.name,
       description,
       max_duration: maxDuration,
+      time_filter_hours: timeFilterHours,
       rss_feeds: feeds,
       cover_image: coverImage,
       visibility,
@@ -181,6 +201,28 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
             </div>
           </div>
 
+          {/* Time Filter */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1.5 flex items-center gap-1">
+              <Timer size={11} /> Episódios publicados
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {TIME_FILTER_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setTimeFilterHours(opt.value)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                    timeFilterHours === opt.value
+                      ? 'bg-primary/20 text-primary border-primary/40'
+                      : 'bg-secondary text-muted-foreground border-border'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Cover Image */}
           <div>
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1.5">Capa da Playlist</label>
@@ -242,28 +284,63 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
                           <div
                             ref={provided.innerRef}
                             {...provided.draggableProps}
-                            className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all ${
+                            className={`rounded-xl border transition-all ${
                               snapshot.isDragging ? 'bg-primary/10 border-primary/40 shadow-lg' : 'bg-secondary border-border'
                             }`}
                           >
-                            <div {...provided.dragHandleProps} className="text-muted-foreground/40 cursor-grab active:cursor-grabbing">
-                              <GripVertical size={16} />
+                            <div className="flex items-center gap-2 p-2.5">
+                              <div {...provided.dragHandleProps} className="text-muted-foreground/40 cursor-grab active:cursor-grabbing">
+                                <GripVertical size={16} />
+                              </div>
+                              {feed.image ? (
+                                <img src={feed.image} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-lg bg-border flex-shrink-0" />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium text-foreground truncate">{feed.title || feed.url}</p>
+                                <p className="text-xs text-muted-foreground truncate">{feed.url}</p>
+                              </div>
+                              <button
+                                onClick={() => setExpandedFeedIdx(expandedFeedIdx === idx ? null : idx)}
+                                className="p-1 rounded-lg text-muted-foreground flex-shrink-0"
+                              >
+                                {expandedFeedIdx === idx ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                              </button>
+                              <button
+                                onClick={() => handleRemoveFeed(idx)}
+                                className="p-1 rounded-lg text-muted-foreground hover:text-destructive flex-shrink-0"
+                              >
+                                <Trash2 size={14} />
+                              </button>
                             </div>
-                            {feed.image ? (
-                              <img src={feed.image} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
-                            ) : (
-                              <div className="w-8 h-8 rounded-lg bg-border flex-shrink-0" />
+                            {expandedFeedIdx === idx && (
+                              <div className="px-3 pb-3 space-y-2 border-t border-border pt-2">
+                                <p className="text-xs text-muted-foreground font-medium flex items-center gap-1"><Timer size={10} /> Cortar silêncio / vinheta</p>
+                                <div className="flex gap-3">
+                                  <div className="flex-1">
+                                    <label className="text-xs text-muted-foreground block mb-1">Pular início (seg)</label>
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      value={feed.skip_start_seconds}
+                                      onChange={e => handleUpdateFeedSkip(idx, 'skip_start_seconds', e.target.value)}
+                                      className="w-full px-2 py-1.5 rounded-lg bg-background border border-border text-foreground text-xs focus:outline-none focus:border-primary"
+                                    />
+                                  </div>
+                                  <div className="flex-1">
+                                    <label className="text-xs text-muted-foreground block mb-1">Pular fim (seg)</label>
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      value={feed.skip_end_seconds}
+                                      onChange={e => handleUpdateFeedSkip(idx, 'skip_end_seconds', e.target.value)}
+                                      className="w-full px-2 py-1.5 rounded-lg bg-background border border-border text-foreground text-xs focus:outline-none focus:border-primary"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
                             )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-foreground truncate">{feed.title || feed.url}</p>
-                              <p className="text-xs text-muted-foreground truncate">{feed.url}</p>
-                            </div>
-                            <button
-                              onClick={() => handleRemoveFeed(idx)}
-                              className="p-1 rounded-lg text-muted-foreground hover:text-destructive flex-shrink-0"
-                            >
-                              <Trash2 size={14} />
-                            </button>
                           </div>
                         )}
                       </Draggable>

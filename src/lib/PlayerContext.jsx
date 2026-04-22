@@ -27,7 +27,20 @@ export function PlayerProvider({ children }) {
     audio.preload = 'none';
     audioRef.current = audio;
 
-    audio.addEventListener('timeupdate', () => setCurrentTime(audio.currentTime));
+    audio.addEventListener('timeupdate', () => {
+      setCurrentTime(audio.currentTime);
+      const ep = currentEpisodeRef.current;
+      const skipEnd = ep?.skip_end_seconds || 0;
+      if (skipEnd > 0 && audio.duration && !isNaN(audio.duration)) {
+        const stopAt = audio.duration - skipEnd;
+        if (audio.currentTime >= stopAt) {
+          audio.pause();
+          setIsPlaying(false);
+          setFinishedUrls(prev => new Set([...prev, ep.audioUrl]));
+          playNextRef.current?.();
+        }
+      }
+    });
     audio.addEventListener('durationchange', () => setDuration(isNaN(audio.duration) ? 0 : audio.duration));
     audio.addEventListener('waiting', () => setIsLoading(true));
     audio.addEventListener('playing', () => setIsLoading(false));
@@ -158,13 +171,18 @@ export function PlayerProvider({ children }) {
       // Same episode — just play it
       audioRef.current?.play().then(() => setIsPlaying(true)).catch(() => {});
     } else {
-      // Set src immediately within the user gesture context before React re-renders,
-      // so iOS doesn't block the play() call that happens in the useEffect.
       const audio = audioRef.current;
       if (audio) {
         playInitiatedRef.current = true;
         setIsLoading(true);
         audio.src = episode.audioUrl;
+        const skipStart = episode.skip_start_seconds || 0;
+        if (skipStart > 0) {
+          audio.addEventListener('loadedmetadata', function onMeta() {
+            audio.currentTime = skipStart;
+            audio.removeEventListener('loadedmetadata', onMeta);
+          });
+        }
         audio.play().then(() => setIsPlaying(true)).catch(() => {});
       }
       setCurrentEpisode(episode);
