@@ -1,8 +1,11 @@
 import { useState, useRef, useCallback } from 'react';
-import { Play, Pause, CheckCircle2 } from 'lucide-react';
+import { Play, Pause, CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePlayer } from '@/lib/PlayerContext';
 
 export default function EpisodeActionButton({ ep, isActive, isCurrentlyPlaying, isFinished, onShortPress, onMarkFinished, onMarkUnfinished }) {
+  const { isLoading } = usePlayer();
+  const isBuffering = isActive && isLoading;
   const [pressing, setPressing] = useState(false);
   const timerRef = useRef(null);
   const didLongPress = useRef(false);
@@ -61,6 +64,8 @@ export default function EpisodeActionButton({ ep, isActive, isCurrentlyPlaying, 
       )}
       {isFinished
         ? <CheckCircle2 size={16} className="text-green-400 relative z-10" />
+        : isBuffering
+        ? <Loader2 size={14} className="text-white relative z-10 animate-spin" />
         : isCurrentlyPlaying
         ? <Pause size={12} fill="white" className="text-white relative z-10" />
         : <Play size={12} fill={isActive ? "white" : "currentColor"} className={cn("relative z-10 ml-0.5", isActive ? "text-white" : "text-muted-foreground")} />
