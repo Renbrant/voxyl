@@ -176,7 +176,10 @@ export function PlayerProvider({ children }) {
         playInitiatedRef.current = true;
         setIsLoading(true);
         audio.src = episode.audioUrl;
-        audio.play().then(() => setIsPlaying(true)).catch(() => {});
+        // Small delay so iOS unlock handler (play+pause) doesn't cancel this play
+        setTimeout(() => {
+          audio.play().then(() => setIsPlaying(true)).catch(() => {});
+        }, 50);
       }
       setCurrentEpisode(episode);
     }
