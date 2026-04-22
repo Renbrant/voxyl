@@ -229,8 +229,8 @@ export default function Explore() {
 
   const TABS = [
     { key: 'playlists', label: 'Playlists', icon: Compass },
-    { key: 'users', label: 'Usuários', icon: Users },
     { key: 'podcasts', label: 'Podcasts', icon: Radio },
+    { key: 'users', label: 'Usuários', icon: Users },
   ];
 
   const sortOptions = [
