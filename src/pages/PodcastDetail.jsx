@@ -36,7 +36,7 @@ export default function PodcastDetail() {
   }, [feedUrl]);
 
   useEffect(() => {
-    if (!feedUrl) return;
+    if (!feedUrl || !user) return;
     setLoading(true);
     base44.functions.invoke('fetchRSSFeed', { url: feedUrl, count: 100 })
       .then(res => {
@@ -55,7 +55,7 @@ export default function PodcastDetail() {
         setEpisodes(items);
       })
       .finally(() => setLoading(false));
-  }, [feedUrl]);
+  }, [feedUrl, user]);
 
   const handlePlayEpisode = (ep) => {
     if (currentEpisode?.audioUrl === ep.audioUrl) { togglePlay(); return; }
