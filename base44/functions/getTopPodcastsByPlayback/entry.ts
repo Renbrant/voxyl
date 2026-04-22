@@ -11,12 +11,12 @@ Deno.serve(async (req) => {
     const podcastMap = {};
 
     allProgress.forEach(progress => {
-      // Only count if finished or played more than 70%
-      const isCompleted = progress.finished;
-      const isAlmostCompleted = progress.duration_seconds > 0 && 
+      // Count if marked as finished OR played 70%+
+      const isMarkedFinished = progress.finished;
+      const isPlayed70Plus = progress.duration_seconds > 0 && 
         (progress.position_seconds / progress.duration_seconds) >= 0.7;
 
-      if (!isCompleted && !isAlmostCompleted) return;
+      if (!isMarkedFinished && !isPlayed70Plus) return;
 
       // Extract podcast identifier from audio URL
       // Most podcast URLs have a common pattern - we'll use the domain
