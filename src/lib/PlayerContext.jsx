@@ -40,20 +40,9 @@ export function PlayerProvider({ children }) {
       playNextRef.current?.();
     });
 
-    // iOS requires a silent play() inside a touch event to unlock the audio context
-    const unlock = () => {
-      audio.play().then(() => audio.pause()).catch(() => {});
-      document.removeEventListener('touchstart', unlock, { once: true });
-      document.removeEventListener('click', unlock, { once: true });
-    };
-    document.addEventListener('touchstart', unlock, { once: true, passive: true });
-    document.addEventListener('click', unlock, { once: true });
-
     return () => {
       audio.pause();
       audio.src = '';
-      document.removeEventListener('touchstart', unlock);
-      document.removeEventListener('click', unlock);
     };
   }, []);
 
@@ -176,10 +165,7 @@ export function PlayerProvider({ children }) {
         playInitiatedRef.current = true;
         setIsLoading(true);
         audio.src = episode.audioUrl;
-        // Small delay so iOS unlock handler (play+pause) doesn't cancel this play
-        setTimeout(() => {
-          audio.play().then(() => setIsPlaying(true)).catch(() => {});
-        }, 50);
+        audio.play().then(() => setIsPlaying(true)).catch(() => {});
       }
       setCurrentEpisode(episode);
     }
