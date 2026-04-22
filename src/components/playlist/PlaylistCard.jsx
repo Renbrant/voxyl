@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Play, Heart, Share2, Lock, MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getPlaylistCoverImage } from '@/lib/playlistCoverHelper';
 import ReportBlockMenu from '@/components/moderation/ReportBlockMenu';
 import EditPlaylistModal from '@/components/playlist/EditPlaylistModal';
 import VisibilityBadge from '@/components/playlist/VisibilityBadge';
@@ -18,6 +19,7 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
   const [editingPlaylist, setEditingPlaylist] = useState(false);
   const gradient = GRADIENT_COLORS[playlist.id?.charCodeAt(0) % GRADIENT_COLORS.length] || GRADIENT_COLORS[0];
   const isOwner = currentUser && currentUser.id === playlist.creator_id;
+  const coverImage = getPlaylistCoverImage(playlist);
 
   const handleShare = async (e) => {
     e.preventDefault();
@@ -40,8 +42,8 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
         {compact ? (
           <>
             <div className={cn("w-14 h-14 rounded-xl flex-shrink-0 bg-gradient-to-br relative overflow-hidden", gradient)}>
-              {playlist.cover_image && (
-                <img src={playlist.cover_image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              {coverImage && (
+                <img src={coverImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
               )}
             </div>
             <div className="flex-1 min-w-0">
@@ -86,8 +88,8 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
         ) : (
           <>
             <div className={cn("h-36 bg-gradient-to-br relative", gradient)}>
-              {playlist.cover_image && (
-                <img src={playlist.cover_image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              {coverImage && (
+                <img src={coverImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
               )}
               <div className="absolute inset-0 bg-black/20" />
               <div className="absolute top-2 right-2">

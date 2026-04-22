@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
 import { getFeedFromCache, saveFeedToCache, getRSSCacheFromCloud } from '@/lib/feedCache';
+import { getPlaylistCoverImage } from '@/lib/playlistCoverHelper';
 import { getPlaylistEpisodes, saveFreshEpisodes, clearCache } from '@/lib/playlistCacheManager';
 import { usePlayer } from '@/lib/PlayerContext';
 import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward, Pencil, CheckCircle2, Heart, UserPlus, UserCheck } from 'lucide-react';
@@ -248,14 +249,15 @@ export default function PlaylistDetail() {
   };
 
   const gradient = GRADIENT_COLORS[id?.charCodeAt(0) % GRADIENT_COLORS.length];
+  const coverImage = playlist ? getPlaylistCoverImage(playlist) : null;
 
   return (
     <>
     <PageTransition>
     <div className="min-h-screen bg-background">
       <div className={cn("relative h-56 bg-gradient-to-br", gradient)}>
-        {(playlist?.cover_image || (!playlist?.cover_image && episodes[0]?.image)) && (
-          <img src={playlist?.cover_image || episodes[0]?.image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        {coverImage && (
+          <img src={coverImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
         )}
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute top-12 left-4 right-4 flex items-center justify-between z-10">
