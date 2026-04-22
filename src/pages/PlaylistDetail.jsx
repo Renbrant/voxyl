@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
+import { getFeedFromCache, saveFeedToCache } from '@/lib/feedCache';
 import { usePlayer } from '@/lib/PlayerContext';
 import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward, Pencil, CheckCircle2, Heart, UserPlus, UserCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -133,51 +134,73 @@ export default function PlaylistDetail() {
 
   useEffect(() => {
     if (!playlist?.rss_feeds?.length) return;
-    setLoadingEps(true);
-    Promise.allSettled(
-      playlist.rss_feeds.map(f =>
-        base44.functions.invoke('fetchRSSFeed', { url: f.url, count: 30 }).then(r => r.data)
-      )
-    )
-      .then(results => {
-        const feedSkipMap = {};
-        (playlist.rss_feeds || []).forEach(f => {
-          feedSkipMap[f.url] = {
-            skip_start_seconds: f.skip_start_seconds || 0,
-            skip_end_seconds: f.skip_end_seconds || 0,
+
+    const feedSkipMap = {};
+    (playlist.rss_feeds || []).forEach(f => {
+      feedSkipMap[f.url] = {
+        skip_start_seconds: f.skip_start_seconds || 0,
+        skip_end_seconds: f.skip_end_seconds || 0,
+      };
+    });
+
+    const processResults = (results) => {
+      const timeFilterMs = playlist.time_filter_hours ? playlist.time_filter_hours * 60 * 60 * 1000 : 0;
+      const now = Date.now();
+      return results
+        .filter(r => r?.items)
+        .flatMap(r => r.items.map(ep => {
+          const skip = feedSkipMap[ep.feedUrl] || { skip_start_seconds: 0, skip_end_seconds: 0 };
+          return {
+            ...ep,
+            audioUrl: ep.audioUrl?.replace(/&amp;/g, '&'),
+            image: ep.image?.replace(/&amp;/g, '&'),
+            skip_start_seconds: skip.skip_start_seconds,
+            skip_end_seconds: skip.skip_end_seconds,
           };
-        });
+        }))
+        .filter(ep => {
+          if (playlist.max_duration && playlist.max_duration > 0) {
+            const secs = parseDurationToSeconds(ep.duration);
+            if (secs && secs > playlist.max_duration * 60) return false;
+          }
+          if (timeFilterMs > 0 && ep.pubDate) {
+            const age = now - new Date(ep.pubDate).getTime();
+            if (age > timeFilterMs) return false;
+          }
+          return true;
+        })
+        .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+    };
 
-        const timeFilterMs = playlist.time_filter_hours ? playlist.time_filter_hours * 60 * 60 * 1000 : 0;
-        const now = Date.now();
+    // Load from cache first (instant)
+    const cached = playlist.rss_feeds.map(f => getFeedFromCache(f.url));
+    const allCached = cached.every(c => c !== null);
+    if (allCached) {
+      setEpisodes(processResults(cached));
+    } else {
+      setLoadingEps(true);
+    }
 
-        const allEpisodes = results
-          .filter(r => r.status === 'fulfilled' && r.value?.items)
-          .flatMap(r => r.value.items.map(ep => {
-            const skip = feedSkipMap[ep.feedUrl] || { skip_start_seconds: 0, skip_end_seconds: 0 };
-            return {
-              ...ep,
-              audioUrl: ep.audioUrl?.replace(/&amp;/g, '&'),
-              image: ep.image?.replace(/&amp;/g, '&'),
-              skip_start_seconds: skip.skip_start_seconds,
-              skip_end_seconds: skip.skip_end_seconds,
-            };
-          }))
-          .filter(ep => {
-            if (playlist.max_duration && playlist.max_duration > 0) {
-              const secs = parseDurationToSeconds(ep.duration);
-              if (secs && secs > playlist.max_duration * 60) return false;
-            }
-            if (timeFilterMs > 0 && ep.pubDate) {
-              const age = now - new Date(ep.pubDate).getTime();
-              if (age > timeFilterMs) return false;
-            }
-            return true;
-          })
-          .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
-        setEpisodes(allEpisodes);
-      })
-      .finally(() => setLoadingEps(false));
+    // Fetch only stale/missing feeds in background
+    const staleFeedUrls = playlist.rss_feeds.filter((f, i) => cached[i] === null);
+    if (staleFeedUrls.length === 0) return;
+
+    Promise.allSettled(
+      staleFeedUrls.map(f =>
+        base44.functions.invoke('fetchRSSFeed', { url: f.url, count: 30 }).then(r => {
+          saveFeedToCache(f.url, r.data);
+          return r.data;
+        })
+      )
+    ).then(results => {
+      const freshData = results
+        .filter(r => r.status === 'fulfilled')
+        .map(r => r.value);
+
+      // Merge fresh with already-cached
+      const allData = playlist.rss_feeds.map((f, i) => cached[i] || freshData.shift());
+      setEpisodes(processResults(allData));
+    }).finally(() => setLoadingEps(false));
   }, [playlist]);
 
   const handleShare = async () => {

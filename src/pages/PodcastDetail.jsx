@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { usePlayer } from '@/lib/PlayerContext';
 import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
+import { getFeedFromCache, saveFeedToCache } from '@/lib/feedCache';
 import { ArrowLeft, Play, Pause, Loader2, ListMusic, Heart, Info, X } from 'lucide-react';
 import PageTransition from '@/components/common/PageTransition';
 import { cn } from '@/lib/utils';
@@ -37,23 +38,35 @@ export default function PodcastDetail() {
 
   useEffect(() => {
     if (!feedUrl || !user) return;
+
+    const applyData = (data) => {
+      setPodcastMeta({
+        title: data.title || '',
+        image: data.image || '',
+        description: data.description || '',
+        author: data.author || '',
+      });
+      setEpisodes((data.items || []).map(ep => ({
+        ...ep,
+        audioUrl: ep.audioUrl?.replace(/&amp;/g, '&'),
+        image: ep.image?.replace(/&amp;/g, '&') || data.image,
+      })));
+    };
+
+    // Load from cache instantly if available
+    const cached = getFeedFromCache(feedUrl);
+    if (cached) {
+      applyData(cached);
+      return;
+    }
+
+    // Fetch from network if not cached
     setLoading(true);
     setEpisodes([]);
     base44.functions.invoke('fetchRSSFeed', { url: feedUrl, count: 100 })
       .then(res => {
-        const data = res.data;
-        setPodcastMeta({
-          title: data.title || '',
-          image: data.image || '',
-          description: data.description || '',
-          author: data.author || '',
-        });
-        const items = (data.items || []).map(ep => ({
-          ...ep,
-          audioUrl: ep.audioUrl?.replace(/&amp;/g, '&'),
-          image: ep.image?.replace(/&amp;/g, '&') || data.image,
-        }));
-        setEpisodes(items);
+        saveFeedToCache(feedUrl, res.data);
+        applyData(res.data);
       })
       .finally(() => setLoading(false));
   }, [feedUrl, user]);
