@@ -197,6 +197,34 @@ export default function Feed() {
 
       {/* Content Grid */}
       <div className="px-4 pb-24">
+        {/* Playlists em Alta */}
+        {!isLoading && trendingPlaylists.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-base font-semibold mb-3 text-foreground">Playlists em Alta</h2>
+
+            {/* Grid de Playlists */}
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              {displayedTrendingPlaylists.map((pl, i) => (
+                <motion.div key={pl.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                  <PlaylistCard playlist={pl} liked={likes.includes(pl.id)} onLike={handleLike} currentUser={user} onBlocked={id => setBlockedIds(prev => [...prev, id])} />
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Expand Playlists */}
+            {trendingPlaylists.length > 8 && (
+              <motion.button
+                onClick={() => setExpandedPlaylists(!expandedPlaylists)}
+                className="w-full py-3 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground font-medium transition-colors text-sm"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                {expandedPlaylists ? '← Ver menos' : '+ Ver mais'}
+              </motion.button>
+            )}
+          </div>
+        )}
+
         {/* Podcasts em Alta */}
          {topPodcasts.length > 0 && (
            <div>
