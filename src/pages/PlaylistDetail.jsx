@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
-import { getFeedFromCache, saveFeedToCache } from '@/lib/feedCache';
+import { getFeedFromCache, saveFeedToCache, getRSSCacheFromCloud } from '@/lib/feedCache';
 import { getPlaylistEpisodes, saveFreshEpisodes, clearCache } from '@/lib/playlistCacheManager';
 import { usePlayer } from '@/lib/PlayerContext';
 import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward, Pencil, CheckCircle2, Heart, UserPlus, UserCheck } from 'lucide-react';
@@ -194,16 +194,21 @@ export default function PlaylistDetail() {
         setLoadingEps(true);
       }
 
-      // Fetch fresh data from feeds in background
+      // Fetch fresh data from feeds in background (with cloud cache fallback)
       Promise.allSettled(
-        playlist.rss_feeds.map((f, idx) =>
-          base44.functions.invoke('fetchRSSFeed', { url: f.url, count: 50 })
-            .then(r => {
-              const fresh = r.data;
-              saveFeedToCache(f.url, fresh);
-              return fresh;
-            })
-        )
+        playlist.rss_feeds.map(async (f) => {
+          // Try cloud cache first
+          const cloudCached = await getRSSCacheFromCloud(f.url).catch(() => null);
+          if (cloudCached) {
+            saveFeedToCache(f.url, cloudCached);
+            return cloudCached;
+          }
+          
+          // Fall back to API
+          const fresh = await base44.functions.invoke('fetchRSSFeed', { url: f.url, count: 50 }).then(r => r.data);
+          saveFeedToCache(f.url, fresh);
+          return fresh;
+        })
       ).then(results => {
         const freshData = results
           .filter(r => r.status === 'fulfilled')

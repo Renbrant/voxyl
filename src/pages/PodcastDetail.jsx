@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { usePlayer } from '@/lib/PlayerContext';
 import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
-import { getFeedFromCache, saveFeedToCache } from '@/lib/feedCache';
+import { getFeedFromCache, saveFeedToCache, getRSSCacheFromCloud } from '@/lib/feedCache';
 import { ArrowLeft, Play, Pause, Loader2, ListMusic, Heart, Info, X } from 'lucide-react';
 import PageTransition from '@/components/common/PageTransition';
 import { cn } from '@/lib/utils';
@@ -62,29 +62,37 @@ export default function PodcastDetail() {
       setLoading(true);
     }
 
-    // Fetch in background and update only new episodes
-    base44.functions.invoke('fetchRSSFeed', { url: feedUrl, count: 100 })
-      .then(res => {
-        const fresh = res.data;
-        saveFeedToCache(feedUrl, fresh);
+    // Fetch in background with cloud cache fallback
+    (async () => {
+      let fresh;
+      
+      // Try cloud cache first
+      const cloudCached = await getRSSCacheFromCloud(feedUrl).catch(() => null);
+      if (cloudCached) {
+        fresh = cloudCached;
+      } else {
+        // Fall back to API
+        fresh = (await base44.functions.invoke('fetchRSSFeed', { url: feedUrl, count: 100 })).data;
+      }
+      
+      saveFeedToCache(feedUrl, fresh);
         
-        // If nothing was cached, show all fresh episodes
-        if (!cached) {
-          applyData(fresh);
-        } else {
-          // Only update with new episodes
-          const oldUrls = new Set(cached.items?.map(e => e.link) || []);
-          const newItems = fresh.items?.filter(e => !oldUrls.has(e.link)) || [];
-          if (newItems.length > 0) {
-            const merged = {
-              ...cached,
-              items: [...newItems, ...cached.items],
-            };
-            applyData(merged);
-          }
+      // If nothing was cached, show all fresh episodes
+      if (!cached) {
+        applyData(fresh);
+      } else {
+        // Only update with new episodes
+        const oldUrls = new Set(cached.items?.map(e => e.link) || []);
+        const newItems = fresh.items?.filter(e => !oldUrls.has(e.link)) || [];
+        if (newItems.length > 0) {
+          const merged = {
+            ...cached,
+            items: [...newItems, ...cached.items],
+          };
+          applyData(merged);
         }
-      })
-      .finally(() => setLoading(false));
+      }
+    })().finally(() => setLoading(false));
   }, [feedUrl, user]);
 
   const handlePlayEpisode = (ep) => {
