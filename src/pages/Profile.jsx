@@ -6,7 +6,7 @@ import PlaylistCard from '@/components/playlist/PlaylistCard';
 import InviteFriendModal from '@/components/profile/InviteFriendModal';
 import DeleteAccountModal from '@/components/profile/DeleteAccountModal';
 import ShareAppModal from '@/components/profile/ShareAppModal';
-import { UserCircle2, Mail, Users, ListMusic, Trash2, Share2, Shield, LogOut, Bell, AtSign, EyeOff, Eye, Pencil, Settings } from 'lucide-react';
+import { UserCircle2, Mail, Users, ListMusic, Trash2, Share2, Shield, LogOut, Bell, AtSign, EyeOff, Eye, Pencil, Settings, Camera, RefreshCw, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,6 +23,9 @@ export default function Profile() {
   const [pendingCount, setPendingCount] = useState(0);
   const [showUsernameModal, setShowUsernameModal] = useState(false);
   const [hidingProfile, setHidingProfile] = useState(false);
+  const [showAvatarSheet, setShowAvatarSheet] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = useRef(null);
   const [eggProgress, setEggProgress] = useState(0); // 0–1
   const [eggUnlocked, setEggUnlocked] = useState(false);
   const [showEggToast, setShowEggToast] = useState(false);
@@ -64,6 +67,27 @@ export default function Profile() {
     clearTimeout(eggTimerRef.current);
     clearInterval(eggIntervalRef.current);
     setEggProgress(0);
+  };
+
+  const handleUseLoginPhoto = async () => {
+    const loginPhoto = user.picture || user.avatar_url || user.photo_url;
+    if (!loginPhoto) return;
+    await base44.auth.updateMe({ profile_picture: loginPhoto });
+    setUser(prev => ({ ...prev, profile_picture: loginPhoto }));
+    setShowAvatarSheet(false);
+  };
+
+  const handleUploadPhoto = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    setShowAvatarSheet(false);
+    const res = await base44.integrations.Core.UploadFile({ file }).catch(() => null);
+    if (res?.file_url) {
+      await base44.auth.updateMe({ profile_picture: res.file_url });
+      setUser(prev => ({ ...prev, profile_picture: res.file_url }));
+    }
+    setUploadingPhoto(false);
   };
 
   const handleToggleHidden = async () => {
@@ -132,19 +156,24 @@ export default function Profile() {
       <div className="px-4">
         {/* Avatar & Info */}
         <div className="flex flex-col items-center py-6 mb-4">
-          <div className="w-20 h-20 rounded-full mb-3 flex-shrink-0">
+          <div className="relative w-20 h-20 mb-3 flex-shrink-0">
             {user.profile_picture || user.picture || user.avatar_url || user.photo_url ?
             <img
               src={user.profile_picture || user.picture || user.avatar_url || user.photo_url}
               alt={user.full_name}
-              className="w-full h-full rounded-full object-cover glow-primary"
+              className="w-20 h-20 rounded-full object-cover glow-primary"
               referrerPolicy="no-referrer" /> :
-
-
-            <div className="w-full h-full rounded-full gradient-primary flex items-center justify-center glow-primary">
-                <UserCircle2 size={40} className="text-white" />
-              </div>
-            }
+            <div className="w-20 h-20 rounded-full gradient-primary flex items-center justify-center glow-primary">
+              {uploadingPhoto
+                ? <Loader2 size={28} className="text-white animate-spin" />
+                : <UserCircle2 size={40} className="text-white" />}
+            </div>}
+            <button
+              onClick={() => setShowAvatarSheet(true)}
+              className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-primary flex items-center justify-center border-2 border-background"
+            >
+              <Camera size={13} className="text-white" />
+            </button>
           </div>
           <h2 className="text-xl font-grotesk font-bold">{user.full_name || 'Usuário'}</h2>
 
@@ -300,6 +329,42 @@ export default function Profile() {
         {showShare &&
         <ShareAppModal onClose={() => setShowShare(false)} />
         }
+      </AnimatePresence>
+
+      {/* Avatar photo sheet */}
+      <AnimatePresence>
+        {showAvatarSheet && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 z-50"
+              onClick={() => setShowAvatarSheet(false)}
+            />
+            <motion.div
+              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+              className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl p-5 pb-10 border-t border-border"
+            >
+              <p className="text-base font-grotesk font-bold mb-4">Foto de perfil</p>
+              <div className="space-y-2">
+                {(user.picture || user.avatar_url || user.photo_url) && (
+                  <button
+                    onClick={handleUseLoginPhoto}
+                    className="w-full flex items-center gap-3 p-4 rounded-2xl bg-secondary border border-border text-sm font-medium"
+                  >
+                    <RefreshCw size={18} className="text-primary" />
+                    Usar foto do login
+                  </button>
+                )}
+                <label className="w-full flex items-center gap-3 p-4 rounded-2xl bg-secondary border border-border text-sm font-medium cursor-pointer">
+                  <Camera size={18} className="text-primary" />
+                  Enviar foto do celular
+                  <input type="file" accept="image/*" className="hidden" onChange={handleUploadPhoto} />
+                </label>
+              </div>
+            </motion.div>
+          </>
+        )}
       </AnimatePresence>
 
       {/* Easter egg toast */}
