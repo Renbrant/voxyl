@@ -3,12 +3,13 @@ import { Play, Pause, CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePlayer } from '@/lib/PlayerContext';
 
-export default function EpisodeActionButton({ ep, isActive, isCurrentlyPlaying, isFinished, onShortPress, onMarkFinished, onMarkUnfinished }) {
+export default function EpisodeActionButton({ ep, isActive, isCurrentlyPlaying, isFinished, onShortPress, onMarkFinished, onMarkUnfinished, progressPct = 0 }) {
   const { isLoading } = usePlayer();
   const isBuffering = isActive && isLoading;
   const [pressing, setPressing] = useState(false);
   const timerRef = useRef(null);
   const didLongPress = useRef(false);
+  const hasPartialProgress = !isFinished && !isActive && progressPct > 1;
 
   const startPress = useCallback((e) => {
     e.preventDefault();
@@ -45,7 +46,7 @@ export default function EpisodeActionButton({ ep, isActive, isCurrentlyPlaying, 
     <div
       className={cn(
         "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 relative overflow-hidden cursor-pointer select-none",
-        isActive ? "gradient-primary" : "bg-secondary"
+        isActive ? "gradient-primary" : hasPartialProgress ? "bg-secondary" : "bg-secondary"
       )}
       onClick={handleClick}
       onMouseDown={startPress}
@@ -55,6 +56,14 @@ export default function EpisodeActionButton({ ep, isActive, isCurrentlyPlaying, 
       onTouchEnd={cancelPress}
       onTouchCancel={cancelPress}
     >
+      {/* Progress background for partial playback */}
+      {hasPartialProgress && (
+        <div
+          className="absolute inset-0 rounded-full bg-primary/60"
+          style={{ clipPath: `inset(${100 - progressPct}% 0 0 0)` }}
+        />
+      )}
+
       {/* Fill animation on long press */}
       {pressing && (
         <div
@@ -68,7 +77,7 @@ export default function EpisodeActionButton({ ep, isActive, isCurrentlyPlaying, 
         ? <Loader2 size={14} className="text-white relative z-10 animate-spin" />
         : isCurrentlyPlaying
         ? <Pause size={12} fill="white" className="text-white relative z-10" />
-        : <Play size={12} fill={isActive ? "white" : "currentColor"} className={cn("relative z-10 ml-0.5", isActive ? "text-white" : "text-muted-foreground")} />
+        : <Play size={12} fill={isActive ? "white" : hasPartialProgress ? "hsl(var(--primary))" : "currentColor"} className={cn("relative z-10 ml-0.5", isActive ? "text-white" : hasPartialProgress ? "text-white" : "text-muted-foreground")} />
       }
 
       <style>{`

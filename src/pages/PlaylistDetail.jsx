@@ -421,6 +421,7 @@ export default function PlaylistDetail() {
                       isActive={isActive}
                       isCurrentlyPlaying={isCurrentlyPlaying}
                       isFinished={isFinished}
+                      progressPct={savedProgressPct}
                       onShortPress={() => handlePlayEpisode(ep)}
                       onMarkFinished={() => markFinished(ep.audioUrl)}
                       onMarkUnfinished={() => setFinishedUrls(prev => { const s = new Set(prev); s.delete(ep.audioUrl); return s; })}
@@ -528,6 +529,7 @@ export default function PlaylistDetail() {
                           isActive={isActive}
                           isCurrentlyPlaying={isCurrentlyPlaying}
                           isFinished={isFinished}
+                          progressPct={savedProgressPct}
                           onShortPress={() => handlePlayEpisode(ep)}
                           onMarkFinished={() => markFinished(ep.audioUrl)}
                           onMarkUnfinished={() => setFinishedUrls(prev => { const s = new Set(prev); s.delete(ep.audioUrl); return s; })}
