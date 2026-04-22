@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Plus, Mic, Heart, Play, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Mic, Heart, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 export default function PodcastResultCard({ podcast, index, onAdd, onLike, liked }) {
@@ -30,7 +31,13 @@ export default function PodcastResultCard({ podcast, index, onAdd, onLike, liked
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm text-foreground leading-tight">{podcast.title}</p>
+          <Link
+            to={`/podcast/${encodeURIComponent(podcast.feedUrl)}`}
+            className="font-semibold text-sm text-foreground leading-tight hover:text-primary transition-colors line-clamp-2 block"
+            onClick={e => e.stopPropagation()}
+          >
+            {podcast.title}
+          </Link>
           {podcast.author && <p className="text-xs text-primary truncate mt-0.5">{podcast.author}</p>}
           {podcast.episodeCount > 0 && (
             <p className="text-xs text-muted-foreground mt-0.5">{podcast.episodeCount} episódios</p>
