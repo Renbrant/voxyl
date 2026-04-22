@@ -41,6 +41,7 @@ export default function UserProfile() {
       .then(follows => {
         if (follows.length > 0 && follows[0].follower_username) {
           setProfileUser(prev => prev?.username ? prev : {
+            ...prev,
             username: follows[0].follower_username || null,
             full_name: follows[0].follower_name || null,
           });
