@@ -275,7 +275,7 @@ export default function Explore() {
       <VoxylHeader title="Explorar" subtitle="Descubra podcasts e playlists" />
 
       {/* Tabs */}
-      <div className="flex gap-2 px-4 overflow-x-auto">
+      <div className="flex gap-2 px-4 justify-center">
         {TABS.map(({ key, label, icon: TabIcon }) => (
           <button
             key={key}
