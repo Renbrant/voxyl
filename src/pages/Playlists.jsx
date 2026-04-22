@@ -12,6 +12,7 @@ import PullToRefreshIndicator from '@/components/common/PullToRefreshIndicator';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import DownloadedEpisodeCard from '@/components/downloads/DownloadedEpisodeCard';
 import { getDownloads } from '@/lib/downloads';
+import { getCache, setCache, invalidateCache, TTL_5MIN } from '@/lib/appCache';
 
 const TABS = [
   { key: 'playlists', label: 'Playlists', icon: ListMusic },
@@ -28,6 +29,9 @@ export default function Playlists() {
   const queryClient = useQueryClient();
 
   const { pullProgress, refreshing } = usePullToRefresh(() => {
+    invalidateCache(`my-playlists-${user?.id}`);
+    invalidateCache(`liked-playlists-${user?.id}`);
+    invalidateCache(`liked-podcasts-${user?.id}`);
     queryClient.invalidateQueries({ queryKey: ['my-playlists'] });
     queryClient.invalidateQueries({ queryKey: ['liked-playlists'] });
     queryClient.invalidateQueries({ queryKey: ['liked-podcasts'] });
@@ -42,14 +46,30 @@ export default function Playlists() {
   const { data: myPlaylists = [], refetch: refetchMine } = useQuery({
     queryKey: ['my-playlists', user?.id],
     enabled: !!user,
-    queryFn: () => base44.entities.Playlist.filter({ creator_id: user.id }, '-created_date', 50),
+    queryFn: async () => {
+      const cacheKey = `my-playlists-${user.id}`;
+      const cached = getCache(cacheKey);
+      if (cached) return cached;
+      const data = await base44.entities.Playlist.filter({ creator_id: user.id }, '-created_date', 50);
+      setCache(cacheKey, data, TTL_5MIN);
+      return data;
+    },
+    initialData: () => user ? getCache(`my-playlists-${user.id}`) || undefined : undefined,
   });
 
   // Liked playlist IDs
   const { data: likedPlaylistRecords = [] } = useQuery({
     queryKey: ['liked-playlists', user?.id],
     enabled: !!user && tab === 'playlists',
-    queryFn: () => base44.entities.PlaylistLike.filter({ user_id: user.id }),
+    queryFn: async () => {
+      const cacheKey = `liked-playlists-${user.id}`;
+      const cached = getCache(cacheKey);
+      if (cached) return cached;
+      const data = await base44.entities.PlaylistLike.filter({ user_id: user.id });
+      setCache(cacheKey, data, TTL_5MIN);
+      return data;
+    },
+    initialData: () => user ? getCache(`liked-playlists-${user.id}`) || undefined : undefined,
   });
 
   const likedPlaylistIds = likedPlaylistRecords.map(r => r.playlist_id);
@@ -221,7 +241,11 @@ export default function Playlists() {
           user={user}
           playlistCount={myPlaylists.length}
           onClose={() => setShowCreate(false)}
-          onCreated={() => { setShowCreate(false); refetchMine(); }}
+          onCreated={() => {
+            invalidateCache(`my-playlists-${user.id}`);
+            setShowCreate(false);
+            refetchMine();
+          }}
         />
       )}
     </div>

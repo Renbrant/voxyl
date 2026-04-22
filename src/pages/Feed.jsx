@@ -9,6 +9,7 @@ import { Flame, Sparkles, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { getCache, setCache, invalidateCache, TTL_5MIN } from '@/lib/appCache';
 
 export default function Feed() {
   const [user, setUser] = useState(null);
@@ -40,23 +41,42 @@ export default function Feed() {
   }, []);
 
   const { pullProgress, refreshing } = usePullToRefresh(() => {
+    invalidateCache('feed-playlists');
+    invalidateCache(`my-likes-${user?.id}`);
     queryClient.invalidateQueries({ queryKey: ['feed-playlists'] });
     queryClient.invalidateQueries({ queryKey: ['my-likes'] });
   }, containerRef);
 
   const { data: playlists = [], isLoading } = useQuery({
     queryKey: ['feed-playlists'],
-    queryFn: () => base44.entities.Playlist.list('-plays_count', 100),
+    queryFn: async () => {
+      const cached = getCache('feed-playlists');
+      if (cached) return cached;
+      const data = await base44.entities.Playlist.list('-plays_count', 100);
+      setCache('feed-playlists', data, TTL_5MIN);
+      return data;
+    },
+    initialData: () => getCache('feed-playlists') || undefined,
   });
 
   const { data: likedIds = [] } = useQuery({
     queryKey: ['my-likes', user?.id],
     enabled: !!user,
     queryFn: async () => {
+      const cacheKey = `my-likes-${user.id}`;
+      const cached = getCache(cacheKey);
+      if (cached) { setLikes(cached); return cached; }
       const l = await base44.entities.PlaylistLike.filter({ user_id: user.id });
-      setLikes(l.map(x => x.playlist_id));
-      return l.map(x => x.playlist_id);
-    }
+      const ids = l.map(x => x.playlist_id);
+      setLikes(ids);
+      setCache(cacheKey, ids, TTL_5MIN);
+      return ids;
+    },
+    initialData: () => {
+      const cached = user ? getCache(`my-likes-${user.id}`) : null;
+      if (cached) { setLikes(cached); return cached; }
+      return undefined;
+    },
   });
 
   const handleLike = async (playlist) => {
