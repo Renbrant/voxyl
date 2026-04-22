@@ -4,10 +4,31 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Fetch all episode progress records where episode was mostly played
+    // Fetch all playlists to map audio URLs to podcast feeds
+    const allPlaylists = await base44.entities.Playlist.list('', 1000);
+    
+    // Build a map of audio URLs to podcast info
+    const urlToPodcastMap = {};
+    
+    allPlaylists.forEach(playlist => {
+      if (!playlist.rss_feeds) return;
+      
+      playlist.rss_feeds.forEach(feed => {
+        if (urlToPodcastMap[feed.url]) return; // Already mapped
+        urlToPodcastMap[feed.url] = {
+          feedUrl: feed.url,
+          title: feed.title || 'Sem título',
+          image: feed.image || '',
+          description: feed.description || '',
+          playCount: 0
+        };
+      });
+    });
+
+    // Fetch all episode progress records
     const allProgress = await base44.entities.EpisodeProgress.list('-updated_date', 10000);
 
-    // Count by podcast (group by domain/pattern from audio_url)
+    // Count by feed URL
     const podcastMap = {};
 
     allProgress.forEach(progress => {
@@ -18,28 +39,33 @@ Deno.serve(async (req) => {
 
       if (!isMarkedFinished && !isPlayed70Plus) return;
 
-      // Extract podcast identifier from audio URL
-      // Most podcast URLs have a common pattern - we'll use the domain
-      const url = progress.audio_url || '';
-      try {
-        const urlObj = new URL(url);
-        const host = urlObj.hostname;
-        
-        if (!podcastMap[host]) {
-          podcastMap[host] = {
-            id: host,
-            playCount: 0,
-            sampleUrl: url
-          };
+      // Find which podcast feed this audio URL belongs to
+      // by matching against feeds in playlists
+      let matchedFeed = null;
+      
+      for (const feedUrl of Object.keys(urlToPodcastMap)) {
+        // Check if this audio URL likely belongs to this feed
+        // We do a simple domain matching as a heuristic
+        if (progress.audio_url && progress.audio_url.includes(feedUrl.split('/')[2])) {
+          matchedFeed = feedUrl;
+          break;
         }
-        podcastMap[host].playCount++;
-      } catch {
-        // Skip invalid URLs
       }
+
+      if (!matchedFeed) return; // Skip if can't determine podcast
+
+      if (!podcastMap[matchedFeed]) {
+        podcastMap[matchedFeed] = {
+          ...urlToPodcastMap[matchedFeed],
+          playCount: 0
+        };
+      }
+      podcastMap[matchedFeed].playCount++;
     });
 
     // Sort by play count and return top 100
     const sorted = Object.values(podcastMap)
+      .filter(p => p.playCount > 0)
       .sort((a, b) => b.playCount - a.playCount)
       .slice(0, 100);
 
