@@ -11,20 +11,11 @@ import { ptBR } from 'date-fns/locale';
 export default function EpisodeDetailModal({ episode, isActive, isPlaying, onPlay, onClose, gradient }) {
   const navigate = useNavigate();
   const [downloaded, setDownloaded] = useState(() => isDownloaded(episode?.audioUrl));
-  const [downloading, setDownloading] = useState(false);
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     if (downloaded) return;
-    setDownloading(true);
     saveDownload(episode);
     setDownloaded(true);
-    setDownloading(false);
-    // Also trigger native download of the audio file
-    const a = document.createElement('a');
-    a.href = episode.audioUrl;
-    a.download = `${episode.title || 'episodio'}.mp3`;
-    a.target = '_blank';
-    a.click();
   };
   const formattedDate = episode.pubDate
     ? format(new Date(episode.pubDate), "d 'de' MMMM 'de' yyyy", { locale: ptBR })
@@ -83,7 +74,6 @@ export default function EpisodeDetailModal({ episode, isActive, isPlaying, onPla
         )}
         <button
           onClick={handleDownload}
-          disabled={downloading}
           className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold transition-all ${
             downloaded ? 'bg-green-600/20 text-green-400 border border-green-600/30' : 'bg-secondary text-foreground border border-border'
           }`}
