@@ -173,30 +173,24 @@ export default function PlaylistDetail() {
         .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
     };
 
-    // Load from cache first (instant)
+    // Always show loading state initially
+    setLoadingEps(true);
+    
+    // Load from cache first (instant display)
     const cached = playlist.rss_feeds.map(f => getFeedFromCache(f.url));
     const allCached = cached.every(c => c !== null);
     if (allCached) {
       setEpisodes(processResults(cached));
-    } else {
-      setLoadingEps(true);
     }
 
-    // Fetch all feeds in background (to detect new episodes)
+    // Always fetch all feeds in background (always check for new episodes)
     Promise.allSettled(
       playlist.rss_feeds.map((f, idx) =>
-        base44.functions.invoke('fetchRSSFeed', { url: f.url, count: 30 })
+        base44.functions.invoke('fetchRSSFeed', { url: f.url, count: 50 })
           .then(r => {
             const fresh = r.data;
-            const oldCached = cached[idx];
             saveFeedToCache(f.url, fresh);
-            
-            // Return only NEW episodes (those not in the cached version)
-            if (!oldCached) return fresh; // All new if wasn't cached
-            
-            const oldUrls = new Set(oldCached.items?.map(e => e.link) || []);
-            const newItems = fresh.items?.filter(e => !oldUrls.has(e.link)) || [];
-            return { ...fresh, items: newItems };
+            return fresh;
           })
       )
     ).then(results => {
@@ -204,21 +198,11 @@ export default function PlaylistDetail() {
         .filter(r => r.status === 'fulfilled')
         .map(r => r.value);
 
-      // Merge: cached feeds + new episodes from fresh fetches
-      const mergedData = playlist.rss_feeds.map((f, i) => {
-        const cachedFeed = cached[i];
-        const freshFeed = freshData[i];
-        
-        if (!cachedFeed) return freshFeed; // Not cached, use full fresh
-        if (!freshFeed?.items?.length) return cachedFeed; // No new items, use cached
-        
-        // Merge: new items first, then existing cached items
-        const newUrls = new Set(freshFeed.items.map(e => e.link));
-        const existingItems = cachedFeed.items?.filter(e => !newUrls.has(e.link)) || [];
-        return {
-          ...cachedFeed,
-          items: [...freshFeed.items, ...existingItems],
-        };
+      // Use fresh data directly, merging with cache only if fresh is incomplete
+      const mergedData = freshData.map((freshFeed, i) => {
+        if (freshFeed?.items?.length) return freshFeed;
+        // Fallback to cache only if fresh feed has no items
+        return cached[i] || freshFeed;
       });
       
       setEpisodes(processResults(mergedData));
