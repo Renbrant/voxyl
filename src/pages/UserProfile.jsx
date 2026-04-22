@@ -23,7 +23,14 @@ export default function UserProfile() {
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(() => {});
-  }, []);
+    // Fetch public profile data (including picture) via service role
+    base44.functions.invoke('getPublicUserProfile', { userId })
+      .then(res => {
+        const data = res.data;
+        setProfileUser(prev => ({ ...prev, ...data }));
+      })
+      .catch(() => {});
+  }, [userId]);
 
   useEffect(() => {
     base44.entities.Follow.filter({ following_id: userId, status: 'accepted' })
@@ -139,8 +146,8 @@ export default function UserProfile() {
 
       <div className="flex flex-col items-center py-4 px-4 mb-4">
         <div className="w-16 h-16 rounded-full mb-2 overflow-hidden flex-shrink-0">
-          {playlists[0]?.creator_picture ? (
-            <img src={playlists[0].creator_picture} alt={displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+          {profileUser?.profile_picture ? (
+            <img src={profileUser.profile_picture} alt={displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
           ) : (
             <div className="w-full h-full gradient-primary flex items-center justify-center">
               <UserCircle2 size={32} className="text-white" />
