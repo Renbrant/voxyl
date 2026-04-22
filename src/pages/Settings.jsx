@@ -1,50 +1,72 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Moon, Sun, Eye, Ban, LogOut, Trash2, Shield, UserX } from 'lucide-react';
+import { ChevronLeft, Moon, Sun, Eye, Ban, LogOut, Trash2, Shield, Monitor } from 'lucide-react';
 import VoxylHeader from '@/components/common/VoxylHeader';
 import DeleteAccountModal from '@/components/profile/DeleteAccountModal';
 import BlockedUsersModal from '@/components/profile/BlockedUsersModal';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
+
+const THEME_OPTIONS = [
+  { key: 'auto', label: 'Automático', icon: Monitor },
+  { key: 'dark', label: 'Escuro', icon: Moon },
+  { key: 'light', label: 'Claro', icon: Sun },
+];
+
+function applyTheme(theme) {
+  const root = document.documentElement;
+  if (theme === 'auto') {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    root.classList.remove('dark', 'light');
+    root.classList.add(prefersDark ? 'dark' : 'light');
+  } else if (theme === 'dark') {
+    root.classList.remove('light');
+    root.classList.add('dark');
+  } else {
+    root.classList.remove('dark');
+    root.classList.add('light');
+  }
+}
 
 export default function Settings() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [darkMode, setDarkMode] = useState(true);
+  const [theme, setTheme] = useState('dark');
   const [showDelete, setShowDelete] = useState(false);
   const [showBlocked, setShowBlocked] = useState(false);
+  const [showThemePicker, setShowThemePicker] = useState(false);
   const [blockedCount, setBlockedCount] = useState(0);
 
   useEffect(() => {
     base44.auth.me().then(u => {
       setUser(u);
-      // Check for dark mode preference
-      const isDark = localStorage.getItem('darkMode') !== 'false';
-      setDarkMode(isDark);
+      const saved = localStorage.getItem('theme') || 'dark';
+      setTheme(saved);
+      applyTheme(saved);
     }).catch(() => {});
   }, []);
 
-  const handleThemeChange = (isDark) => {
-    setDarkMode(isDark);
-    localStorage.setItem('darkMode', isDark ? 'true' : 'false');
-    // Apply theme to document
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+  const handleThemeChange = (t) => {
+    setTheme(t);
+    localStorage.setItem('theme', t);
+    applyTheme(t);
+    setShowThemePicker(false);
   };
 
   const handleLogout = () => {
     base44.auth.logout('/');
   };
 
+  const themeOption = THEME_OPTIONS.find(o => o.key === theme) || THEME_OPTIONS[0];
+  const ThemeIcon = themeOption.icon;
+
   const menuItems = [
     {
-      icon: darkMode ? Moon : Sun,
+      icon: ThemeIcon,
       label: 'Tema',
-      description: darkMode ? 'Modo escuro ativado' : 'Modo claro ativado',
-      action: () => handleThemeChange(!darkMode),
+      description: themeOption.label,
+      action: () => setShowThemePicker(true),
       badge: null,
     },
     {
@@ -179,6 +201,49 @@ export default function Settings() {
             onClose={() => setShowBlocked(false)}
             onCountChange={setBlockedCount}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Theme picker bottom sheet */}
+      <AnimatePresence>
+        {showThemePicker && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 z-40"
+              onClick={() => setShowThemePicker(false)}
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl border-t border-border p-6"
+              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)' }}
+            >
+              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">Escolher Tema</p>
+              <div className="space-y-2">
+                {THEME_OPTIONS.map(({ key, label, icon: Icon }) => (
+                  <button
+                    key={key}
+                    onClick={() => handleThemeChange(key)}
+                    className={cn(
+                      'w-full flex items-center gap-4 px-4 py-4 rounded-2xl border transition-all',
+                      theme === key
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border bg-secondary text-foreground'
+                    )}
+                  >
+                    <Icon size={20} />
+                    <span className="font-medium">{label}</span>
+                    {theme === key && <span className="ml-auto text-xs font-semibold text-primary">✓</span>}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>
