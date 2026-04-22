@@ -1,5 +1,7 @@
-import { X, Play, Pause, Calendar, Clock, ArrowLeft, List } from 'lucide-react';
+import { X, Play, Pause, Calendar, Clock, ArrowLeft, List, Download, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { saveDownload, isDownloaded } from '@/lib/downloads';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { formatDuration } from '@/lib/rssUtils';
@@ -8,6 +10,22 @@ import { ptBR } from 'date-fns/locale';
 
 export default function EpisodeDetailModal({ episode, isActive, isPlaying, onPlay, onClose, gradient }) {
   const navigate = useNavigate();
+  const [downloaded, setDownloaded] = useState(() => isDownloaded(episode?.audioUrl));
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (downloaded) return;
+    setDownloading(true);
+    saveDownload(episode);
+    setDownloaded(true);
+    setDownloading(false);
+    // Also trigger native download of the audio file
+    const a = document.createElement('a');
+    a.href = episode.audioUrl;
+    a.download = `${episode.title || 'episodio'}.mp3`;
+    a.target = '_blank';
+    a.click();
+  };
   const formattedDate = episode.pubDate
     ? format(new Date(episode.pubDate), "d 'de' MMMM 'de' yyyy", { locale: ptBR })
     : null;
@@ -52,18 +70,28 @@ export default function EpisodeDetailModal({ episode, isActive, isPlaying, onPla
         )}
       </div>
 
-      {/* Podcast episodes button */}
-      {episode.feedUrl && (
-        <div className="px-5 pt-4 flex-shrink-0">
+      {/* Action buttons */}
+      <div className="px-5 pt-4 flex-shrink-0 flex gap-2">
+        {episode.feedUrl && (
           <button
             onClick={() => { onClose(); navigate(`/podcast/${encodeURIComponent(episode.feedUrl)}`); }}
-            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl gradient-primary text-white font-semibold"
+            className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl gradient-primary text-white font-semibold"
           >
             <List size={16} />
-            Ver todos os episódios
+            Ver episódios
           </button>
-        </div>
-      )}
+        )}
+        <button
+          onClick={handleDownload}
+          disabled={downloading}
+          className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold transition-all ${
+            downloaded ? 'bg-green-600/20 text-green-400 border border-green-600/30' : 'bg-secondary text-foreground border border-border'
+          }`}
+        >
+          {downloaded ? <Check size={16} /> : <Download size={16} />}
+          {downloaded ? 'Salvo' : 'Baixar'}
+        </button>
+      </div>
 
       {/* Description */}
       {episode.description && (

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, ListMusic, Mic } from 'lucide-react';
+import { Plus, ListMusic, Mic, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import VoxylHeader from '@/components/common/VoxylHeader';
@@ -10,16 +10,20 @@ import CreatePlaylistModal from '@/components/playlist/CreatePlaylistModal';
 import LikedPodcastCard from '@/components/explore/LikedPodcastCard';
 import PullToRefreshIndicator from '@/components/common/PullToRefreshIndicator';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import DownloadedEpisodeCard from '@/components/downloads/DownloadedEpisodeCard';
+import { getDownloads } from '@/lib/downloads';
 
 const TABS = [
   { key: 'playlists', label: 'Playlists', icon: ListMusic },
   { key: 'podcasts', label: 'Podcasts', icon: Mic },
+  { key: 'downloads', label: 'Baixados', icon: Download },
 ];
 
 export default function Playlists() {
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState('playlists');
   const [showCreate, setShowCreate] = useState(false);
+  const [downloads, setDownloads] = useState([]);
   const containerRef = useRef(null);
   const queryClient = useQueryClient();
 
@@ -31,6 +35,7 @@ export default function Playlists() {
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
+    setDownloads(getDownloads());
   }, []);
 
   // My playlists
@@ -166,6 +171,28 @@ export default function Playlists() {
               </div>
             )}
           </>
+        )}
+
+        {/* Downloads tab */}
+        {tab === 'downloads' && (
+          downloads.length === 0 ? (
+            <div className="text-center py-16 text-muted-foreground">
+              <p className="text-4xl mb-3">📥</p>
+              <p className="font-medium text-foreground">Nenhum episódio baixado</p>
+              <p className="text-sm mt-1">Abra um episódio e toque em "Baixar" para salvá-lo aqui.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {downloads.map((ep, i) => (
+                <motion.div key={ep.audioUrl} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+                  <DownloadedEpisodeCard
+                    episode={ep}
+                    onRemoved={() => setDownloads(getDownloads())}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )
         )}
 
         {/* Podcasts tab */}
