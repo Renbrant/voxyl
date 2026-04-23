@@ -282,6 +282,8 @@ export default function PlaylistDetail() {
           <h2 className="font-semibold text-foreground flex items-center gap-2">
             <ListMusic size={16} className="text-primary" /> {t('detailEpisodes')}
             {episodes.length > 0 && <span className="text-muted-foreground text-sm font-normal">({episodes.length})</span>}
+            {backgroundSyncSource === 'local' && episodes.length > 0 && <span className="text-xs px-2 py-1 rounded-full bg-accent/10 text-accent font-medium">📡 Cache</span>}
+            {!loadingEps && backgroundSyncSource === 'rss' && episodes.length > 0 && <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">✓ Atualizado</span>}
           </h2>
           {episodes.length > 0 && (
             <button
@@ -301,22 +303,6 @@ export default function PlaylistDetail() {
           <div className="flex flex-col items-center py-12 gap-3 text-muted-foreground">
             <Loader2 size={24} className="animate-spin text-primary" />
             <p className="text-sm">{t('detailLoadingFeeds')}</p>
-          </div>
-        ) : backgroundSyncSource === 'local' && episodes.length > 0 && playlist ? (
-          <div className="mb-4 p-3 rounded-xl bg-accent/10 border border-accent/30 flex items-start gap-2">
-            <div className="text-accent text-lg mt-0.5">📡</div>
-            <div>
-              <p className="text-xs font-medium text-accent">Sem conexão com a internet</p>
-              <p className="text-xs text-accent/70 mt-0.5">Exibindo apenas episódios em cache. Novos episódios serão carregados quando a conexão for restaurada.</p>
-            </div>
-          </div>
-        ) : backgroundSyncSource === 'rss' && episodes.length > 0 && playlist ? (
-          <div className="mb-4 p-3 rounded-xl bg-primary/10 border border-primary/30 flex items-start gap-2">
-            <div className="text-primary text-lg mt-0.5">✓</div>
-            <div>
-              <p className="text-xs font-medium text-primary">Playlist atualizada</p>
-              <p className="text-xs text-primary/70 mt-0.5">Todos os episódios foram carregados com sucesso.</p>
-            </div>
           </div>
         ) : episodes.length === 0 && playlist ? (
           <div className="text-center py-12 text-muted-foreground">
