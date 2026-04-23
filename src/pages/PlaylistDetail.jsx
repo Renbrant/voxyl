@@ -190,16 +190,9 @@ export default function PlaylistDetail() {
 
     loadEpisodesRef.current = async () => {
       setLoadingEps(true);
+      setEpisodes([]); // Clear episodes to avoid showing wrong playlist
 
-      // Step 1: Try cloud cache first (source of truth across devices)
-      const cloudCache = await getCloudEpisodes(id);
-      if (cloudCache?.episodes?.length > 0) {
-        setEpisodes(sortEpisodes(cloudCache.episodes));
-        setLoadingEps(false);
-        // Continue fetching fresh data in background
-      }
-
-      // Step 2: Always fetch fresh data for every feed in parallel
+      // Always fetch fresh data for every feed in parallel
       const freshResults = await Promise.allSettled(
         playlist.rss_feeds.map(async (f) => {
           const res = await base44.functions.invoke('fetchRSSFeed', { url: f.url, count: 100 });
@@ -211,7 +204,7 @@ export default function PlaylistDetail() {
         })
       );
 
-      // Step 3: For feeds that failed, fall back to local cache so we never lose episodes
+      // For feeds that failed, fall back to local cache so we never lose episodes
       const finalResults = playlist.rss_feeds.map((f, i) => {
         const result = freshResults[i];
         if (result.status === 'fulfilled' && result.value?.items?.length) {
