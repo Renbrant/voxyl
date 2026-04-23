@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, ListMusic, Mic, Download } from 'lucide-react';
+import { Plus, ListMusic, Mic, Download, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import VoxylHeader from '@/components/common/VoxylHeader';
@@ -22,6 +22,7 @@ const TABS = [
 
 export default function Playlists() {
   const [user, setUser] = useState(null);
+  const [isAuthed, setIsAuthed] = useState(null); // null = loading
   const [tab, setTab] = useState('playlists');
   const [showCreate, setShowCreate] = useState(false);
   const [downloads, setDownloads] = useState([]);
@@ -38,7 +39,12 @@ export default function Playlists() {
   }, containerRef);
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.isAuthenticated().then(authed => {
+      setIsAuthed(authed);
+      if (authed) {
+        base44.auth.me().then(setUser).catch(() => {});
+      }
+    }).catch(() => setIsAuthed(false));
     setDownloads(getDownloads());
   }, []);
 
@@ -114,6 +120,26 @@ export default function Playlists() {
     await base44.functions.invoke('togglePlaylistLike', { playlist_id: playlist.id });
     queryClient.invalidateQueries({ queryKey: ['liked-playlists', user?.id] });
   };
+
+  if (isAuthed === false) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 text-center gap-5">
+        <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center glow-primary">
+          <LogIn size={28} className="text-white" />
+        </div>
+        <div>
+          <h2 className="text-xl font-grotesk font-bold text-foreground mb-1">Entre para continuar</h2>
+          <p className="text-sm text-muted-foreground">Faça login para criar playlists, curtir e salvar seus podcasts favoritos.</p>
+        </div>
+        <button
+          onClick={() => base44.auth.redirectToLogin(window.location.href)}
+          className="px-6 py-3 rounded-2xl gradient-primary text-white font-semibold text-sm glow-primary"
+        >
+          Entrar com Google
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className="bg-background pb-24 relative">

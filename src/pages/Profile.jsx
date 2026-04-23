@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import VoxylHeader from '@/components/common/VoxylHeader';
 import PlaylistCard from '@/components/playlist/PlaylistCard';
 import InviteFriendModal from '@/components/profile/InviteFriendModal';
 import DeleteAccountModal from '@/components/profile/DeleteAccountModal';
 import ShareAppModal from '@/components/profile/ShareAppModal';
-import { UserCircle2, Mail, Users, ListMusic, Trash2, Share2, Shield, LogOut, Bell, AtSign, EyeOff, Eye, Pencil, Settings, Camera, RefreshCw, Loader2 } from 'lucide-react';
+import { UserCircle2, Mail, Users, ListMusic, Trash2, Share2, Shield, LogOut, Bell, AtSign, EyeOff, Eye, Pencil, Settings, Camera, RefreshCw, Loader2, LogIn } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,6 +15,7 @@ import UsernameSetupModal from '@/components/profile/UsernameSetupModal';
 import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
+  const [isAuthed, setIsAuthed] = useState(null); // null = loading
   const [user, setUser] = useState(null);
   const [showInvite, setShowInvite] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
@@ -34,13 +35,18 @@ export default function Profile() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    base44.auth.me().then((u) => {
-      setUser(u);
-      if (!u.username) setShowUsernameModal(true);
-      base44.entities.Follow.filter({ following_id: u.id, status: 'pending' })
-        .then((reqs) => setPendingCount(reqs.length))
-        .catch(() => {});
-    }).catch(() => {});
+    base44.auth.isAuthenticated().then(authed => {
+      setIsAuthed(authed);
+      if (authed) {
+        base44.auth.me().then((u) => {
+          setUser(u);
+          if (!u.username) setShowUsernameModal(true);
+          base44.entities.Follow.filter({ following_id: u.id, status: 'pending' })
+            .then((reqs) => setPendingCount(reqs.length))
+            .catch(() => {});
+        }).catch(() => {});
+      }
+    }).catch(() => setIsAuthed(false));
     // Check if already unlocked
     if (localStorage.getItem('voxyl_egg_unlocked') === 'true') setEggUnlocked(true);
   }, []);
@@ -117,6 +123,26 @@ export default function Profile() {
 
   const publicPlaylists = playlists.filter((p) => p.visibility === 'public' || !p.visibility);
   const followersPlaylists = playlists.filter((p) => p.visibility === 'friends_only');
+
+  if (isAuthed === false) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 text-center gap-5">
+        <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center glow-primary">
+          <LogIn size={28} className="text-white" />
+        </div>
+        <div>
+          <h2 className="text-xl font-grotesk font-bold text-foreground mb-1">Entre para ver seu perfil</h2>
+          <p className="text-sm text-muted-foreground">Faça login para acessar seu perfil, suas playlists e configurações.</p>
+        </div>
+        <button
+          onClick={() => base44.auth.redirectToLogin(window.location.href)}
+          className="px-6 py-3 rounded-2xl gradient-primary text-white font-semibold text-sm glow-primary"
+        >
+          Entrar com Google
+        </button>
+      </div>
+    );
+  }
 
   if (!user) return (
     <div className="min-h-screen bg-background flex items-center justify-center">

@@ -1,10 +1,11 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useRef } from 'react';
-import { Home, Compass, Heart, User } from 'lucide-react';
+import { useRef, useEffect, useState } from 'react';
+import { Home, Compass, Heart, User, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AudioPlayer from './player/AudioPlayer';
 import { usePlayer } from '@/lib/PlayerContext';
 import FollowRequestsBell from '@/components/notifications/FollowRequestsBell';
+import { base44 } from '@/api/base44Client';
 
 const navItems = [
   { icon: Home, label: 'Feed', path: '/' },
@@ -18,6 +19,11 @@ export default function Layout() {
   const navigate = useNavigate();
   const { currentEpisode } = usePlayer();
   const tabHistory = useRef({});
+  const [isAuthed, setIsAuthed] = useState(false);
+
+  useEffect(() => {
+    base44.auth.isAuthenticated().then(setIsAuthed).catch(() => setIsAuthed(false));
+  }, [location.pathname]);
 
   const handleNavClick = (path) => {
     const active = location.pathname === path ||
@@ -55,12 +61,27 @@ export default function Layout() {
       >
         <div className="flex items-center justify-around px-2 py-3">
           {navItems.map(({ icon: Icon, label, path }) => {
+            // For protected tabs, redirect to login if not authed
+            const isProtected = path === '/playlists' || path === '/profile';
             const active = location.pathname === path ||
               (path !== '/' && location.pathname.startsWith(path));
+
+            const handleClick = () => {
+              if (isProtected && !isAuthed) {
+                base44.auth.redirectToLogin(window.location.href);
+                return;
+              }
+              handleNavClick(path);
+            };
+
+            // Show login icon for profile tab when not authed
+            const DisplayIcon = (path === '/profile' && !isAuthed) ? LogIn : Icon;
+            const displayLabel = (path === '/profile' && !isAuthed) ? 'Entrar' : label;
+
             return (
               <button
                 key={path}
-                onClick={() => handleNavClick(path)}
+                onClick={handleClick}
                 className={cn(
                   "flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-all duration-200 active:scale-95",
                   active ? "text-primary" : "text-muted-foreground"
@@ -71,9 +92,9 @@ export default function Layout() {
                   "relative",
                   active && "after:absolute after:-bottom-0.5 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:rounded-full after:bg-primary"
                 )}>
-                  <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
+                  <DisplayIcon size={22} strokeWidth={active ? 2.5 : 1.8} />
                 </div>
-                <span className="text-xs font-medium">{label}</span>
+                <span className="text-xs font-medium">{displayLabel}</span>
               </button>
             );
           })}

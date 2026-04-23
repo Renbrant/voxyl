@@ -5,7 +5,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import VoxylHeader from '@/components/common/VoxylHeader';
 import PlaylistCard from '@/components/playlist/PlaylistCard';
 import PullToRefreshIndicator from '@/components/common/PullToRefreshIndicator';
-import { Flame, Sparkles, Play } from 'lucide-react';
+import { Flame, Sparkles, Play, LogIn } from 'lucide-react';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
@@ -19,6 +20,7 @@ export default function Feed() {
   const [tab, setTab] = useState('trending');
   const [expandedPlaylists, setExpandedPlaylists] = useState(false);
   const [expandedPodcasts, setExpandedPodcasts] = useState(false);
+  const { requireAuth } = useRequireAuth();
   const containerRef = useRef(null);
   const queryClient = useQueryClient();
 
@@ -38,7 +40,7 @@ export default function Feed() {
       base44.entities.Follow.filter({ follower_id: u.id, status: 'accepted' })
         .then(follows => setFollowingIds(new Set(follows.map(f => f.following_id))))
         .catch(() => {});
-    }).catch(() => {});
+    }).catch(() => {}); // guest mode — user stays null
   }, []);
 
   const { pullProgress, refreshing } = usePullToRefresh(() => {
@@ -96,12 +98,11 @@ export default function Feed() {
     },
   });
 
-  const handleLike = async (playlist) => {
-    if (!user) return;
+  const handleLike = requireAuth(async (playlist) => {
     const liked = likes.includes(playlist.id);
     setLikes(prev => liked ? prev.filter(id => id !== playlist.id) : [...prev, playlist.id]);
     await base44.functions.invoke('togglePlaylistLike', { playlist_id: playlist.id });
-  };
+  });
 
   const visiblePlaylists = playlists.filter(p => {
     if (blockedIds.includes(p.creator_id)) return false;
