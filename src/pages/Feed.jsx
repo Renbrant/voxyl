@@ -88,9 +88,8 @@ export default function Feed() {
         const res = await base44.functions.invoke('getTopPodcastsByPlayback', {});
         // Function returns array directly
         if (Array.isArray(res.data)) return res.data;
-        // Fallback for old format { podcasts: [] }
         if (Array.isArray(res.data?.podcasts)) return res.data.podcasts;
-        return [];
+        return Array.isArray(res.data) ? res.data : [];
       } catch (err) {
         return [];
       }
@@ -118,7 +117,8 @@ export default function Feed() {
   const heroPlaylist = sortedPlaylists[0];
   const trendingPlaylists = sortedPlaylists.slice(1);
   const displayedTrendingPlaylists = expandedPlaylists ? trendingPlaylists : trendingPlaylists.slice(0, 8);
-  const displayedPodcasts = expandedPodcasts ? topPodcasts : topPodcasts.slice(0, 8);
+  const safePodcasts = Array.isArray(topPodcasts) ? topPodcasts : [];
+  const displayedPodcasts = expandedPodcasts ? safePodcasts : safePodcasts.slice(0, 8);
 
   return (
     <div ref={containerRef} className="bg-background relative">
@@ -207,22 +207,22 @@ export default function Feed() {
         )}
 
         {/* Podcasts em Alta */}
-        {topPodcasts.length > 0 && (
+        {safePodcasts.length > 0 && (
           <div>
             <h2 className="text-base font-semibold mb-3 text-foreground">Podcasts em Alta</h2>
 
             {/* Hero Podcast */}
-            {topPodcasts[0] && (
+            {safePodcasts[0] && (
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-4 relative rounded-3xl overflow-hidden h-48 bg-gradient-to-br from-purple-800 via-primary/60 to-cyan-600">
-                {topPodcasts[0].image && (
-                  <img src={topPodcasts[0].image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                {safePodcasts[0].image && (
+                  <img src={safePodcasts[0].image} alt="" className="absolute inset-0 w-full h-full object-cover" />
                 )}
                 <div className="absolute inset-0 bg-black/40" />
                 <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
                   <div className="flex-1 min-w-0 mr-3">
                     <p className="text-xs text-white/70 mb-0.5 font-medium">🔥 Mais tocado agora</p>
-                    <h2 className="text-xl font-grotesk font-bold text-white truncate">{topPodcasts[0].title}</h2>
-                    <p className="text-sm text-white/70 truncate">{topPodcasts[0].playCount || 0} reproduções</p>
+                    <h2 className="text-xl font-grotesk font-bold text-white truncate">{safePodcasts[0].title}</h2>
+                    <p className="text-sm text-white/70 truncate">{safePodcasts[0].playCount || 0} reproduções</p>
                   </div>
                   <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center glow-primary flex-shrink-0">
                     <Play size={20} fill="white" className="text-white ml-0.5" />
@@ -254,7 +254,7 @@ export default function Feed() {
                 </div>
 
                 {/* Expand Podcasts */}
-                {topPodcasts.length > 9 && (
+                {safePodcasts.length > 9 && (
                   <motion.button
                     onClick={() => setExpandedPodcasts(!expandedPodcasts)}
                     className="w-full py-3 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground font-medium transition-colors text-sm"
