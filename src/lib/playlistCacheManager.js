@@ -141,17 +141,24 @@ export async function getPlaylistEpisodes(playlistId, forceRefresh = false) {
   };
 }
 
-// Get cloud episodes (aggregated)
+// Get cloud episodes (aggregated) - only if valid for this playlist
 export async function getCloudEpisodes(playlistId) {
   try {
     const records = await base44.entities.PlaylistEpisodesCache.filter({ playlist_id: playlistId });
     if (!records[0]) return null;
     
-    return {
+    const cached = {
       episodes: JSON.parse(records[0].episodes_data || '[]'),
       hash: records[0].episodes_hash,
       timestamp: new Date(records[0].last_updated).getTime()
     };
+    
+    // Validate cache is recent (not older than 1 hour)
+    if (Date.now() - cached.timestamp > CACHE_DURATION_MS) {
+      return null;
+    }
+    
+    return cached;
   } catch {
     return null;
   }

@@ -221,6 +221,12 @@ export default function PlaylistDetail() {
         setEpisodes(sorted);
         // Save aggregated episodes to cloud cache so all devices stay in sync
         await updateCloudCache(id, sorted);
+      } else {
+        // Only use cloud cache as last resort if all feeds failed
+        const cloudCache = await getCloudEpisodes(id);
+        if (cloudCache?.episodes?.length > 0) {
+          setEpisodes(sortEpisodes(cloudCache.episodes));
+        }
       }
 
       setLoadingEps(false);
