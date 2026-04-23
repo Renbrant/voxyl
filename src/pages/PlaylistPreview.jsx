@@ -24,10 +24,11 @@ export default function PlaylistPreview() {
   useEffect(() => {
     base44.auth.isAuthenticated().then(auth => {
       setIsLoggedIn(auth);
-      // If already logged in, go straight to the full detail page
+      // If already logged in, go straight to the full detail page (with all features)
       if (auth) navigate(`/playlist/${id}`, { replace: true });
     });
   }, [id]);
+  // Note: guests (/share/:id) see a preview — /playlist/:id is now open to guests too
 
   useEffect(() => {
     base44.entities.Playlist.filter({ id })

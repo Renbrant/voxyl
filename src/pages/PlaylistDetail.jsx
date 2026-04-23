@@ -8,6 +8,7 @@ import { getPlaylistCoverImage } from '@/lib/playlistCoverHelper';
 import { getPlaylistEpisodes, saveFreshEpisodes, clearCache } from '@/lib/playlistCacheManager';
 import { usePlayer } from '@/lib/PlayerContext';
 import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward, Pencil, CheckCircle2, Heart, UserPlus, UserCheck } from 'lucide-react';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Link } from 'react-router-dom';
 import PageTransition from '@/components/common/PageTransition';
 import VisibilityBadge from '@/components/playlist/VisibilityBadge';
@@ -42,6 +43,7 @@ export default function PlaylistDetail() {
   const [liked, setLiked] = useState(false);
   const [following, setFollowing] = useState(false);
   const [followingLoader, setFollowingLoader] = useState(false);
+  const { requireAuth } = useRequireAuth();
   const { play, currentEpisode, isPlaying, togglePlay, seek, currentTime, duration, autoplay, setAutoplay, finishedUrls, setFinishedUrls, markFinished, getCachedProgress } = usePlayer();
 
   useEffect(() => {
@@ -51,13 +53,13 @@ export default function PlaylistDetail() {
       .catch(() => {});
   }, [user, id]);
 
-  const handleLike = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!user || !playlist) return;
+  const handleLike = requireAuth(async (e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    if (!playlist) return;
     setLiked(v => !v);
     await base44.functions.invoke('togglePlaylistLike', { playlist_id: id });
-  };
+  });
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -105,10 +107,10 @@ export default function PlaylistDetail() {
 
   const isOwner = user && playlist && user.id === playlist.creator_id;
 
-  const handleFollowCreator = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!user || !playlist || isOwner) return;
+  const handleFollowCreator = requireAuth(async (e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    if (!playlist || isOwner) return;
     setFollowingLoader(true);
     if (following) {
       const records = await base44.entities.Follow.filter({ follower_id: user.id, following_id: playlist.creator_id });
@@ -126,7 +128,7 @@ export default function PlaylistDetail() {
       setFollowing(true);
     }
     setFollowingLoader(false);
-  };
+  });
 
   useEffect(() => {
     if (!user || !playlist || isOwner) return;
@@ -230,7 +232,9 @@ export default function PlaylistDetail() {
     if (currentEpisode?.audioUrl === ep.audioUrl) { togglePlay(); return; }
     play(ep, episodes, { type: 'playlist', id });
     setPlayedUrls(prev => new Set([...prev, ep.audioUrl]));
-    base44.entities.Playlist.update(id, { plays_count: (playlist?.plays_count || 0) + 1 });
+    if (user) {
+      base44.entities.Playlist.update(id, { plays_count: (playlist?.plays_count || 0) + 1 });
+    }
   };
 
   const [coverImage, setCoverImage] = useState(null);
