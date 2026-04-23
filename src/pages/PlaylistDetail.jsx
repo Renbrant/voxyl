@@ -211,7 +211,7 @@ export default function PlaylistDetail() {
             {/* Autoplay toggle switch */}
             <button
               onClick={() => setAutoplay(v => !v)}
-              title={autoplay ? 'Autoplay ativado' : 'Autoplay desativado'}
+              title={autoplay ? t('detailAutoplayOn') : t('detailAutoplayOff')}
               className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm rounded-full px-1 py-1 transition-all"
             >
               <div className={cn(
@@ -380,7 +380,7 @@ export default function PlaylistDetail() {
                             • {format(new Date(ep.pubDate), "d MMM yyyy", { locale: ptBR })}
                           </span>
                         )}
-                        {hasBeenPlayed && <span className="text-xs text-muted-foreground/60 italic">• {t('detailHeard')}</span>}
+                        {hasBeenPlayed && <span className="text-xs text-muted-foreground/60 italic">• ouvido</span>}
                       </div>
                     </div>
                     <EpisodeActionButton
@@ -488,7 +488,7 @@ export default function PlaylistDetail() {
                                 • {format(new Date(ep.pubDate), "d MMM yyyy", { locale: ptBR })}
                               </span>
                             )}
-                            {hasBeenPlayed && <span className="text-xs text-muted-foreground/60 italic">• ouvido</span>}
+                            {hasBeenPlayed && <span className="text-xs text-muted-foreground/60 italic">• {t('detailHeard')}</span>}
                           </div>
                         </div>
                         <EpisodeActionButton

@@ -171,6 +171,8 @@ const translations = {
   visibilityPublic: { pt: 'Pública', en: 'Public' },
   visibilityFriendsOnly: { pt: 'Seguidores', en: 'Followers only' },
   visibilityPrivate: { pt: 'Privada', en: 'Private' },
+  detailAutoplayOn: { pt: 'Autoplay ativado', en: 'Autoplay enabled' },
+  detailAutoplayOff: { pt: 'Autoplay desativado', en: 'Autoplay disabled' },
 
   // Privacy Policy
   privacyTitle: { pt: 'Política de Privacidade', en: 'Privacy Policy' },
