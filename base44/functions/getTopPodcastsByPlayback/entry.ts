@@ -4,71 +4,49 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Fetch all playlists to get podcast feeds
-    const allPlaylists = await base44.entities.Playlist.list('', 1000);
+    // Build podcast metadata from playlist rss_feeds (no external fetching)
+    const allPlaylists = await base44.asServiceRole.entities.Playlist.list('', 1000);
     const podcastMap = {};
 
     allPlaylists.forEach(playlist => {
       if (!playlist.rss_feeds) return;
       playlist.rss_feeds.forEach(feed => {
+        if (!feed.url) return;
         if (!podcastMap[feed.url]) {
           podcastMap[feed.url] = {
             feedUrl: feed.url,
-            title: feed.title || 'Sem título',
+            title: feed.title || '',
             image: feed.image || '',
             description: feed.description || '',
+            author: feed.author || '',
             playCount: 0,
-            episodes: []
           };
         }
+        // Prefer non-empty title/image from any playlist that has it
+        if (!podcastMap[feed.url].title && feed.title) podcastMap[feed.url].title = feed.title;
+        if (!podcastMap[feed.url].image && feed.image) podcastMap[feed.url].image = feed.image;
       });
     });
 
-    // Fetch episodes for each podcast and cache audio URLs
-    for (const feedUrl of Object.keys(podcastMap)) {
-      try {
-        const feedResult = await base44.functions.invoke('fetchRSSFeed', { 
-          url: feedUrl, 
-          count: 200 
-        });
-        
-        const episodes = feedResult.data?.items || [];
-        podcastMap[feedUrl].episodes = episodes.map(e => e.audioUrl).filter(Boolean);
-      } catch {
-        // Feed fetch failed
-      }
-    }
-
-    // Fetch all episode progress records
-    const allProgress = await base44.entities.EpisodeProgress.list('-updated_date', 10000);
-    
-    // Count plays per podcast
-    allProgress.forEach(progress => {
-      const audioUrl = progress.audio_url;
-      if (!audioUrl) return;
-
-      // Count if marked as finished OR played 70%+
-      const isFinished = progress.finished === true;
-      const isPct70 = progress.duration_seconds && progress.position_seconds 
-        ? (progress.position_seconds / progress.duration_seconds) >= 0.7 
-        : false;
-
-      if (!isFinished && !isPct70) return;
-
-      // Find which podcast this audio belongs to
-      for (const feedUrl of Object.keys(podcastMap)) {
-        if (podcastMap[feedUrl].episodes.includes(audioUrl)) {
-          podcastMap[feedUrl].playCount++;
-          break;
+    // Count plays from PodcastPlay records (admin-only entity)
+    const allPlays = await base44.asServiceRole.entities.PodcastPlay.list('-played_at', 10000);
+    allPlays.forEach(play => {
+      if (play.feed_url && podcastMap[play.feed_url]) {
+        podcastMap[play.feed_url].playCount++;
+        // Fill metadata from play records if missing
+        if (!podcastMap[play.feed_url].title && play.podcast_title) {
+          podcastMap[play.feed_url].title = play.podcast_title;
+        }
+        if (!podcastMap[play.feed_url].image && play.podcast_image) {
+          podcastMap[play.feed_url].image = play.podcast_image;
         }
       }
     });
 
-    // Filter and sort — show all podcasts, sorted by play count
     const sorted = Object.values(podcastMap)
-      .filter(p => p.title && p.title !== 'Sem título')
+      .filter(p => p.title)
       .sort((a, b) => b.playCount - a.playCount)
-      .slice(0, 100);
+      .slice(0, 50);
 
     return Response.json(sorted);
   } catch (error) {
