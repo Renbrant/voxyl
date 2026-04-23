@@ -114,7 +114,7 @@ export default function Feed() {
 
   const sortedPlaylists = tab === 'trending'
     ? [...visiblePlaylists].sort((a, b) => (b.plays_count || 0) - (a.plays_count || 0))
-    : [...visiblePlaylists].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    : [...visiblePlaylists].sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0));
 
   const heroPlaylist = sortedPlaylists[0];
   const trendingPlaylists = sortedPlaylists.slice(1);
