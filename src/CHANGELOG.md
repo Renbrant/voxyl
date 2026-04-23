@@ -1,5 +1,27 @@
 # Changelog — Voxyl
 
+## v0.2 — Abril 2026
+
+### Melhorias e correções
+
+#### Acesso de convidados (Guest Mode)
+- Usuários não autenticados podem navegar o Feed e explorar conteúdo sem fazer login
+- Ações protegidas (curtir, seguir, criar playlists) redirecionam para login ao serem acionadas
+- Páginas de Playlists e Perfil exibem tela de convite ao login quando não autenticado
+- Botão "Entrar" aparece na barra de navegação inferior para usuários não logados
+
+#### Compatibilidade Android / Google Play
+- Corrigido erro 403 (Forbidden) durante login com Google em WebViews Android
+- O login agora abre no navegador externo do sistema (Chrome), contornando restrições de OAuth em WebViews
+- Utilitário centralizado `authRedirect` substitui chamadas diretas ao SDK em todos os pontos de redirecionamento
+
+#### Técnico
+- Refatoração do hook `useRequireAuth` para usar o utilitário `authRedirect`
+- Remoção de imports duplicados do SDK em componentes de autenticação
+- Melhoria na detecção de estado de carregamento (`isAuthed === null`) para evitar flickering de UI
+
+---
+
 ## v0.1 — Abril 2026
 
 ### Lançamento inicial
