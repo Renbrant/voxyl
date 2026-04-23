@@ -1,21 +1,22 @@
 import { Globe, Lock, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { t } from '@/lib/i18n';
 
 export default function VisibilityBadge({ visibility, withLabel = false }) {
   const configs = {
     public: {
       icon: Globe,
-      label: 'Pública',
+      label: t('visibilityPublic'),
       color: 'bg-primary/10 text-primary',
     },
     friends_only: {
       icon: Users,
-      label: 'Seguidores',
+      label: t('visibilityFriendsOnly'),
       color: 'bg-accent/10 text-accent',
     },
     private: {
       icon: Lock,
-      label: 'Privada',
+      label: t('visibilityPrivate'),
       color: 'bg-muted text-muted-foreground',
     },
   };

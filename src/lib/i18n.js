@@ -168,6 +168,9 @@ const translations = {
   detailUser: { pt: 'Usuário', en: 'User' },
   detailCached: { pt: '📡 Cache', en: '📡 Cached' },
   detailUpdated: { pt: '✓ Atualizado', en: '✓ Updated' },
+  visibilityPublic: { pt: 'Pública', en: 'Public' },
+  visibilityFriendsOnly: { pt: 'Seguidores', en: 'Followers only' },
+  visibilityPrivate: { pt: 'Privada', en: 'Private' },
 
   // Privacy Policy
   privacyTitle: { pt: 'Política de Privacidade', en: 'Privacy Policy' },
