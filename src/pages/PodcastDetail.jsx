@@ -68,7 +68,7 @@ export default function PodcastDetail() {
     (async () => {
       try {
         let fresh;
-        let source = 'local';
+        let source = 'rss'; // Default to 'rss' for cloud cache or API fetch
         
         // Try cloud cache first
         const cloudCached = await getRSSCacheFromCloud(feedUrl).catch(() => null);
@@ -78,7 +78,11 @@ export default function PodcastDetail() {
           // Fall back to API - this is "fresh" data
           const res = await base44.functions.invoke('fetchRSSFeed', { url: feedUrl, count: 100 });
           fresh = res.data || res;
-          source = 'rss';
+        }
+        
+        // Only mark as 'local' if nothing was cached (meaning we loaded from localStorage)
+        if (cached) {
+          source = 'local';
         }
         
         saveFeedToCache(feedUrl, fresh).catch(() => {});
