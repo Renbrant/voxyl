@@ -26,6 +26,7 @@ export default function PodcastDetail() {
   const [liked, setLiked] = useState(false);
   const [user, setUser] = useState(null);
   const [showInfo, setShowInfo] = useState(false);
+  const [feedSource, setFeedSource] = useState('none');
   const { play, currentEpisode, isPlaying, togglePlay, seek, currentTime, duration, finishedUrls, setFinishedUrls, markFinished, getCachedProgress } = usePlayer();
 
   useEffect(() => {
@@ -58,6 +59,7 @@ export default function PodcastDetail() {
     const cached = getFeedFromCache(feedUrl);
     if (cached) {
       applyData(cached);
+      setFeedSource('local');
     } else {
       setLoading(true);
     }
@@ -65,14 +67,17 @@ export default function PodcastDetail() {
     // Fetch in background with cloud cache fallback
     (async () => {
       let fresh;
+      let source = 'local';
       
       // Try cloud cache first
       const cloudCached = await getRSSCacheFromCloud(feedUrl).catch(() => null);
       if (cloudCached) {
         fresh = cloudCached;
+        source = 'local';
       } else {
         // Fall back to API
         fresh = (await base44.functions.invoke('fetchRSSFeed', { url: feedUrl, count: 100 })).data;
+        source = 'rss';
       }
       
       saveFeedToCache(feedUrl, fresh);
@@ -80,6 +85,7 @@ export default function PodcastDetail() {
       // If nothing was cached, show all fresh episodes
       if (!cached) {
         applyData(fresh);
+        setFeedSource(source);
       } else {
         // Only update with new episodes
         const oldUrls = new Set(cached.items?.map(e => e.link) || []);
@@ -90,6 +96,7 @@ export default function PodcastDetail() {
             items: [...newItems, ...cached.items],
           };
           applyData(merged);
+          setFeedSource(source);
         }
       }
     })().finally(() => setLoading(false));
@@ -171,6 +178,8 @@ export default function PodcastDetail() {
             <h2 className="font-semibold text-foreground flex items-center gap-2">
               <ListMusic size={16} className="text-primary" /> Episódios
               {episodes.length > 0 && <span className="text-muted-foreground text-sm font-normal">({episodes.length})</span>}
+              {feedSource === 'local' && episodes.length > 0 && <span className="text-xs px-2 py-1 rounded-full bg-accent/10 text-accent font-medium">📡 Cache</span>}
+              {!loading && feedSource === 'rss' && episodes.length > 0 && <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">✓ Atualizado</span>}
             </h2>
             {episodes.length > 0 && (
               <button
