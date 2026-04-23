@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { t } from '@/lib/i18n';
+import { t, setLanguage, lang } from '@/lib/i18n';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Moon, Sun, Eye, Ban, LogOut, Trash2, Shield, Monitor } from 'lucide-react';
+import { ChevronLeft, Moon, Sun, Globe, Eye, Ban, LogOut, Trash2, Shield, Monitor } from 'lucide-react';
 import VoxylHeader from '@/components/common/VoxylHeader';
 import DeleteAccountModal from '@/components/profile/DeleteAccountModal';
 import BlockedUsersModal from '@/components/profile/BlockedUsersModal';
@@ -37,9 +37,11 @@ export default function Settings() {
   const [showDelete, setShowDelete] = useState(false);
   const [showBlocked, setShowBlocked] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [showLanguagePicker, setShowLanguagePicker] = useState(false);
   const [blockedCount, setBlockedCount] = useState(0);
   const [showDangerZone, setShowDangerZone] = useState(false);
   const [dangerTaps, setDangerTaps] = useState(0);
+  const [currentLang, setCurrentLang] = useState(lang);
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -66,6 +68,13 @@ export default function Settings() {
   const ThemeIcon = themeOption.icon;
 
   const menuItems = [
+    {
+      icon: Globe,
+      label: t('settingsLanguage'),
+      description: lang === 'pt' ? t('settingsLanguagePortuguese') : t('settingsLanguageEnglish'),
+      action: () => setShowLanguagePicker(true),
+      badge: null,
+    },
     {
       icon: ThemeIcon,
       label: t('settingsTheme'),
@@ -239,7 +248,57 @@ export default function Settings() {
 
       {/* Theme picker bottom sheet */}
       <AnimatePresence>
-        {showThemePicker && (
+        {showLanguagePicker && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 z-40"
+            onClick={() => setShowLanguagePicker(false)}
+          />
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl border-t border-border p-6"
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}
+          >
+            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">{t('settingsChooseLanguage')}</p>
+            <div className="space-y-2">
+              <button
+                onClick={() => setLanguage('pt')}
+                className={cn(
+                  'w-full flex items-center gap-4 px-4 py-4 rounded-2xl border transition-all',
+                  currentLang === 'pt'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-secondary text-foreground'
+                )}
+              >
+                <Globe size={20} />
+                <span className="font-medium">{t('settingsLanguagePortuguese')}</span>
+                {currentLang === 'pt' && <span className="ml-auto text-xs font-semibold text-primary">✓</span>}
+              </button>
+              <button
+                onClick={() => setLanguage('en')}
+                className={cn(
+                  'w-full flex items-center gap-4 px-4 py-4 rounded-2xl border transition-all',
+                  currentLang === 'en'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-secondary text-foreground'
+                )}
+              >
+                <Globe size={20} />
+                <span className="font-medium">{t('settingsLanguageEnglish')}</span>
+                {currentLang === 'en' && <span className="ml-auto text-xs font-semibold text-primary">✓</span>}
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+
+      {showThemePicker && (
           <>
             <motion.div
               initial={{ opacity: 0 }}

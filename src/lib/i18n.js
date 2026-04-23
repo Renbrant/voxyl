@@ -1,11 +1,22 @@
-// Detect browser/device language
+// Detect browser/device language or get from localStorage
 const detectLang = () => {
-  const lang = navigator.language || navigator.languages?.[0] || 'pt';
-  return lang.startsWith('pt') ? 'pt' : 'en';
+  const saved = localStorage.getItem('voxyl_language');
+  if (saved === 'en' || saved === 'pt') return saved;
+  
+  const browserLang = navigator.language || navigator.languages?.[0] || 'pt';
+  return browserLang.startsWith('pt') ? 'pt' : 'en';
 };
 
 export const lang = detectLang();
 export const isEn = lang === 'en';
+
+// Allow changing language preference
+export const setLanguage = (newLang) => {
+  if (newLang === 'en' || newLang === 'pt') {
+    localStorage.setItem('voxyl_language', newLang);
+    window.location.reload();
+  }
+};
 
 const translations = {
   // Common
@@ -118,6 +129,11 @@ const translations = {
 
   // Settings
   settingsTitle: { pt: 'Configurações', en: 'Settings' },
+  settingsLanguage: { pt: 'Idioma', en: 'Language' },
+  settingsLanguageAuto: { pt: 'Automático', en: 'Auto' },
+  settingsLanguagePortuguese: { pt: 'Português', en: 'Portuguese' },
+  settingsLanguageEnglish: { pt: 'Inglês', en: 'English' },
+  settingsChooseLanguage: { pt: 'Escolher Idioma', en: 'Choose Language' },
   settingsTheme: { pt: 'Tema', en: 'Theme' },
   settingsThemeAuto: { pt: 'Automático', en: 'Auto' },
   settingsThemeDark: { pt: 'Escuro', en: 'Dark' },
