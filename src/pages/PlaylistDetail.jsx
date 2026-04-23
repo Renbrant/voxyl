@@ -178,42 +178,56 @@ export default function PlaylistDetail() {
 
     const sortEpisodes = (eps) => {
       const sortOrder = playlist?.episodes_sort_order || 'newest_first';
-      const sorted = [...eps].sort((a, b) => {
+      return [...eps].sort((a, b) => {
         const dateA = new Date(a.pubDate);
         const dateB = new Date(b.pubDate);
         return sortOrder === 'newest_first' ? dateB - dateA : dateA - dateB;
       });
-      return sorted;
     };
 
     const loadEpisodes = async () => {
       setLoadingEps(true);
 
-      // Always fetch fresh data from feeds (no cache-first strategy)
-      Promise.allSettled(
+      // Step 1: Show cached episodes immediately so the screen is never empty
+      const cachedResults = playlist.rss_feeds.map(f => getFeedFromCache(f.url)).filter(Boolean);
+      if (cachedResults.length > 0) {
+        const cachedProcessed = processResults(cachedResults);
+        if (cachedProcessed.length > 0) {
+          setEpisodes(sortEpisodes(cachedProcessed));
+          setLoadingEps(false); // show cached content, keep fetching in background
+        }
+      }
+
+      // Step 2: Always fetch fresh data for every feed in parallel
+      const freshResults = await Promise.allSettled(
         playlist.rss_feeds.map(async (f) => {
-          // Always fetch fresh from API
-          const fresh = await base44.functions.invoke('fetchRSSFeed', { url: f.url, count: 100 }).then(r => r.data);
-          saveFeedToCache(f.url, fresh);
+          const res = await base44.functions.invoke('fetchRSSFeed', { url: f.url, count: 100 });
+          const fresh = res.data;
+          if (fresh?.items?.length) {
+            saveFeedToCache(f.url, fresh);
+          }
           return fresh;
         })
-      ).then(results => {
-        const freshData = results
-          .filter(r => r.status === 'fulfilled')
-          .map(r => r.value);
+      );
 
-        // Flatten and process all episodes
-        const allFreshEpisodes = freshData
-          .filter(r => r?.items)
-          .flatMap(r => r.items);
+      // Step 3: For feeds that failed, fall back to local cache so we never lose episodes
+      const finalResults = playlist.rss_feeds.map((f, i) => {
+        const result = freshResults[i];
+        if (result.status === 'fulfilled' && result.value?.items?.length) {
+          return result.value;
+        }
+        // Fallback to cache for this specific feed
+        const cached = getFeedFromCache(f.url);
+        if (cached?.items?.length) return cached;
+        return null;
+      }).filter(Boolean);
 
-        // Save to cache system
-        saveFreshEpisodes(id, allFreshEpisodes);
-
-        // Process and sort
-        const processed = processResults(freshData);
+      if (finalResults.length > 0) {
+        const processed = processResults(finalResults);
         setEpisodes(sortEpisodes(processed));
-      }).finally(() => setLoadingEps(false));
+      }
+
+      setLoadingEps(false);
     };
 
     loadEpisodes();

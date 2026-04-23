@@ -12,12 +12,6 @@ function getTagValue(xml, tag) {
   return null;
 }
 
-function getAttrValue(xml, tag, attr) {
-  const re = new RegExp(`<${tag}[^>]*\\s${attr}=["']([^"']+)["'][^>]*>`, 'i');
-  const m = xml.match(re);
-  return m ? m[1] : null;
-}
-
 function parseItems(xml) {
   const itemRegex = /<item[\s>]([\s\S]*?)<\/item>/gi;
   const items = [];
@@ -29,13 +23,11 @@ function parseItems(xml) {
     const pubDate = getTagValue(item, 'pubDate') || '';
     const duration = getTagValue(item, 'itunes:duration') || getTagValue(item, 'duration') || null;
 
-    // Audio URL from enclosure
     const enclosureMatch = item.match(/<enclosure[^>]*url=["']([^"']+)["'][^>]*>/i);
     const audioUrl = enclosureMatch ? enclosureMatch[1] : null;
 
     if (!audioUrl) continue;
 
-    // Image: try itunes:image href, then media:thumbnail, then item image
     const itunesImgMatch = item.match(/<itunes:image[^>]*href=["']([^"']+)["'][^>]*>/i);
     const mediaThumbnailMatch = item.match(/<media:thumbnail[^>]*url=["']([^"']+)["'][^>]*>/i);
     const image = itunesImgMatch?.[1] || mediaThumbnailMatch?.[1] || null;
@@ -65,28 +57,51 @@ function parseFeedMeta(xml) {
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 Deno.serve(async (req) => {
+  const base44 = createClientFromRequest(req);
+  
+  // Parse body first so we have `url` available in the catch block
+  let url, count;
   try {
-    const base44 = createClientFromRequest(req);
-    const { url, count = 30 } = await req.json();
-    if (!url) return Response.json({ error: 'Missing url' }, { status: 400 });
+    const body = await req.json();
+    url = body.url;
+    count = body.count || 30;
+  } catch {
+    return Response.json({ error: 'Invalid request body' }, { status: 400 });
+  }
 
-    // Check cache
+  if (!url) return Response.json({ error: 'Missing url' }, { status: 400 });
+
+  // Load any existing cache entry (used both for fresh-enough serving and stale fallback)
+  let cachedEntry = null;
+  try {
     const cached = await base44.asServiceRole.entities.RSSCache.filter({ feed_url: url });
-    if (cached.length > 0) {
-      const entry = cached[0];
-      const age = Date.now() - new Date(entry.cached_at).getTime();
-      if (age < CACHE_TTL_MS) {
-        const data = JSON.parse(entry.data);
-        const items = data.items.slice(0, count);
-        return Response.json({ ...data, items });
-      }
+    if (cached.length > 0) cachedEntry = cached[0];
+  } catch {}
+
+  // Serve from cache if fresh enough
+  if (cachedEntry) {
+    const age = Date.now() - new Date(cachedEntry.cached_at).getTime();
+    if (age < CACHE_TTL_MS) {
+      const data = JSON.parse(cachedEntry.data);
+      return Response.json({ ...data, items: data.items.slice(0, count) });
+    }
+  }
+
+  // Fetch fresh with 15s timeout
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    let res;
+    try {
+      res = await fetch(url, {
+        headers: { 'User-Agent': 'Voxyl/1.0 RSS Reader' },
+        redirect: 'follow',
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
     }
 
-    // Fetch fresh
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'Voxyl/1.0 RSS Reader' },
-      redirect: 'follow',
-    });
     if (!res.ok) throw new Error(`HTTP ${res.status} fetching feed`);
 
     const xml = await res.text();
@@ -104,14 +119,20 @@ Deno.serve(async (req) => {
 
     // Save/update cache (fire and forget)
     const now = new Date().toISOString();
-    if (cached.length > 0) {
-      base44.asServiceRole.entities.RSSCache.update(cached[0].id, { data: JSON.stringify(payload), cached_at: now });
+    if (cachedEntry) {
+      base44.asServiceRole.entities.RSSCache.update(cachedEntry.id, { data: JSON.stringify(payload), cached_at: now }).catch(() => {});
     } else {
-      base44.asServiceRole.entities.RSSCache.create({ feed_url: url, data: JSON.stringify(payload), cached_at: now });
+      base44.asServiceRole.entities.RSSCache.create({ feed_url: url, data: JSON.stringify(payload), cached_at: now }).catch(() => {});
     }
 
     return Response.json({ ...payload, items: items.slice(0, count) });
+
   } catch (error) {
+    // Fetch failed — return stale cache rather than an error so the app never shows empty
+    if (cachedEntry) {
+      const data = JSON.parse(cachedEntry.data);
+      return Response.json({ ...data, items: data.items.slice(0, count), stale: true });
+    }
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
