@@ -1,4 +1,6 @@
 import { base44 } from '@/api/base44Client';
+import { getFeedFromCache, saveFeedToCache } from '@/lib/feedCache';
+import { parseDurationToSeconds } from '@/lib/rssUtils';
 
 const CACHE_PREFIX = 'playlist_episodes_';
 const CACHE_HASH_PREFIX = 'playlist_hash_';
@@ -94,85 +96,167 @@ export async function updateCloudCache(playlistId, episodes) {
   }
 }
 
-// Main cache manager function
-export async function getPlaylistEpisodes(playlistId, forceRefresh = false) {
-  // 1. Load local cache instantly
+// Process and filter episodes based on playlist config
+function processEpisodes(rawEpisodes, playlist) {
+  const feedSkipMap = {};
+  (playlist.rss_feeds || []).forEach(f => {
+    feedSkipMap[f.url] = {
+      skip_start_seconds: f.skip_start_seconds || 0,
+      skip_end_seconds: f.skip_end_seconds || 0,
+    };
+  });
+
+  const timeFilterMs = playlist.time_filter_hours ? playlist.time_filter_hours * 60 * 60 * 1000 : 0;
+  const now = Date.now();
+
+  return rawEpisodes
+    .filter(ep => {
+      // Apply max duration filter
+      if (playlist.max_duration && playlist.max_duration > 0) {
+        const secs = parseDurationToSeconds(ep.duration);
+        if (secs && secs > playlist.max_duration * 60) return false;
+      }
+
+      // Apply time filter
+      if (timeFilterMs > 0 && ep.pubDate) {
+        const age = now - new Date(ep.pubDate).getTime();
+        if (age > timeFilterMs) return false;
+      }
+
+      return true;
+    })
+    .map(ep => {
+      const skip = feedSkipMap[ep.feedUrl] || { skip_start_seconds: 0, skip_end_seconds: 0 };
+      return {
+        ...ep,
+        audioUrl: ep.audioUrl?.replace(/&amp;/g, '&'),
+        image: ep.image?.replace(/&amp;/g, '&'),
+        skip_start_seconds: skip.skip_start_seconds,
+        skip_end_seconds: skip.skip_end_seconds,
+      };
+    });
+}
+
+// Sort episodes
+function sortEpisodes(episodes, playlist) {
+  const sortOrder = playlist?.episodes_sort_order || 'newest_first';
+  return [...episodes].sort((a, b) => {
+    const dateA = new Date(a.pubDate);
+    const dateB = new Date(b.pubDate);
+    return sortOrder === 'newest_first' ? dateB - dateA : dateA - dateB;
+  });
+}
+
+// Get initial playlist episodes (fast load from local cache)
+export async function getInitialPlaylistEpisodes(playlistId) {
   const localCache = getLocalCache(playlistId);
   if (localCache?.episodes?.length) {
-    // Return local cache immediately but continue checking cloud
-    const result = {
+    return {
       episodes: localCache.episodes,
       source: 'local',
-      isStale: false
+      hash: localCache.hash
     };
-    
-    // Check if we need to verify cloud cache
-    const isOlderThanAnHour = localCache.timestamp < Date.now() - CACHE_DURATION_MS;
-    
-    if (forceRefresh || isOlderThanAnHour) {
-      // Fetch cloud cache in background
-      getCloudCache(playlistId).then(cloudCache => {
-        if (cloudCache && cloudCache.hash && cloudCache.hash !== localCache.hash) {
-          // Cloud has different data, update local
-          saveLocalCache(playlistId, cloudCache.episodes);
-        }
-      }).catch(err => console.error('Error checking cloud cache:', err));
-    }
-    
-    return result;
   }
-  
-  // 2. If no local cache, try cloud
+
+  // Fallback to cloud if no local cache
   const cloudCache = await getCloudCache(playlistId);
   if (cloudCache?.episodes?.length) {
     saveLocalCache(playlistId, cloudCache.episodes);
     return {
       episodes: cloudCache.episodes,
       source: 'cloud',
-      isStale: false
+      hash: cloudCache.hash
     };
   }
-  
-  // 3. No cache available, need to fetch fresh
+
   return {
     episodes: [],
     source: 'none',
-    isStale: true
+    hash: null
   };
 }
 
-// Get cloud episodes (aggregated) - only if valid for this playlist
-export async function getCloudEpisodes(playlistId) {
+// Refresh and sync episodes (background sync with cloud and RSS feeds)
+export async function refreshAndSyncPlaylistEpisodes(playlistId, playlist) {
   try {
-    const records = await base44.entities.PlaylistEpisodesCache.filter({ playlist_id: playlistId });
-    if (!records[0]) return null;
-    
-    const cached = {
-      episodes: JSON.parse(records[0].episodes_data || '[]'),
-      hash: records[0].episodes_hash,
-      timestamp: new Date(records[0].last_updated).getTime()
-    };
-    
-    // Validate cache is recent (not older than 1 hour)
-    if (Date.now() - cached.timestamp > CACHE_DURATION_MS) {
-      return null;
-    }
-    
-    return cached;
-  } catch {
-    return null;
-  }
-}
+    // Fetch cloud cache and RSS feeds in parallel
+    const [cloudCache, feedResults] = await Promise.all([
+      getCloudCache(playlistId),
+      Promise.allSettled(
+        (playlist.rss_feeds || []).map(async (f) => {
+          const res = await base44.functions.invoke('fetchRSSFeed', { url: f.url, count: 100 });
+          const fresh = res.data;
+          if (fresh?.items?.length) {
+            saveFeedToCache(f.url, fresh);
+          }
+          return fresh;
+        })
+      )
+    ]);
 
-// After fetching fresh episodes, update both caches
-export async function saveFreshEpisodes(playlistId, episodes) {
-  // Save to local cache
-  saveLocalCache(playlistId, episodes);
-  
-  // Update cloud cache
-  await updateCloudCache(playlistId, episodes);
-  
-  return episodes;
+    // Process feed results (fresh or cached)
+    const processedFeeds = (playlist.rss_feeds || []).map((f, i) => {
+      const result = feedResults[i];
+      if (result.status === 'fulfilled' && result.value?.items?.length) {
+        return result.value;
+      }
+      const cached = getFeedFromCache(f.url);
+      return cached?.items?.length ? cached : null;
+    }).filter(Boolean);
+
+    // Get current local cache
+    const localCache = getLocalCache(playlistId);
+
+    // Determine which data to use (fresh RSS, cloud, or local)
+    let episodesToUse = [];
+    let sourceUsed = 'local';
+
+    if (processedFeeds.length > 0) {
+      // We have fresh RSS data, use it
+      const rawEpisodes = processedFeeds
+        .filter(r => r?.items)
+        .flatMap(r => r.items);
+      
+      episodesToUse = processEpisodes(rawEpisodes, playlist);
+      sourceUsed = 'rss';
+    } else if (cloudCache?.episodes?.length) {
+      // No fresh RSS, use cloud cache if available and newer than local
+      if (!localCache || cloudCache.timestamp > localCache.timestamp) {
+        episodesToUse = cloudCache.episodes;
+        sourceUsed = 'cloud';
+      } else if (localCache?.episodes?.length) {
+        episodesToUse = localCache.episodes;
+        sourceUsed = 'local';
+      }
+    } else if (localCache?.episodes?.length) {
+      episodesToUse = localCache.episodes;
+      sourceUsed = 'local';
+    }
+
+    // Sort episodes
+    const sortedEpisodes = sortEpisodes(episodesToUse, playlist);
+
+    // Update both caches if we have new data
+    if (sortedEpisodes.length > 0) {
+      saveLocalCache(playlistId, sortedEpisodes);
+      await updateCloudCache(playlistId, sortedEpisodes);
+    }
+
+    return {
+      episodes: sortedEpisodes,
+      source: sourceUsed,
+      hash: hashEpisodes(sortedEpisodes)
+    };
+  } catch (error) {
+    console.error('Error refreshing playlist episodes:', error);
+    // Return local cache as fallback
+    const localCache = getLocalCache(playlistId);
+    return {
+      episodes: localCache?.episodes || [],
+      source: 'local',
+      hash: localCache?.hash || null
+    };
+  }
 }
 
 // Clear cache

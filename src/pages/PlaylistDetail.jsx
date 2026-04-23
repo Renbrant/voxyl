@@ -3,9 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
-import { getFeedFromCache, saveFeedToCache, getRSSCacheFromCloud } from '@/lib/feedCache';
 import { getPlaylistCoverImage } from '@/lib/playlistCoverHelper';
-import { saveFreshEpisodes, clearCache, getCloudEpisodes, updateCloudCache } from '@/lib/playlistCacheManager';
+import { getInitialPlaylistEpisodes, refreshAndSyncPlaylistEpisodes } from '@/lib/playlistCacheManager';
 import { usePlayer } from '@/lib/PlayerContext';
 import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward, Pencil, CheckCircle2, Heart, UserPlus, UserCheck } from 'lucide-react';
 import { t } from '@/lib/i18n';
@@ -140,98 +139,27 @@ export default function PlaylistDetail() {
       .catch(() => {});
   }, [user, playlist, isOwner]);
 
+  // Load initial cache (fast)
+  useEffect(() => {
+    if (!id) return;
+    
+    setLoadingEps(true);
+    getInitialPlaylistEpisodes(id).then(result => {
+      setEpisodes(result.episodes);
+      setLoadingEps(false);
+    });
+  }, [id]);
+
+  // Refresh and sync in background
   useEffect(() => {
     if (!playlist?.rss_feeds?.length || !id) return;
 
-    const feedSkipMap = {};
-    (playlist.rss_feeds || []).forEach(f => {
-      feedSkipMap[f.url] = {
-        skip_start_seconds: f.skip_start_seconds || 0,
-        skip_end_seconds: f.skip_end_seconds || 0,
-      };
-    });
-
-    const processResults = (results) => {
-      const timeFilterMs = playlist.time_filter_hours ? playlist.time_filter_hours * 60 * 60 * 1000 : 0;
-      const now = Date.now();
-      return results
-        .filter(r => r?.items)
-        .flatMap(r => r.items.map(ep => {
-          const skip = feedSkipMap[ep.feedUrl] || { skip_start_seconds: 0, skip_end_seconds: 0 };
-          return {
-            ...ep,
-            audioUrl: ep.audioUrl?.replace(/&amp;/g, '&'),
-            image: ep.image?.replace(/&amp;/g, '&'),
-            skip_start_seconds: skip.skip_start_seconds,
-            skip_end_seconds: skip.skip_end_seconds,
-          };
-        }))
-        .filter(ep => {
-          if (playlist.max_duration && playlist.max_duration > 0) {
-            const secs = parseDurationToSeconds(ep.duration);
-            if (secs && secs > playlist.max_duration * 60) return false;
-          }
-          if (timeFilterMs > 0 && ep.pubDate) {
-            const age = now - new Date(ep.pubDate).getTime();
-            if (age > timeFilterMs) return false;
-          }
-          return true;
-        });
-    };
-
-    const sortEpisodes = (eps) => {
-      const sortOrder = playlist?.episodes_sort_order || 'newest_first';
-      return [...eps].sort((a, b) => {
-        const dateA = new Date(a.pubDate);
-        const dateB = new Date(b.pubDate);
-        return sortOrder === 'newest_first' ? dateB - dateA : dateA - dateB;
-      });
-    };
-
     loadEpisodesRef.current = async () => {
-      setLoadingEps(true);
-      setEpisodes([]); // Clear episodes to avoid showing wrong playlist
-
-      // Always fetch fresh data for every feed in parallel
-      const freshResults = await Promise.allSettled(
-        playlist.rss_feeds.map(async (f) => {
-          const res = await base44.functions.invoke('fetchRSSFeed', { url: f.url, count: 100 });
-          const fresh = res.data;
-          if (fresh?.items?.length) {
-            saveFeedToCache(f.url, fresh);
-          }
-          return fresh;
-        })
-      );
-
-      // For feeds that failed, fall back to local cache so we never lose episodes
-      const finalResults = playlist.rss_feeds.map((f, i) => {
-        const result = freshResults[i];
-        if (result.status === 'fulfilled' && result.value?.items?.length) {
-          return result.value;
-        }
-        const cached = getFeedFromCache(f.url);
-        if (cached?.items?.length) return cached;
-        return null;
-      }).filter(Boolean);
-
-      if (finalResults.length > 0) {
-        const processed = processResults(finalResults);
-        const sorted = sortEpisodes(processed);
-        setEpisodes(sorted);
-        // Save aggregated episodes to cloud cache so all devices stay in sync
-        await updateCloudCache(id, sorted);
-      } else {
-        // Only use cloud cache as last resort if all feeds failed
-        const cloudCache = await getCloudEpisodes(id);
-        if (cloudCache?.episodes?.length > 0) {
-          setEpisodes(sortEpisodes(cloudCache.episodes));
-        }
-      }
-
-      setLoadingEps(false);
+      const result = await refreshAndSyncPlaylistEpisodes(id, playlist);
+      setEpisodes(result.episodes);
     };
 
+    // Start background sync immediately
     loadEpisodesRef.current();
   }, [playlist, id]);
 
