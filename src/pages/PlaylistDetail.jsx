@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
@@ -11,6 +11,8 @@ import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward,
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Link } from 'react-router-dom';
 import PageTransition from '@/components/common/PageTransition';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import PullToRefreshIndicator from '@/components/common/PullToRefreshIndicator';
 import VisibilityBadge from '@/components/playlist/VisibilityBadge';
 import { useLongPress } from '@/hooks/useLongPress';
 import EditPlaylistModal from '@/components/playlist/EditPlaylistModal';
@@ -185,7 +187,7 @@ export default function PlaylistDetail() {
       });
     };
 
-    const loadEpisodes = async () => {
+    loadEpisodesRef.current = async () => {
       setLoadingEps(true);
 
       // Step 1: Show cached episodes immediately so the screen is never empty
@@ -194,7 +196,7 @@ export default function PlaylistDetail() {
         const cachedProcessed = processResults(cachedResults);
         if (cachedProcessed.length > 0) {
           setEpisodes(sortEpisodes(cachedProcessed));
-          setLoadingEps(false); // show cached content, keep fetching in background
+          setLoadingEps(false);
         }
       }
 
@@ -216,7 +218,6 @@ export default function PlaylistDetail() {
         if (result.status === 'fulfilled' && result.value?.items?.length) {
           return result.value;
         }
-        // Fallback to cache for this specific feed
         const cached = getFeedFromCache(f.url);
         if (cached?.items?.length) return cached;
         return null;
@@ -230,7 +231,7 @@ export default function PlaylistDetail() {
       setLoadingEps(false);
     };
 
-    loadEpisodes();
+    loadEpisodesRef.current();
   }, [playlist, id]);
 
   const handleShare = async () => {
@@ -249,6 +250,9 @@ export default function PlaylistDetail() {
     base44.functions.invoke('incrementPlaylistPlays', { playlist_id: id, plays_count: (playlist?.plays_count || 0) + 1 }).catch(() => {});
   };
 
+  const loadEpisodesRef = useRef(null);
+  const handleRefresh = useCallback(() => loadEpisodesRef.current?.(), []);
+  const { pullProgress, refreshing } = usePullToRefresh(handleRefresh, null);
   const [coverImage, setCoverImage] = useState(null);
   const gradient = GRADIENT_COLORS[id?.charCodeAt(0) % GRADIENT_COLORS.length];
 
@@ -261,7 +265,8 @@ export default function PlaylistDetail() {
   return (
     <>
     <PageTransition>
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      <PullToRefreshIndicator pullProgress={pullProgress} refreshing={refreshing} />
       <div className={cn("relative h-56 bg-gradient-to-br", gradient)}>
         {coverImage && (
           <img src={coverImage} alt="" className="absolute inset-0 w-full h-full object-cover" />

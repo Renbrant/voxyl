@@ -7,13 +7,16 @@ export function usePullToRefresh(onRefresh, containerRef) {
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    const el = containerRef?.current;
-    if (!el) return;
+    // If no containerRef provided, listen on the document (for full-page scrollable views)
+    const el = containerRef?.current ?? null;
+    const target = el || document;
 
     const THRESHOLD = 64;
 
+    const getScrollTop = () => el ? el.scrollTop : (document.documentElement.scrollTop || document.body.scrollTop);
+
     const onTouchStart = (e) => {
-      if (el.scrollTop === 0) {
+      if (getScrollTop() === 0) {
         startY.current = e.touches[0].clientY;
         pulling.current = true;
       }
@@ -41,14 +44,14 @@ export function usePullToRefresh(onRefresh, containerRef) {
       }
     };
 
-    el.addEventListener('touchstart', onTouchStart, { passive: true });
-    el.addEventListener('touchmove', onTouchMove, { passive: true });
-    el.addEventListener('touchend', onTouchEnd, { passive: true });
+    target.addEventListener('touchstart', onTouchStart, { passive: true });
+    target.addEventListener('touchmove', onTouchMove, { passive: true });
+    target.addEventListener('touchend', onTouchEnd, { passive: true });
 
     return () => {
-      el.removeEventListener('touchstart', onTouchStart);
-      el.removeEventListener('touchmove', onTouchMove);
-      el.removeEventListener('touchend', onTouchEnd);
+      target.removeEventListener('touchstart', onTouchStart);
+      target.removeEventListener('touchmove', onTouchMove);
+      target.removeEventListener('touchend', onTouchEnd);
     };
   }, [onRefresh, containerRef]);
 
