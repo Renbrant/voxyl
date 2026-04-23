@@ -246,7 +246,7 @@ export default function Feed() {
                         <div className="min-w-0 px-1 flex-1">
                           <p className="text-xs font-medium line-clamp-2 text-foreground">{podcast.title}</p>
                           <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{podcast.author || 'Podcast'}</p>
-                          <p className="text-xs text-primary mt-1">▶️ {podcast.playCount}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{podcast.playCount || 0} ▶</p>
                         </div>
                       </div>
                     </motion.div>
