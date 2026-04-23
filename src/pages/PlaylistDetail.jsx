@@ -270,10 +270,20 @@ export default function PlaylistDetail() {
         </div>
       </div>
 
-      {playlist?.max_duration > 0 && (
-        <div className="mx-4 mt-3 px-3 py-2 bg-primary/10 border border-primary/30 rounded-xl flex items-center gap-2">
-          <Clock size={14} className="text-primary" />
-          <span className="text-xs text-primary">{t('detailFilterLabel')} {playlist.max_duration} {t('detailFilterMin')}</span>
+      {(playlist?.max_duration > 0 || playlist?.time_filter_hours > 0) && (
+        <div className="mx-4 mt-3 space-y-2">
+          {playlist?.max_duration > 0 && (
+            <div className="px-3 py-2 bg-primary/10 border border-primary/30 rounded-xl flex items-center gap-2">
+              <Clock size={14} className="text-primary" />
+              <span className="text-xs text-primary">{t('detailFilterLabel')} {playlist.max_duration} {t('detailFilterMin')}</span>
+            </div>
+          )}
+          {playlist?.time_filter_hours > 0 && (
+            <div className="px-3 py-2 bg-accent/10 border border-accent/30 rounded-xl flex items-center gap-2">
+              <Clock size={14} className="text-accent" />
+              <span className="text-xs text-accent">Últimas {playlist.time_filter_hours >= 24 ? `${Math.round(playlist.time_filter_hours / 24)} dias` : `${playlist.time_filter_hours}h`}</span>
+            </div>
+          )}
         </div>
       )}
 
