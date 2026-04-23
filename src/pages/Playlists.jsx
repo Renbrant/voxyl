@@ -15,6 +15,7 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import DownloadedEpisodeCard from '@/components/downloads/DownloadedEpisodeCard';
 import { getDownloads } from '@/lib/downloads';
 import { getCache, setCache, invalidateCache, TTL_5MIN } from '@/lib/appCache';
+import { getCachedContent, setCachedContent, clearAllContentCache, isCacheExpired } from '@/lib/savedContentCache';
 
 const TABS = () => [
 { key: 'playlists', label: t('playlistsTabPlaylists'), icon: ListMusic },
@@ -32,6 +33,7 @@ export default function Playlists() {
   const queryClient = useQueryClient();
 
   const { pullProgress, refreshing } = usePullToRefresh(() => {
+    if (user?.id) clearAllContentCache(user.id);
     invalidateCache(`my-playlists-${user?.id}`);
     invalidateCache(`liked-playlists-${user?.id}`);
     invalidateCache(`liked-podcasts-${user?.id}`);
@@ -60,9 +62,14 @@ export default function Playlists() {
       if (cached) return cached;
       const data = await base44.entities.Playlist.filter({ creator_id: user.id }, '-created_date', 50);
       setCache(cacheKey, data, TTL_5MIN);
+      setCachedContent(user.id, 'MY_PLAYLISTS', data);
       return data;
     },
-    initialData: () => user ? getCache(`my-playlists-${user.id}`) || undefined : undefined
+    initialData: () => {
+      if (!user) return undefined;
+      const cached = getCachedContent(user.id, 'MY_PLAYLISTS');
+      return cached || getCache(`my-playlists-${user.id}`) || undefined;
+    }
   });
 
   // Liked playlist IDs
@@ -75,9 +82,14 @@ export default function Playlists() {
       if (cached) return cached;
       const data = await base44.entities.PlaylistLike.filter({ user_id: user.id });
       setCache(cacheKey, data, TTL_5MIN);
+      setCachedContent(user.id, 'LIKED_PLAYLISTS', data);
       return data;
     },
-    initialData: () => user ? getCache(`liked-playlists-${user.id}`) || undefined : undefined
+    initialData: () => {
+      if (!user) return undefined;
+      const cached = getCachedContent(user.id, 'LIKED_PLAYLISTS');
+      return cached || getCache(`liked-playlists-${user.id}`) || undefined;
+    }
   });
 
   const likedPlaylistIds = likedPlaylistRecords.map((r) => r.playlist_id);
@@ -107,9 +119,14 @@ export default function Playlists() {
       if (cached) return cached;
       const data = await base44.entities.PodcastLike.filter({ user_id: user.id }, '-created_date', 100);
       setCache(cacheKey, data, TTL_5MIN);
+      setCachedContent(user.id, 'LIKED_PODCASTS', data);
       return data;
     },
-    initialData: () => user ? getCache(`liked-podcasts-${user.id}`) || undefined : undefined
+    initialData: () => {
+      if (!user) return undefined;
+      const cached = getCachedContent(user.id, 'LIKED_PODCASTS');
+      return cached || getCache(`liked-podcasts-${user.id}`) || undefined;
+    }
   });
 
   const handleUnlikePodcast = async (podcastLike) => {
