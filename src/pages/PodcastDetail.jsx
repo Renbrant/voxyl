@@ -66,40 +66,45 @@ export default function PodcastDetail() {
 
     // Fetch in background with cloud cache fallback
     (async () => {
-      let fresh;
-      let source = 'local';
-      
-      // Try cloud cache first
-      const cloudCached = await getRSSCacheFromCloud(feedUrl).catch(() => null);
-      if (cloudCached) {
-        fresh = cloudCached;
-      } else {
-        // Fall back to API - this is "fresh" data
-        fresh = (await base44.functions.invoke('fetchRSSFeed', { url: feedUrl, count: 100 })).data;
-        source = 'rss';
-      }
-      
-      saveFeedToCache(feedUrl, fresh);
+      try {
+        let fresh;
+        let source = 'local';
         
-      // If nothing was cached, show all fresh episodes
-      if (!cached) {
-        applyData(fresh);
-        setFeedSource(source);
-      } else {
-        // Only update with new episodes
-        const oldUrls = new Set(cached.items?.map(e => e.link) || []);
-        const newItems = fresh.items?.filter(e => !oldUrls.has(e.link)) || [];
-        if (newItems.length > 0) {
-          const merged = {
-            ...cached,
-            items: [...newItems, ...cached.items],
-          };
-          applyData(merged);
+        // Try cloud cache first
+        const cloudCached = await getRSSCacheFromCloud(feedUrl).catch(() => null);
+        if (cloudCached) {
+          fresh = cloudCached;
+        } else {
+          // Fall back to API - this is "fresh" data
+          const res = await base44.functions.invoke('fetchRSSFeed', { url: feedUrl, count: 100 });
+          fresh = res.data || res;
+          source = 'rss';
         }
-        // Always update source based on fetch result
-        setFeedSource(source);
+        
+        saveFeedToCache(feedUrl, fresh).catch(() => {});
+          
+        // If nothing was cached, show all fresh episodes
+        if (!cached) {
+          applyData(fresh);
+          setFeedSource(source);
+        } else {
+          // Only update with new episodes
+          const oldUrls = new Set(cached.items?.map(e => e.link) || []);
+          const newItems = fresh.items?.filter(e => !oldUrls.has(e.link)) || [];
+          if (newItems.length > 0) {
+            const merged = {
+              ...cached,
+              items: [...newItems, ...cached.items],
+            };
+            applyData(merged);
+          }
+          // Always update source based on fetch result
+          setFeedSource(source);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar feed:', error);
       }
-    })().finally(() => setLoading(false));
+    }).finally(() => setLoading(false));
   }, [feedUrl, user]);
 
   const handlePlayEpisode = (ep) => {
