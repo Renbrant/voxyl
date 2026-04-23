@@ -278,7 +278,7 @@ export default function Playlists() {
             </div> :
 
         likedPodcasts.map((like, i) =>
-        <motion.div key={like.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+        <motion.div key={like.feed_url} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                 <LikedPodcastCard
             podcastLike={like}
             onUnlike={() => handleUnlikePodcast(like)} />
