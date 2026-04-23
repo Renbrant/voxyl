@@ -147,6 +147,13 @@ export function PlayerProvider({ children }) {
       setIsPlaying(false);
       stopSaveTimers();
       markFinished(currentEpisodeRef.current?.audioUrl);
+      // Notify Service Worker about the end
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.controller?.postMessage({
+          type: 'EPISODE_ENDED',
+          payload: { audioUrl: currentEpisodeRef.current?.audioUrl }
+        });
+      }
       playNextRef.current?.();
     });
 
@@ -207,18 +214,38 @@ export function PlayerProvider({ children }) {
 
   // ─── Load user + progress on mount ───────────────────────────────────────
   useEffect(() => {
-    base44.auth.me().then(async u => {
-      setUser(u);
-      if (u) {
-        try {
-          await loadProgressFromDB(base44, u.id);
-        } catch {}
-      }
-      // Seed finishedUrls from cache (fast, no DB needed)
-      setFinishedUrls(getAllFinishedFromCache());
-    }).catch(() => {
-      setFinishedUrls(getAllFinishedFromCache());
-    });
+   base44.auth.me().then(async u => {
+     setUser(u);
+     if (u) {
+       try {
+         await loadProgressFromDB(base44, u.id);
+       } catch {}
+     }
+     // Seed finishedUrls from cache (fast, no DB needed)
+     setFinishedUrls(getAllFinishedFromCache());
+   }).catch(() => {
+     setFinishedUrls(getAllFinishedFromCache());
+   });
+
+   // Register Service Worker for background playback
+   if ('serviceWorker' in navigator) {
+     navigator.serviceWorker.register('/sw.js').catch(() => {});
+   }
+
+   // Listen for messages from Service Worker
+   if ('serviceWorker' in navigator) {
+     navigator.serviceWorker.addEventListener('message', event => {
+       if (event.data.type === 'PLAY_NEXT_EPISODE') {
+         // Auto-play next episode from background
+         playNextRef.current?.();
+       } else if (event.data.type === 'PLAY') {
+         audioRef.current?.play().then(() => setIsPlaying(true)).catch(() => {});
+       } else if (event.data.type === 'PAUSE') {
+         audioRef.current?.pause();
+         setIsPlaying(false);
+       }
+     });
+   }
   }, []);
 
   // ─── Keep ref in sync ────────────────────────────────────────────────────
@@ -226,6 +253,7 @@ export function PlayerProvider({ children }) {
 
   // ─── play() ──────────────────────────────────────────────────────────────
   const play = (episode, newQueue = [], source = null) => {
+    const updatedQueue = newQueue.length > 0 ? newQueue : queue;
     if (newQueue.length > 0) setQueue(newQueue);
     if (source) setEpisodeSource(source);
 
@@ -259,6 +287,18 @@ export function PlayerProvider({ children }) {
 
     audio.play().then(() => setIsPlaying(true)).catch(() => {});
     setCurrentEpisode(episode);
+
+    // Update Service Worker with current episode and queue
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'UPDATE_EPISODE',
+        payload: {
+          ...episode,
+          queue: updatedQueue,
+          autoplay: autoplay
+        }
+      });
+    }
   };
 
   const togglePlay = () => {
@@ -300,6 +340,26 @@ export function PlayerProvider({ children }) {
 
   playNextRef.current = playNext;
   playPrevRef.current = playPrev;
+
+  // Sync finished URLs to Service Worker
+  useEffect(() => {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'UPDATE_FINISHED_URLS',
+        payload: Array.from(finishedUrls)
+      });
+    }
+  }, [finishedUrls]);
+
+  // Notify Service Worker about autoplay changes
+  useEffect(() => {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SET_AUTOPLAY',
+        payload: { autoplay }
+      });
+    }
+  }, [autoplay]);
 
   return (
     <PlayerContext.Provider value={{
