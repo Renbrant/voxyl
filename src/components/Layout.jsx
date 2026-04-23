@@ -19,11 +19,11 @@ export default function Layout() {
   const navigate = useNavigate();
   const { currentEpisode } = usePlayer();
   const tabHistory = useRef({});
-  const [isAuthed, setIsAuthed] = useState(false);
+  const [isAuthed, setIsAuthed] = useState(null); // null = still checking
 
   useEffect(() => {
     base44.auth.isAuthenticated().then(setIsAuthed).catch(() => setIsAuthed(false));
-  }, [location.pathname]);
+  }, []);
 
   const handleNavClick = (path) => {
     const active = location.pathname === path ||
@@ -67,16 +67,16 @@ export default function Layout() {
               (path !== '/' && location.pathname.startsWith(path));
 
             const handleClick = () => {
-              if (isProtected && !isAuthed) {
+              if (isProtected && isAuthed === false) {
                 base44.auth.redirectToLogin(window.location.href);
                 return;
               }
               handleNavClick(path);
             };
 
-            // Show login icon for profile tab when not authed
-            const DisplayIcon = (path === '/profile' && !isAuthed) ? LogIn : Icon;
-            const displayLabel = (path === '/profile' && !isAuthed) ? 'Entrar' : label;
+            // Show login icon for profile tab only when confirmed not authed (not while loading)
+            const DisplayIcon = (path === '/profile' && isAuthed === false) ? LogIn : Icon;
+            const displayLabel = (path === '/profile' && isAuthed === false) ? 'Entrar' : label;
 
             return (
               <button
