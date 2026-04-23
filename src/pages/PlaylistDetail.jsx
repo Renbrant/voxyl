@@ -281,7 +281,7 @@ export default function PlaylistDetail() {
           {playlist?.time_filter_hours > 0 && (
             <div className="px-3 py-2 bg-accent/10 border border-accent/30 rounded-xl flex items-center gap-2">
               <Clock size={14} className="text-accent" />
-              <span className="text-xs text-accent">Últimas {playlist.time_filter_hours >= 24 ? `${Math.round(playlist.time_filter_hours / 24)} dias` : `${playlist.time_filter_hours}h`}</span>
+              <span className="text-xs text-accent">{t('detailLastHours')} {playlist.time_filter_hours >= 24 ? `${Math.round(playlist.time_filter_hours / 24)} ${t('detailDays')}` : `${playlist.time_filter_hours}${t('detailHours')}`}</span>
             </div>
           )}
         </div>
