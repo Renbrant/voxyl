@@ -112,43 +112,55 @@ export default function PrivacyPolicy() {
         </div>
 
         {/* Data Deletion Section */}
-        <div className="mt-10 p-5 rounded-2xl border border-destructive/30 bg-destructive/5">
-          <h2 className="font-grotesk font-bold text-sm text-foreground mb-2">🗑️ Exclusão de Dados e Conta</h2>
-          <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-            Você pode solicitar a exclusão completa dos seus dados e da sua conta a qualquer momento enviando um e-mail para:
-          </p>
-          <a
-            href="mailto:privacy@voxyl.app?subject=Solicita%C3%A7%C3%A3o%20de%20Exclus%C3%A3o%20de%20Conta%20e%20Dados&body=Ol%C3%A1%2C%0A%0ASolicito%20a%20exclus%C3%A3o%20completa%20da%20minha%20conta%20e%20de%20todos%20os%20meus%20dados%20pessoais%20do%20Voxyl.%0A%0AE-mail%20da%20conta%3A%20%5Bseu%20e-mail%5D%0A%0AAtenciosamente."
-            className="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-destructive/20 border border-destructive/40 text-destructive font-semibold text-sm hover:bg-destructive/30 transition-colors"
-          >
-            ✉️ privacy@voxyl.app
-          </a>
-          <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
-            Processamos solicitações de exclusão em até <strong className="text-foreground">30 dias</strong>. Inclua o e-mail da sua conta no corpo da mensagem.
-          </p>
+        <div className="mt-10 rounded-2xl border border-destructive/30 bg-destructive/5 overflow-hidden">
+          <div className="p-5">
+            <h2 className="font-grotesk font-bold text-base text-foreground mb-1">🗑️ Como Excluir Sua Conta e Dados</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Você tem direito de excluir completamente sua conta e todos os seus dados pessoais do Voxyl. Há duas formas de fazer isso:
+            </p>
+          </div>
 
-          <div className="mt-5 pt-4 border-t border-border">
-            <h3 className="font-grotesk font-semibold text-xs text-foreground mb-2">Prefere excluir você mesmo agora?</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              O Voxyl possui uma opção de auto-exclusão diretamente no app. Veja como acessar:
-            </p>
-            <ol className="mt-3 space-y-2">
-              {[
-                'Abra o app e vá até a aba Perfil (ícone no menu inferior)',
-                'Role até o final da página de perfil',
-                'Toque 10 vezes seguidas no ícone do Voxyl no rodapé da página',
-                'O menu "Zona de Perigo" será revelado',
-                'Toque em "Excluir Conta" e siga as instruções de confirmação',
-              ].map((step, i) => (
-                <li key={i} className="flex gap-3 text-xs text-muted-foreground">
-                  <span className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center text-primary font-bold flex-shrink-0 text-[10px]">{i + 1}</span>
-                  <span className="leading-relaxed">{step}</span>
-                </li>
-              ))}
-            </ol>
-            <p className="text-xs text-muted-foreground mt-3 italic">
-              ⚠️ A exclusão é permanente e irreversível. Todos os seus dados, playlists e histórico serão removidos.
-            </p>
+          {/* Option 1: Self-service in app */}
+          <div className="px-5 pb-5">
+            <div className="p-4 rounded-xl bg-card border border-border mb-4">
+              <p className="font-grotesk font-semibold text-sm text-foreground mb-3">Opção 1 — Excluir pelo próprio app (imediato)</p>
+              <ol className="space-y-3">
+                {[
+                  { icon: '📱', text: 'Acesse a aba Perfil no menu inferior do app.' },
+                  { icon: '✋', text: 'Pressione e segure a palavra "Perfil" (título no topo da tela) por 5 segundos até a barra de progresso completar.' },
+                  { icon: '🔓', text: 'A seção "Zona de Perigo" será desbloqueada no final da tela.' },
+                  { icon: '🗑️', text: 'Toque em "Excluir Conta" e confirme digitando sua confirmação.' },
+                  { icon: '✅', text: 'Sua conta, playlists, curtidas e histórico serão removidos imediatamente.' },
+                ].map((step, i) => (
+                  <li key={i} className="flex gap-3 items-start">
+                    <span className="text-base leading-none mt-0.5">{step.icon}</span>
+                    <span className="text-sm text-muted-foreground leading-relaxed">
+                      <strong className="text-foreground">Passo {i + 1}:</strong> {step.text}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+              <p className="text-xs text-destructive/80 mt-4 font-medium">
+                ⚠️ Esta ação é permanente e irreversível. Todos os seus dados serão apagados.
+              </p>
+            </div>
+
+            {/* Option 2: Email */}
+            <div className="p-4 rounded-xl bg-card border border-border">
+              <p className="font-grotesk font-semibold text-sm text-foreground mb-2">Opção 2 — Solicitar por e-mail</p>
+              <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
+                Se preferir ou não conseguir acessar o app, envie um e-mail solicitando a exclusão:
+              </p>
+              <a
+                href="mailto:privacy@voxyl.app?subject=Solicitação de Exclusão de Conta e Dados&body=Olá,%0A%0ASolicito a exclusão completa da minha conta e de todos os meus dados pessoais do Voxyl.%0A%0AE-mail da conta: [seu e-mail]%0A%0AAtenciosamente."
+                className="flex items-center gap-2 px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive font-semibold text-sm"
+              >
+                ✉️ privacy@voxyl.app
+              </a>
+              <p className="text-xs text-muted-foreground mt-2">
+                Inclua o e-mail da sua conta. Processamos em até <strong className="text-foreground">30 dias</strong>.
+              </p>
+            </div>
           </div>
         </div>
       </div>
