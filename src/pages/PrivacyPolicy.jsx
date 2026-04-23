@@ -46,20 +46,28 @@ const sections = [
     ],
   },
   {
-    title: '6. Segurança',
+    title: '6. Permissões do Dispositivo',
+    content: [
+      '**Câmera (android.permission.CAMERA):** Esta permissão é declarada no manifesto do aplicativo Android pela plataforma de build, porém o Voxyl **não acessa nem utiliza** a câmera do dispositivo em nenhuma funcionalidade. Nenhuma imagem ou vídeo é capturado pelo aplicativo.',
+      '**Armazenamento:** Utilizado apenas para cache local de episódios e imagens de podcast, melhora a performance offline.',
+      '**Internet:** Necessária para reprodução de episódios, carregamento de feeds RSS e sincronização de dados da conta.',
+    ],
+  },
+  {
+    title: '7. Segurança',
     content: [
       'Utilizamos criptografia em trânsito (HTTPS/TLS) e em repouso para proteger seus dados.',
       'Acesso interno aos dados é restrito e auditado.',
     ],
   },
   {
-    title: '7. Crianças',
+    title: '8. Crianças',
     content: [
       'O Voxyl não é destinado a menores de 13 anos. Não coletamos intencionalmente dados de crianças. Se identificarmos tal coleta, removeremos os dados imediatamente.',
     ],
   },
   {
-    title: '8. Contato',
+    title: '9. Contato',
     content: [
       'Dúvidas ou solicitações relacionadas à privacidade: envie e-mail para privacy@voxyl.app',
     ],
