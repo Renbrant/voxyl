@@ -141,6 +141,22 @@ export async function getPlaylistEpisodes(playlistId, forceRefresh = false) {
   };
 }
 
+// Get cloud episodes (aggregated)
+export async function getCloudEpisodes(playlistId) {
+  try {
+    const records = await base44.entities.PlaylistEpisodesCache.filter({ playlist_id: playlistId });
+    if (!records[0]) return null;
+    
+    return {
+      episodes: JSON.parse(records[0].episodes_data || '[]'),
+      hash: records[0].episodes_hash,
+      timestamp: new Date(records[0].last_updated).getTime()
+    };
+  } catch {
+    return null;
+  }
+}
+
 // After fetching fresh episodes, update both caches
 export async function saveFreshEpisodes(playlistId, episodes) {
   // Save to local cache

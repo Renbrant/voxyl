@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
 import { getFeedFromCache, saveFeedToCache, getRSSCacheFromCloud } from '@/lib/feedCache';
 import { getPlaylistCoverImage } from '@/lib/playlistCoverHelper';
-import { getPlaylistEpisodes, saveFreshEpisodes, clearCache } from '@/lib/playlistCacheManager';
+import { saveFreshEpisodes, clearCache, getCloudEpisodes, updateCloudCache } from '@/lib/playlistCacheManager';
 import { usePlayer } from '@/lib/PlayerContext';
 import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward, Pencil, CheckCircle2, Heart, UserPlus, UserCheck } from 'lucide-react';
 import { t } from '@/lib/i18n';
@@ -191,14 +191,12 @@ export default function PlaylistDetail() {
     loadEpisodesRef.current = async () => {
       setLoadingEps(true);
 
-      // Step 1: Show cached episodes immediately so the screen is never empty
-      const cachedResults = playlist.rss_feeds.map(f => getFeedFromCache(f.url)).filter(Boolean);
-      if (cachedResults.length > 0) {
-        const cachedProcessed = processResults(cachedResults);
-        if (cachedProcessed.length > 0) {
-          setEpisodes(sortEpisodes(cachedProcessed));
-          setLoadingEps(false);
-        }
+      // Step 1: Try cloud cache first (source of truth across devices)
+      const cloudCache = await getCloudEpisodes(id);
+      if (cloudCache?.episodes?.length > 0) {
+        setEpisodes(sortEpisodes(cloudCache.episodes));
+        setLoadingEps(false);
+        // Continue fetching fresh data in background
       }
 
       // Step 2: Always fetch fresh data for every feed in parallel
@@ -226,7 +224,10 @@ export default function PlaylistDetail() {
 
       if (finalResults.length > 0) {
         const processed = processResults(finalResults);
-        setEpisodes(sortEpisodes(processed));
+        const sorted = sortEpisodes(processed);
+        setEpisodes(sorted);
+        // Save aggregated episodes to cloud cache so all devices stay in sync
+        await updateCloudCache(id, sorted);
       }
 
       setLoadingEps(false);
