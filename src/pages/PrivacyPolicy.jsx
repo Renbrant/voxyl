@@ -113,54 +113,45 @@ export default function PrivacyPolicy() {
 
         {/* Data Deletion Section */}
         <div className="mt-10 rounded-2xl border border-destructive/30 bg-destructive/5 overflow-hidden">
-          <div className="p-5">
-            <h2 className="font-grotesk font-bold text-base text-foreground mb-1">🗑️ Como Excluir Sua Conta e Dados</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Você tem direito de excluir completamente sua conta e todos os seus dados pessoais do Voxyl. Há duas formas de fazer isso:
+          <div className="p-5 pb-0">
+            <h2 className="font-grotesk font-bold text-base text-foreground mb-2">🗑️ Como Excluir Sua Conta e Dados</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+              Você pode excluir sua conta e apagar todos os seus dados diretamente pelo app, a qualquer momento. O processo é simples e imediato:
             </p>
           </div>
 
-          {/* Option 1: Self-service in app */}
           <div className="px-5 pb-5">
-            <div className="p-4 rounded-xl bg-card border border-border mb-4">
-              <p className="font-grotesk font-semibold text-sm text-foreground mb-3">Opção 1 — Excluir pelo próprio app (imediato)</p>
-              <ol className="space-y-3">
-                {[
-                  { icon: '📱', text: 'Acesse a aba Perfil no menu inferior do app.' },
-                  { icon: '✋', text: 'Pressione e segure a palavra "Perfil" (título no topo da tela) por 5 segundos até a barra de progresso completar.' },
-                  { icon: '🔓', text: 'A seção "Zona de Perigo" será desbloqueada no final da tela.' },
-                  { icon: '🗑️', text: 'Toque em "Excluir Conta" e confirme digitando sua confirmação.' },
-                  { icon: '✅', text: 'Sua conta, playlists, curtidas e histórico serão removidos imediatamente.' },
-                ].map((step, i) => (
-                  <li key={i} className="flex gap-3 items-start">
-                    <span className="text-base leading-none mt-0.5">{step.icon}</span>
-                    <span className="text-sm text-muted-foreground leading-relaxed">
-                      <strong className="text-foreground">Passo {i + 1}:</strong> {step.text}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-              <p className="text-xs text-destructive/80 mt-4 font-medium">
-                ⚠️ Esta ação é permanente e irreversível. Todos os seus dados serão apagados.
+            <ol className="space-y-4">
+              {[
+                { icon: '📱', title: 'Vá para a aba Perfil', text: 'No menu inferior do app, toque no ícone de Perfil.' },
+                { icon: '✋', title: 'Pressione e segure "Perfil"', text: 'No topo da tela de Perfil, pressione e segure a palavra "Perfil" por 5 segundos. Uma barra de progresso aparecerá enquanto você segura.' },
+                { icon: '🔓', title: 'A Zona de Perigo será revelada', text: 'Após os 5 segundos, uma seção chamada "Zona de Perigo" aparece no final da tela.' },
+                { icon: '🗑️', title: 'Toque em "Excluir Conta"', text: 'Dentro da Zona de Perigo, toque em "Excluir Conta". O app pedirá uma confirmação antes de prosseguir.' },
+                { icon: '✅', title: 'Confirmação e exclusão', text: 'Confirme a ação. Sua conta, playlists, curtidas, histórico de reprodução e todos os dados pessoais serão removidos permanentemente.' },
+              ].map((step, i) => (
+                <li key={i} className="flex gap-4 items-start">
+                  <div className="w-8 h-8 rounded-full bg-card border border-border flex items-center justify-center flex-shrink-0 text-sm">
+                    {step.icon}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{step.title}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">{step.text}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+
+            <div className="mt-5 p-3 rounded-xl bg-destructive/10 border border-destructive/20">
+              <p className="text-xs text-destructive font-medium">
+                ⚠️ A exclusão é permanente e irreversível. Não é possível recuperar os dados após a confirmação.
               </p>
             </div>
 
-            {/* Option 2: Email */}
-            <div className="p-4 rounded-xl bg-card border border-border">
-              <p className="font-grotesk font-semibold text-sm text-foreground mb-2">Opção 2 — Solicitar por e-mail</p>
-              <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
-                Se preferir ou não conseguir acessar o app, envie um e-mail solicitando a exclusão:
-              </p>
-              <a
-                href="mailto:privacy@voxyl.app?subject=Solicitação de Exclusão de Conta e Dados&body=Olá,%0A%0ASolicito a exclusão completa da minha conta e de todos os meus dados pessoais do Voxyl.%0A%0AE-mail da conta: [seu e-mail]%0A%0AAtenciosamente."
-                className="flex items-center gap-2 px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive font-semibold text-sm"
-              >
-                ✉️ privacy@voxyl.app
-              </a>
-              <p className="text-xs text-muted-foreground mt-2">
-                Inclua o e-mail da sua conta. Processamos em até <strong className="text-foreground">30 dias</strong>.
-              </p>
-            </div>
+            <p className="text-xs text-muted-foreground mt-4 leading-relaxed">
+              Caso não consiga acessar o app, envie um e-mail para{' '}
+              <a href="mailto:privacy@voxyl.app" className="text-primary underline">privacy@voxyl.app</a>{' '}
+              e processaremos sua solicitação em até 30 dias.
+            </p>
           </div>
         </div>
       </div>
