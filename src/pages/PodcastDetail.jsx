@@ -73,9 +73,8 @@ export default function PodcastDetail() {
       const cloudCached = await getRSSCacheFromCloud(feedUrl).catch(() => null);
       if (cloudCached) {
         fresh = cloudCached;
-        source = 'local';
       } else {
-        // Fall back to API
+        // Fall back to API - this is "fresh" data
         fresh = (await base44.functions.invoke('fetchRSSFeed', { url: feedUrl, count: 100 })).data;
         source = 'rss';
       }
@@ -96,8 +95,9 @@ export default function PodcastDetail() {
             items: [...newItems, ...cached.items],
           };
           applyData(merged);
-          setFeedSource(source);
         }
+        // Always update source based on fetch result
+        setFeedSource(source);
       }
     })().finally(() => setLoading(false));
   }, [feedUrl, user]);
