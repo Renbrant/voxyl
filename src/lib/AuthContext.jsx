@@ -165,8 +165,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const navigateToLogin = () => {
-    const next = window.location.pathname + window.location.search + window.location.hash;
-    base44.auth.redirectToLogin(next);
+    base44.auth.redirectToLogin();
   };
 
   return (
