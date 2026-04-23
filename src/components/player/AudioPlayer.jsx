@@ -38,17 +38,17 @@ export default function AudioPlayer() {
 
         {minimized ? (
           /* Minimized bar */
-          <div className="flex items-center gap-3 px-3 py-2">
+          <div className="flex items-center gap-3 px-3 py-2" onClick={(e) => e.stopPropagation()}>
             <div className="w-7 h-7 rounded-lg overflow-hidden flex-shrink-0 bg-secondary">
               {currentEpisode.image
                 ? <img src={currentEpisode.image} alt="" className="w-full h-full object-cover" />
                 : <div className="w-full h-full gradient-primary" />}
             </div>
-            <p className="flex-1 text-xs font-medium truncate text-foreground">{currentEpisode.title}</p>
-            <button onClick={togglePlay} className="w-7 h-7 rounded-full gradient-primary flex items-center justify-center flex-shrink-0">
+            <p className="flex-1 text-xs font-medium truncate text-foreground" onClick={handlePlayerClick}>{currentEpisode.title}</p>
+            <button onClick={(e) => { e.stopPropagation(); togglePlay(); }} className="w-7 h-7 rounded-full gradient-primary flex items-center justify-center flex-shrink-0">
               {isPlaying ? <Pause size={13} fill="white" className="text-white" /> : <Play size={13} fill="white" className="text-white ml-0.5" />}
             </button>
-            <button onClick={() => setMinimized(false)} className="p-1 text-muted-foreground">
+            <button onClick={(e) => { e.stopPropagation(); setMinimized(false); }} className="p-1 text-muted-foreground">
               <ChevronUp size={16} />
             </button>
           </div>
