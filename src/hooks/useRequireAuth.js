@@ -1,15 +1,16 @@
 import { base44 } from '@/api/base44Client';
+import { redirectToLogin as doRedirectToLogin } from '@/lib/authRedirect';
 
 /**
  * Returns a wrapper that checks if the user is authenticated before running an action.
- * If not authenticated, redirects to login.
+ * If not authenticated, redirects to login (using external browser on Android WebView).
  */
 export function useRequireAuth() {
   const requireAuth = (action) => {
     return async (...args) => {
       const authed = await base44.auth.isAuthenticated();
       if (!authed) {
-        base44.auth.redirectToLogin(window.location.href);
+        doRedirectToLogin(window.location.href);
         return;
       }
       return action(...args);
@@ -17,7 +18,7 @@ export function useRequireAuth() {
   };
 
   const redirectToLogin = () => {
-    base44.auth.redirectToLogin(window.location.href);
+    doRedirectToLogin(window.location.href);
   };
 
   return { requireAuth, redirectToLogin };

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
+import { redirectToLogin } from '@/lib/authRedirect';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, ListMusic, Mic, Download, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -132,7 +133,7 @@ export default function Playlists() {
           <p className="text-sm text-muted-foreground">Faça login para criar playlists, curtir e salvar seus podcasts favoritos.</p>
         </div>
         <button
-          onClick={() => base44.auth.redirectToLogin(window.location.href)}
+          onClick={() => redirectToLogin(window.location.href)}
           className="px-6 py-3 rounded-2xl gradient-primary text-white font-semibold text-sm glow-primary"
         >
           Entrar com Google

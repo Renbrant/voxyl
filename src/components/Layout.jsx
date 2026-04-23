@@ -6,6 +6,7 @@ import AudioPlayer from './player/AudioPlayer';
 import { usePlayer } from '@/lib/PlayerContext';
 import FollowRequestsBell from '@/components/notifications/FollowRequestsBell';
 import { base44 } from '@/api/base44Client';
+import { redirectToLogin } from '@/lib/authRedirect';
 
 const navItems = [
   { icon: Home, label: 'Feed', path: '/' },
@@ -68,7 +69,7 @@ export default function Layout() {
 
             const handleClick = () => {
               if (isProtected && isAuthed === false) {
-                base44.auth.redirectToLogin(window.location.href);
+                redirectToLogin(window.location.href);
                 return;
               }
               handleNavClick(path);

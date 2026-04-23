@@ -7,6 +7,7 @@ import DeleteAccountModal from '@/components/profile/DeleteAccountModal';
 import ShareAppModal from '@/components/profile/ShareAppModal';
 import { UserCircle2, Mail, Users, ListMusic, Trash2, Share2, Shield, LogOut, Bell, AtSign, EyeOff, Eye, Pencil, Settings, Camera, RefreshCw, Loader2, LogIn } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { redirectToLogin } from '@/lib/authRedirect';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -135,7 +136,7 @@ export default function Profile() {
           <p className="text-sm text-muted-foreground">Faça login para acessar seu perfil, suas playlists e configurações.</p>
         </div>
         <button
-          onClick={() => base44.auth.redirectToLogin(window.location.href)}
+          onClick={() => redirectToLogin(window.location.href)}
           className="px-6 py-3 rounded-2xl gradient-primary text-white font-semibold text-sm glow-primary"
         >
           Entrar com Google
