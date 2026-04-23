@@ -67,9 +67,6 @@ const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
     const { url, count = 30 } = await req.json();
     if (!url) return Response.json({ error: 'Missing url' }, { status: 400 });
 
