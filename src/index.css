@@ -93,11 +93,12 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  body {
+  body, #root {
     @apply bg-background text-foreground font-inter;
     overscroll-behavior: none;
     touch-action: pan-y;
     -webkit-text-size-adjust: 100%;
+    min-height: 100dvh;
   }
 
   button, a, [role="button"], [role="tab"], input[type="checkbox"], input[type="radio"], svg, label {

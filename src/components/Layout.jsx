@@ -57,7 +57,7 @@ export default function Layout() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background max-w-md mx-auto relative">
+    <div className="flex flex-col bg-background max-w-md mx-auto relative" style={{ height: '100dvh' }}>
       <main
         className="flex-1 overflow-y-auto pb-20"
         style={{ WebkitOverflowScrolling: 'touch' }}
