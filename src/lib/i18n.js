@@ -167,7 +167,7 @@ const translations = {
   detailFeeds: { pt: 'feeds', en: 'feeds' },
   detailUser: { pt: 'Usuário', en: 'User' },
   detailCached: { pt: '📡 Cache', en: '📡 Cached' },
-  detailLoading: { pt: '⏳ Carregando', en: '⏳ Loading' },
+  detailLoading: { pt: 'Carregando', en: 'Loading' },
   detailUpdated: { pt: '✓ Atualizado', en: '✓ Updated' },
   visibilityPublic: { pt: 'Pública', en: 'Public' },
   visibilityFriendsOnly: { pt: 'Seguidores', en: 'Followers only' },
