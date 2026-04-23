@@ -7,12 +7,13 @@ import { usePlayer } from '@/lib/PlayerContext';
 import FollowRequestsBell from '@/components/notifications/FollowRequestsBell';
 import { base44 } from '@/api/base44Client';
 import { redirectToLogin } from '@/lib/authRedirect';
+import { t } from '@/lib/i18n';
 
-const navItems = [
-  { icon: Home, label: 'Feed', path: '/' },
-  { icon: Compass, label: 'Explorar', path: '/explore' },
-  { icon: Heart, label: 'Curtidas', path: '/playlists' },
-  { icon: User, label: 'Perfil', path: '/profile' },
+const getNavItems = () => [
+  { icon: Home, label: t('navFeed'), path: '/' },
+  { icon: Compass, label: t('navExplore'), path: '/explore' },
+  { icon: Heart, label: t('navPlaylists'), path: '/playlists' },
+  { icon: User, label: t('navProfile'), path: '/profile' },
 ];
 
 export default function Layout() {
@@ -48,7 +49,7 @@ export default function Layout() {
       const saved = tabHistory.current[path];
       navigate(saved || path);
     }
-    const currentTab = navItems.find(n => n.path !== '/'
+    const currentTab = getNavItems().find(n => n.path !== '/'
       ? location.pathname.startsWith(n.path)
       : location.pathname === '/');
     if (currentTab) {
@@ -73,7 +74,7 @@ export default function Layout() {
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', userSelect: 'none', WebkitUserSelect: 'none', background: 'hsl(var(--card))' }}
       >
         <div className="flex items-center justify-around px-2 py-3">
-          {navItems.map(({ icon: Icon, label, path }) => {
+          {getNavItems().map(({ icon: Icon, label, path }) => {
             // For protected tabs, redirect to login if not authed
             const isProtected = path === '/playlists' || path === '/profile';
             const active = location.pathname === path ||
@@ -90,7 +91,7 @@ export default function Layout() {
             // Show login icon for profile tab when not authed or still loading (no cache)
             const showLogin = path === '/profile' && isAuthed !== true;
             const DisplayIcon = showLogin ? LogIn : Icon;
-            const displayLabel = showLogin ? 'Entrar' : label;
+            const displayLabel = showLogin ? t('loginWithGoogle').split(' ')[0] : label;
 
             return (
               <button

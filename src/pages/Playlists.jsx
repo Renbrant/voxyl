@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { t } from '@/lib/i18n';
 import { base44 } from '@/api/base44Client';
 import { redirectToLogin } from '@/lib/authRedirect';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -15,10 +16,10 @@ import DownloadedEpisodeCard from '@/components/downloads/DownloadedEpisodeCard'
 import { getDownloads } from '@/lib/downloads';
 import { getCache, setCache, invalidateCache, TTL_5MIN } from '@/lib/appCache';
 
-const TABS = [
-{ key: 'playlists', label: 'Playlists', icon: ListMusic },
-{ key: 'podcasts', label: 'Podcasts', icon: Mic },
-{ key: 'downloads', label: 'Baixados', icon: Download }];
+const TABS = () => [
+{ key: 'playlists', label: t('playlistsTabPlaylists'), icon: ListMusic },
+{ key: 'podcasts', label: t('playlistsTabPodcasts'), icon: Mic },
+{ key: 'downloads', label: t('playlistsTabDownloads'), icon: Download }];
 
 
 export default function Playlists() {
@@ -129,14 +130,14 @@ export default function Playlists() {
           <LogIn size={28} className="text-white" />
         </div>
         <div>
-          <h2 className="text-xl font-grotesk font-bold text-foreground mb-1">Entre para continuar</h2>
-          <p className="text-sm text-muted-foreground">Faça login para criar playlists, curtir e salvar seus podcasts favoritos.</p>
+          <h2 className="text-xl font-grotesk font-bold text-foreground mb-1">{t('loginToAccess')}</h2>
+          <p className="text-sm text-muted-foreground">{t('loginToAccessHint')}</p>
         </div>
         <button
           onClick={() => redirectToLogin(window.location.href)}
           className="px-6 py-3 rounded-2xl gradient-primary text-white font-semibold text-sm glow-primary"
         >
-          Entrar com Google
+          {t('loginWithGoogle')}
         </button>
       </div>
     );
@@ -146,8 +147,8 @@ export default function Playlists() {
     <div ref={containerRef} className="bg-background pb-24 relative">
       <PullToRefreshIndicator pullProgress={pullProgress} refreshing={refreshing} />
       <VoxylHeader
-        title="Curtidas"
-        subtitle="Suas playlists e podcasts salvos"
+        title={t('playlistsTitle')}
+        subtitle={t('playlistsSubtitle')}
         right={
         tab === 'playlists' &&
         <button
@@ -163,7 +164,7 @@ export default function Playlists() {
 
       {/* Tabs */}
       <div className="flex gap-2 px-4 mb-4">
-        {TABS.map(({ key, label, icon: Icon }) =>
+        {TABS().map(({ key, label, icon: Icon }) =>
         <button
           key={key}
           onClick={() => setTab(key)}
@@ -185,7 +186,7 @@ export default function Playlists() {
             {/* My playlists */}
             {myPlaylists.length > 0 &&
           <>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium pb-1">Minhas playlists</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium pb-1">{t('playlistsMine')}</p>
                 {myPlaylists.map((pl, i) =>
             <motion.div key={pl.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                     <PlaylistCard
@@ -203,7 +204,7 @@ export default function Playlists() {
             {/* Liked playlists from others */}
             {likedPlaylists.length > 0 &&
           <>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium pt-3 pb-1">Playlists curtidas</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium pt-3 pb-1">{t('playlistsLiked')}</p>
                 {likedPlaylists.map((pl, i) =>
             <motion.div key={pl.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                     <PlaylistCard
@@ -221,8 +222,8 @@ export default function Playlists() {
             {myPlaylists.length === 0 && likedPlaylists.length === 0 &&
           <div className="text-center py-16 text-muted-foreground">
                 <p className="text-4xl mb-3">🎵</p>
-                <p className="font-medium text-foreground">Nenhuma playlist ainda</p>
-                <p className="text-sm mt-1">Crie ou curta playlists para vê-las aqui!</p>
+                <p className="font-medium text-foreground">{t('playlistsEmpty')}</p>
+                <p className="text-sm mt-1">{t('playlistsEmptyHint')}</p>
               </div>
           }
           </>
@@ -233,8 +234,8 @@ export default function Playlists() {
         downloads.length === 0 ?
         <div className="text-center py-16 text-muted-foreground">
               <p className="text-4xl mb-3">📥</p>
-              <p className="font-medium text-foreground">Nenhum episódio baixado</p>
-              <p className="text-sm mt-1">Funcionalidade ainda não implementada.</p>
+              <p className="font-medium text-foreground">{t('playlistsNoDownloads')}</p>
+              <p className="text-sm mt-1">{t('playlistsNoDownloadsHint')}</p>
             </div> :
 
         <div className="space-y-2">
@@ -255,8 +256,8 @@ export default function Playlists() {
         likedPodcasts.length === 0 ?
         <div className="text-center py-16 text-muted-foreground">
               <p className="text-4xl mb-3">🎙️</p>
-              <p className="font-medium text-foreground">Nenhum podcast curtido</p>
-              <p className="text-sm mt-1">Explore e curta podcasts para salvá-los aqui!</p>
+              <p className="font-medium text-foreground">{t('playlistsNoPodcasts')}</p>
+              <p className="text-sm mt-1">{t('playlistsNoPodcastsHint')}</p>
             </div> :
 
         likedPodcasts.map((like, i) =>

@@ -8,6 +8,7 @@ import { getPlaylistCoverImage } from '@/lib/playlistCoverHelper';
 import { getPlaylistEpisodes, saveFreshEpisodes, clearCache } from '@/lib/playlistCacheManager';
 import { usePlayer } from '@/lib/PlayerContext';
 import { ArrowLeft, Share2, Play, Pause, Clock, Loader2, ListMusic, SkipForward, Pencil, CheckCircle2, Heart, UserPlus, UserCheck } from 'lucide-react';
+import { t } from '@/lib/i18n';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Link } from 'react-router-dom';
 import PageTransition from '@/components/common/PageTransition';
@@ -330,7 +331,7 @@ export default function PlaylistDetail() {
                 <h1 className="text-2xl font-grotesk font-bold text-white leading-tight">{playlist.name}</h1>
                 <VisibilityBadge visibility={playlist.visibility || 'public'} withLabel />
               </div>
-              <p className="text-sm text-white/70">por {playlist.creator_username ? `@${playlist.creator_username}` : 'Usuário'} • {playlist.rss_feeds?.length || 0} feeds</p>
+              <p className="text-sm text-white/70">{t('detailBy')} {playlist.creator_username ? `@${playlist.creator_username}` : t('detailUser')} • {playlist.rss_feeds?.length || 0} {t('detailFeeds')}</p>
               {playlist.description && <p className="text-xs text-white/60 mt-1 line-clamp-2">{playlist.description}</p>}
             </>
           ) : (
@@ -342,14 +343,14 @@ export default function PlaylistDetail() {
       {playlist?.max_duration > 0 && (
         <div className="mx-4 mt-3 px-3 py-2 bg-primary/10 border border-primary/30 rounded-xl flex items-center gap-2">
           <Clock size={14} className="text-primary" />
-          <span className="text-xs text-primary">Filtro: episódios até {playlist.max_duration} min</span>
+          <span className="text-xs text-primary">{t('detailFilterLabel')} {playlist.max_duration} {t('detailFilterMin')}</span>
         </div>
       )}
 
       <div className="px-4 mt-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-semibold text-foreground flex items-center gap-2">
-            <ListMusic size={16} className="text-primary" /> Episódios
+            <ListMusic size={16} className="text-primary" /> {t('detailEpisodes')}
             {episodes.length > 0 && <span className="text-muted-foreground text-sm font-normal">({episodes.length})</span>}
           </h2>
           {episodes.length > 0 && (
@@ -361,7 +362,7 @@ export default function PlaylistDetail() {
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full gradient-primary text-white text-xs font-medium"
             >
-              <Play size={12} fill="white" /> Tocar tudo
+              <Play size={12} fill="white" /> {t('detailPlayAll')}
             </button>
           )}
         </div>
@@ -369,13 +370,13 @@ export default function PlaylistDetail() {
         {loadingEps ? (
           <div className="flex flex-col items-center py-12 gap-3 text-muted-foreground">
             <Loader2 size={24} className="animate-spin text-primary" />
-            <p className="text-sm">Carregando feeds...</p>
+            <p className="text-sm">{t('detailLoadingFeeds')}</p>
           </div>
         ) : episodes.length === 0 && playlist ? (
           <div className="text-center py-12 text-muted-foreground">
             <p className="text-3xl mb-2">📭</p>
-            <p className="text-sm">Nenhum episódio encontrado</p>
-            <p className="text-xs mt-1">Verifique os feeds RSS da playlist</p>
+            <p className="text-sm">{t('detailNoEpisodes')}</p>
+            <p className="text-xs mt-1">{t('detailNoEpisodesHint')}</p>
           </div>
         ) : (
           <div className="space-y-2 pb-4">
@@ -447,7 +448,7 @@ export default function PlaylistDetail() {
                             • {format(new Date(ep.pubDate), "d MMM yyyy", { locale: ptBR })}
                           </span>
                         )}
-                        {hasBeenPlayed && <span className="text-xs text-muted-foreground/60 italic">• ouvido</span>}
+                        {hasBeenPlayed && <span className="text-xs text-muted-foreground/60 italic">• {t('detailHeard')}</span>}
                       </div>
                     </div>
                     <EpisodeActionButton

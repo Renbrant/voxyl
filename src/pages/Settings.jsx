@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { t } from '@/lib/i18n';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Moon, Sun, Eye, Ban, LogOut, Trash2, Shield, Monitor } from 'lucide-react';
@@ -8,10 +9,10 @@ import BlockedUsersModal from '@/components/profile/BlockedUsersModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-const THEME_OPTIONS = [
-  { key: 'auto', label: 'Automático', icon: Monitor },
-  { key: 'dark', label: 'Escuro', icon: Moon },
-  { key: 'light', label: 'Claro', icon: Sun },
+const THEME_OPTIONS = () => [
+  { key: 'auto', label: t('settingsThemeAuto'), icon: Monitor },
+  { key: 'dark', label: t('settingsThemeDark'), icon: Moon },
+  { key: 'light', label: t('settingsThemeLight'), icon: Sun },
 ];
 
 function applyTheme(theme) {
@@ -60,21 +61,22 @@ export default function Settings() {
     base44.auth.logout('/');
   };
 
-  const themeOption = THEME_OPTIONS.find(o => o.key === theme) || THEME_OPTIONS[0];
+  const themeOptions = THEME_OPTIONS();
+  const themeOption = themeOptions.find(o => o.key === theme) || themeOptions[0];
   const ThemeIcon = themeOption.icon;
 
   const menuItems = [
     {
       icon: ThemeIcon,
-      label: 'Tema',
+      label: t('settingsTheme'),
       description: themeOption.label,
       action: () => setShowThemePicker(true),
       badge: null,
     },
     {
       icon: Eye,
-      label: 'Privacidade do Perfil',
-      description: user?.profile_hidden ? 'Seu perfil está oculto' : 'Seu perfil é visível',
+      label: t('settingsPrivacy'),
+      description: user?.profile_hidden ? t('settingsPrivacyHidden') : t('settingsPrivacyVisible'),
       action: () => {
         if (!user) return;
         const newVal = !user.profile_hidden;
@@ -84,19 +86,19 @@ export default function Settings() {
         });
         setUser(prev => ({ ...prev, profile_hidden: newVal }));
       },
-      badge: user?.profile_hidden ? 'Oculto' : null,
+      badge: user?.profile_hidden ? t('settingsHidden') : null,
     },
     {
       icon: Ban,
-      label: 'Usuários Bloqueados',
-      description: `${blockedCount} usuário${blockedCount !== 1 ? 's' : ''} bloqueado${blockedCount !== 1 ? 's' : ''}`,
+      label: t('settingsBlockedUsers'),
+      description: `${blockedCount} ${blockedCount !== 1 ? t('settingsBlockedCountPlural') : t('settingsBlockedCount')}`,
       action: () => setShowBlocked(true),
       badge: blockedCount > 0 ? blockedCount : null,
     },
     {
       icon: Shield,
-      label: 'Política de Privacidade',
-      description: 'Leia nossa política',
+      label: t('settingsPrivacyPolicy'),
+      description: t('settingsPrivacyPolicyDesc'),
       action: () => navigate('/privacy'),
       badge: null,
     },
@@ -105,8 +107,8 @@ export default function Settings() {
   const dangerItems = [
     {
       icon: LogOut,
-      label: 'Sair da Conta',
-      description: 'Você será desconectado',
+      label: t('settingsLogout'),
+      description: t('settingsLogoutDesc'),
       action: handleLogout,
       color: 'text-orange-400',
     },
@@ -123,7 +125,7 @@ export default function Settings() {
   return (
     <div className="bg-background pb-24">
       <VoxylHeader 
-        title="Configurações"
+        title={t('settingsTitle')}
         right={
           <button
             onClick={() => navigate(-1)}
@@ -211,8 +213,8 @@ export default function Settings() {
                   <Trash2 size={18} />
                 </div>
                 <div className="flex-1 text-left">
-                  <p className="font-semibold text-sm text-destructive">Excluir Conta</p>
-                  <p className="text-xs text-muted-foreground">Ação permanente e irreversível</p>
+                  <p className="font-semibold text-sm text-destructive">{t('settingsDeleteAccount')}</p>
+                  <p className="text-xs text-muted-foreground">{t('settingsDeleteAccountDesc')}</p>
                 </div>
               </motion.button>
             )}
@@ -254,9 +256,9 @@ export default function Settings() {
               className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl border-t border-border p-6"
               style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}
             >
-              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">Escolher Tema</p>
+              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">{t('settingsChooseTheme')}</p>
               <div className="space-y-2">
-                {THEME_OPTIONS.map(({ key, label, icon: Icon }) => (
+                {THEME_OPTIONS().map(({ key, label, icon: Icon }) => (
                   <button
                     key={key}
                     onClick={() => handleThemeChange(key)}

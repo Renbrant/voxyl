@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { t } from '@/lib/i18n';
 import { useQuery } from '@tanstack/react-query';
 import VoxylHeader from '@/components/common/VoxylHeader';
 import PlaylistCard from '@/components/playlist/PlaylistCard';
@@ -132,14 +133,14 @@ export default function Profile() {
           <LogIn size={28} className="text-white" />
         </div>
         <div>
-          <h2 className="text-xl font-grotesk font-bold text-foreground mb-1">Entre para ver seu perfil</h2>
-          <p className="text-sm text-muted-foreground">Faça login para acessar seu perfil, suas playlists e configurações.</p>
+          <h2 className="text-xl font-grotesk font-bold text-foreground mb-1">{t('profileLoginTitle')}</h2>
+          <p className="text-sm text-muted-foreground">{t('profileLoginHint')}</p>
         </div>
         <button
           onClick={() => redirectToLogin(window.location.href)}
           className="px-6 py-3 rounded-2xl gradient-primary text-white font-semibold text-sm glow-primary"
         >
-          Entrar com Google
+          {t('loginWithGoogle')}
         </button>
       </div>
     );
@@ -158,7 +159,7 @@ export default function Profile() {
         style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 3rem)' }}
       >
         <div>
-          <p className="text-xs text-muted-foreground mb-0.5">Sua conta</p>
+          <p className="text-xs text-muted-foreground mb-0.5">{t('profileSubtitle')}</p>
           <h1
             className="text-2xl font-grotesk font-bold text-foreground relative inline-block cursor-pointer"
             onMouseDown={startEggPress}
@@ -168,7 +169,7 @@ export default function Profile() {
             onTouchEnd={cancelEggPress}
             onTouchCancel={cancelEggPress}
           >
-            Perfil
+            {t('profileTitle')}
             {/* Progress ring */}
             {eggProgress > 0 && !eggUnlocked && (
               <span
@@ -209,7 +210,7 @@ export default function Profile() {
               <Camera size={13} className="text-white" />
             </button>
           </div>
-          <h2 className="text-xl font-grotesk font-bold">{user.full_name || 'Usuário'}</h2>
+          <h2 className="text-xl font-grotesk font-bold">{user.full_name || t('detailUser')}</h2>
 
           {/* Public username */}
           <button
@@ -217,7 +218,7 @@ export default function Profile() {
             className="flex items-center gap-1.5 mt-1 px-3 py-1 rounded-full bg-secondary border border-border text-sm text-muted-foreground hover:border-primary/40 transition-colors">
             
             
-            <span>{user.username ? `@${user.username.replace(/^@+/, '')}` : 'Definir nome de usuário'}</span>
+            <span>{user.username ? `@${user.username.replace(/^@+/, '')}` : t('profileSetUsername')}</span>
             <Pencil size={11} className="opacity-60" />
           </button>
 
@@ -232,7 +233,7 @@ export default function Profile() {
             }>
             
             {user.profile_hidden ? <EyeOff size={12} /> : <Eye size={12} />}
-            {user.profile_hidden ? 'Perfil oculto' : 'Perfil visível'}
+            {user.profile_hidden ? t('profileHidden') : t('profileVisible')}
           </button>
 
           {/* Follow requests badge */}
@@ -242,22 +243,22 @@ export default function Profile() {
             className="flex items-center gap-2 mt-3 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 text-primary text-sm font-medium">
             
               <Bell size={14} />
-              {pendingCount} pedido{pendingCount > 1 ? 's' : ''} para seguir
+              {pendingCount} {pendingCount > 1 ? t('profileFollowRequestsPlural') : t('profileFollowRequests')}
             </button>
           }
 
           <div className="flex gap-6 mt-4">
             <div className="text-center">
               <p className="text-xl font-bold text-foreground">{playlists.length}</p>
-              <p className="text-xs text-muted-foreground flex items-center gap-1"><ListMusic size={10} /> playlists</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1"><ListMusic size={10} /> {t('profileStats_playlists')}</p>
             </div>
             <div className="text-center">
               <p className="text-xl font-bold text-foreground">{publicPlaylists.length}</p>
-              <p className="text-xs text-muted-foreground">públicas</p>
+              <p className="text-xs text-muted-foreground">{t('profileStats_public')}</p>
             </div>
             <div className="text-center">
               <p className="text-xl font-bold text-foreground">{followersPlaylists.length}</p>
-              <p className="text-xs text-muted-foreground">seguidores</p>
+              <p className="text-xs text-muted-foreground">{t('profileStats_followers')}</p>
             </div>
           </div>
         </div>
@@ -269,8 +270,8 @@ export default function Profile() {
               <Users size={18} className="text-white" />
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-sm">Convide seus amigos!</p>
-              <p className="text-xs text-muted-foreground">Compartilhe o Voxyl com quem você ama</p>
+              <p className="font-semibold text-sm">{t('profileInvite')}</p>
+              <p className="text-xs text-muted-foreground">{t('profileInviteHint')}</p>
             </div>
             <div className="flex gap-2">
               <Button
@@ -286,7 +287,7 @@ export default function Profile() {
                 size="sm"
                 className="rounded-full gradient-primary border-0 text-xs">
                 
-                Convidar
+                {t('profileInviteBtn')}
               </Button>
             </div>
           </div>
@@ -295,11 +296,11 @@ export default function Profile() {
         {/* Playlists */}
         <div className="space-y-6">
           <div>
-            <h3 className="font-semibold mb-3 text-foreground">Playlists Públicas</h3>
+            <h3 className="font-semibold mb-3 text-foreground">{t('profilePublicPlaylists')}</h3>
             {publicPlaylists.length === 0 ?
             <div className="text-center py-8 text-muted-foreground">
                 <p className="text-3xl mb-2">🎧</p>
-                <p className="text-sm">Nenhuma playlist pública</p>
+                <p className="text-sm">{t('profileNoPublic')}</p>
               </div> :
 
             <div className="space-y-2">
@@ -313,11 +314,11 @@ export default function Profile() {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-3 text-foreground">Playlists para Seguidores</h3>
+            <h3 className="font-semibold mb-3 text-foreground">{t('profileFollowerPlaylists')}</h3>
             {followersPlaylists.length === 0 ?
             <div className="text-center py-8 text-muted-foreground">
                 <p className="text-3xl mb-2">👥</p>
-                <p className="text-sm">Nenhuma playlist exclusiva para seguidores</p>
+                <p className="text-sm">{t('profileNoFollower')}</p>
               </div> :
 
             <div className="space-y-2">
@@ -380,7 +381,7 @@ export default function Profile() {
               className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl p-5 border-t border-border"
               style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}
             >
-              <p className="text-base font-grotesk font-bold mb-4">Foto de perfil</p>
+              <p className="text-base font-grotesk font-bold mb-4">{t('profilePhoto')}</p>
               <div className="space-y-2">
                 {(user.picture || user.avatar_url || user.photo_url) && (
                   <button
@@ -388,12 +389,12 @@ export default function Profile() {
                     className="w-full flex items-center gap-3 p-4 rounded-2xl bg-secondary border border-border text-sm font-medium"
                   >
                     <RefreshCw size={18} className="text-primary" />
-                    Usar foto do login
+                    {t('profileUseLoginPhoto')}
                   </button>
                 )}
                 <label className="w-full flex items-center gap-3 p-4 rounded-2xl bg-secondary border border-border text-sm font-medium cursor-pointer">
                   <Camera size={18} className="text-primary" />
-                  Enviar foto do celular
+                  {t('profileUploadPhoto')}
                   <input type="file" accept="image/*" className="hidden" onChange={handleUploadPhoto} />
                 </label>
               </div>
@@ -412,8 +413,8 @@ export default function Profile() {
             className="fixed bottom-28 left-4 right-4 z-50 bg-card border border-primary/40 rounded-2xl p-4 shadow-xl"
           >
             <p className="text-2xl mb-1">🎉</p>
-            <p className="font-grotesk font-bold text-foreground">Easter egg encontrado!</p>
-            <p className="text-sm text-muted-foreground mt-0.5">+5 playlists e +5 podcasts por playlist desbloqueados!</p>
+            <p className="font-grotesk font-bold text-foreground">{t('profileEasterEgg')}</p>
+            <p className="text-sm text-muted-foreground mt-0.5">{t('profileEasterEggMsg')}</p>
           </motion.div>
         )}
       </AnimatePresence>

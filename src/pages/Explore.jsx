@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { t } from '@/lib/i18n';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import VoxylHeader from '@/components/common/VoxylHeader';
@@ -229,50 +230,50 @@ export default function Explore() {
   })();
 
   const TABS = [
-    { key: 'playlists', label: 'Playlists', icon: Compass },
-    { key: 'podcasts', label: 'Podcasts', icon: Radio },
-    { key: 'users', label: 'Usuários', icon: Users },
+    { key: 'playlists', label: t('explorePlaylists'), icon: Compass },
+    { key: 'podcasts', label: t('explorePodcasts'), icon: Radio },
+    { key: 'users', label: t('exploreUsers'), icon: Users },
   ];
 
   const sortOptions = [
-    { value: 'relevance', label: '🔍 Relevância' },
-    { value: 'popularity', label: '🔥 Populares' },
-    { value: 'episodes', label: '📦 Mais episódios' },
-    { value: 'recent', label: '🕐 Episódio recente' },
-    { value: 'frequency', label: '📅 Mais frequentes' },
+    { value: 'relevance', label: t('exploreSortRelevance') },
+    { value: 'popularity', label: t('exploreSortPopular') },
+    { value: 'episodes', label: t('exploreSortEpisodes') },
+    { value: 'recent', label: t('exploreSortRecent') },
+    { value: 'frequency', label: t('exploreSortFrequent') },
   ];
 
   const languageOptions = [
-    { value: '', label: '🌍 Todos os idiomas' },
+    { value: '', label: t('exploreAllLanguages') },
     { value: 'pt', label: '🇧🇷 Português' },
-    { value: 'en', label: '🇺🇸 Inglês' },
-    { value: 'es', label: '🇪🇸 Espanhol' },
-    { value: 'fr', label: '🇫🇷 Francês' },
-    { value: 'de', label: '🇩🇪 Alemão' },
+    { value: 'en', label: '🇺🇸 English' },
+    { value: 'es', label: '🇪🇸 Español' },
+    { value: 'fr', label: '🇫🇷 Français' },
+    { value: 'de', label: '🇩🇪 Deutsch' },
     { value: 'it', label: '🇮🇹 Italiano' },
-    { value: 'ja', label: '🇯🇵 Japonês' },
+    { value: 'ja', label: '🇯🇵 日本語' },
   ];
 
   const categoryOptions = [
-    { value: '', label: '🎙️ Todas as categorias' },
-    { value: 'tecnologia', label: '💻 Tecnologia' },
-    { value: 'negócios', label: '💼 Negócios' },
-    { value: 'educação', label: '📚 Educação' },
-    { value: 'entretenimento', label: '🎭 Entretenimento' },
-    { value: 'esportes', label: '⚽ Esportes' },
-    { value: 'saúde', label: '❤️ Saúde & Bem-estar' },
-    { value: 'notícias', label: '📰 Notícias' },
-    { value: 'ciência', label: '🔬 Ciência' },
-    { value: 'história', label: '🏛️ História' },
-    { value: 'true crime', label: '🔍 True Crime' },
-    { value: 'comédia', label: '😂 Comédia' },
-    { value: 'política', label: '🗳️ Política' },
+    { value: '', label: t('exploreAllCategories') },
+    { value: 'technology', label: t('exploreCatTech') },
+    { value: 'business', label: t('exploreCatBusiness') },
+    { value: 'education', label: t('exploreCatEducation') },
+    { value: 'entertainment', label: t('exploreCatEntertainment') },
+    { value: 'sports', label: t('exploreCatSports') },
+    { value: 'health', label: t('exploreCatHealth') },
+    { value: 'news', label: t('exploreCatNews') },
+    { value: 'science', label: t('exploreCatScience') },
+    { value: 'history', label: t('exploreCatHistory') },
+    { value: 'true crime', label: t('exploreCatCrime') },
+    { value: 'comedy', label: t('exploreCatComedy') },
+    { value: 'politics', label: t('exploreCatPolitics') },
   ];
 
   return (
     <div ref={containerRef} className="bg-background pb-24 relative">
       <PullToRefreshIndicator pullProgress={pullProgress} refreshing={refreshing} />
-      <VoxylHeader title="Explorar" subtitle="Descubra podcasts e playlists" />
+      <VoxylHeader title={t('exploreTitle')} subtitle={t('exploreSubtitle')} />
 
       {/* Tabs */}
       <div className="flex gap-2 px-4 justify-center">
@@ -295,10 +296,10 @@ export default function Explore() {
 
       {/* Search bar and filters */}
       <div className="px-4 mb-4 mt-3">
-        {tab === 'playlists' && <PodcastSearchBar value={voxylSearch} onChange={setVoxylSearch} loading={false} placeholder="Buscar playlists..." />}
+        {tab === 'playlists' && <PodcastSearchBar value={voxylSearch} onChange={setVoxylSearch} loading={false} placeholder={t('exploreSearchPlaylists')} />}
         {tab === 'podcasts' && (
           <div className="space-y-3">
-            <PodcastSearchBar value={search} onChange={setSearch} loading={podcastLoading} placeholder="Ex: tecnologia, true crime, notícias..." />
+            <PodcastSearchBar value={search} onChange={setSearch} loading={podcastLoading} placeholder={t('exploreSearchPodcasts')} />
             <div className="flex gap-2 flex-wrap">
               <SelectBottomSheet
                 value={podcastSortBy}
@@ -327,8 +328,8 @@ export default function Explore() {
           <div className="space-y-3">
             <div className="flex gap-2">
               {[
-                { key: 'connections', label: 'Conexões' },
-                { key: 'pending', label: 'Aguardando' },
+                { key: 'connections', label: t('exploreConnections') },
+                { key: 'pending', label: t('explorePending') },
               ].map(({ key, label }) => (
                 <button
                   key={key}
@@ -363,7 +364,7 @@ export default function Explore() {
               {filteredPlaylists.length === 0 && (
                 <div className="text-center py-16 text-muted-foreground">
                   <p className="text-4xl mb-3">🔍</p>
-                  <p>Nenhum resultado encontrado</p>
+                  <p>{t('noResults')}</p>
                 </div>
               )}
             </div>
@@ -382,15 +383,14 @@ export default function Explore() {
                 <div className="text-center py-16 text-muted-foreground">
                   <p className="text-4xl mb-3">👤</p>
                   <p className="text-sm">
-                    {userFilter === 'connections' ? 'Nenhuma conexão ainda'
-                    : 'Nenhuma solicitação pendente'}
+                    {userFilter === 'connections' ? t('exploreNoConnections') : t('exploreNoPending')}
                   </p>
                 </div>
               ) : userFilter === 'connections' ? (
                 <>
                   {followersList.length > 0 && (
                     <div>
-                      <h3 className="text-sm font-semibold text-muted-foreground mb-2">👥 Seguidores ({followersList.length})</h3>
+                      <h3 className="text-sm font-semibold text-muted-foreground mb-2">👥 {t('exploreFollowers')} ({followersList.length})</h3>
                       <div className="space-y-2">
                         {followersList.map((f, i) => (
                           <UserSearchCard
@@ -415,7 +415,7 @@ export default function Explore() {
                   )}
                   {followingList.length > 0 && (
                     <div>
-                      <h3 className="text-sm font-semibold text-muted-foreground mb-2">➡️ Seguindo ({followingList.length})</h3>
+                      <h3 className="text-sm font-semibold text-muted-foreground mb-2">➡️ {t('exploreFollowing')} ({followingList.length})</h3>
                       <div className="space-y-2">
                         {followingList.map((f, i) => (
                           <UserSearchCard
@@ -472,12 +472,15 @@ export default function Explore() {
               <div className="py-6 text-muted-foreground">
                 <div className="text-center mb-6">
                   <p className="text-5xl mb-3">🎙️</p>
-                  <p className="font-semibold text-foreground text-base">Descubra novos podcasts</p>
-                  <p className="text-xs mt-1 text-muted-foreground">Pesquise por nome, tema ou assunto</p>
+                  <p className="font-semibold text-foreground text-base">{t('exploreDiscover')}</p>
+                  <p className="text-xs mt-1 text-muted-foreground">{t('exploreSearchHint')}</p>
                 </div>
-                <p className="text-xs text-muted-foreground mb-2 px-1">Sugestões populares</p>
+                <p className="text-xs text-muted-foreground mb-2 px-1">{t('exploreSuggestions')}</p>
                 <div className="flex flex-wrap gap-2">
-                  {['tecnologia', 'notícias', 'saúde', 'negócios', 'história', 'esportes', 'ciência', 'comédia', 'política', 'educação', 'entretenimento', 'cristianismo'].map(s => (
+                  {(t('exploreSuggestions') === 'Popular suggestions'
+                    ? ['technology', 'news', 'health', 'business', 'history', 'sports', 'science', 'comedy', 'politics', 'education', 'entertainment', 'christianity']
+                    : ['tecnologia', 'notícias', 'saúde', 'negócios', 'história', 'esportes', 'ciência', 'comédia', 'política', 'educação', 'entretenimento', 'cristianismo']
+                  ).map(s => (
                     <button
                       key={s}
                       onClick={() => setSearch(s)}
@@ -507,7 +510,7 @@ export default function Explore() {
             {!podcastLoading && search.trim() && podcastResults.length === 0 && (
               <div className="text-center py-16 text-muted-foreground">
                 <p className="text-4xl mb-3">🔍</p>
-                <p>Nenhum podcast encontrado para "{search}"</p>
+                <p>{t('exploreNoFound')} "{search}"</p>
               </div>
             )}
           </div>

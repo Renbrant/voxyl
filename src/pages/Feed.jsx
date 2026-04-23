@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { getCache, setCache, invalidateCache, TTL_5MIN } from '@/lib/appCache';
+import { t } from '@/lib/i18n';
 
 export default function Feed() {
   const [user, setUser] = useState(null);
@@ -125,15 +126,15 @@ export default function Feed() {
     <div ref={containerRef} className="bg-background relative">
       <PullToRefreshIndicator pullProgress={pullProgress} refreshing={refreshing} />
       <VoxylHeader
-        subtitle="Descubra"
+        subtitle={t('feedSubtitle')}
         title={<span className="text-gradient font-grotesk">Voxyl</span>}
       />
 
       {/* Tabs */}
       <div className="flex gap-2 px-4 mb-4">
         {[
-          { key: 'trending', label: 'Em Alta', icon: Flame },
-          { key: 'recent', label: 'Recentes', icon: Sparkles },
+          { key: 'trending', label: t('feedTrending'), icon: Flame },
+          { key: 'recent', label: t('feedRecent'), icon: Sparkles },
         ].map(({ key, label, icon: Icon }) => (
           <button
             key={key}
@@ -158,7 +159,7 @@ export default function Feed() {
         {/* Playlists em Alta */}
         {!isLoading && heroPlaylist && (
           <div className="mb-8">
-            <h2 className="text-base font-semibold mb-3 text-foreground">Playlists em Alta</h2>
+            <h2 className="text-base font-semibold mb-3 text-foreground">{t('feedPlaylistsHot')}</h2>
 
             {/* Hero Playlist */}
             <Link to={`/playlist/${heroPlaylist.id}`}>
@@ -169,9 +170,9 @@ export default function Feed() {
                 <div className="absolute inset-0 bg-black/40" />
                 <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
                   <div className="flex-1 min-w-0 mr-3">
-                    <p className="text-xs text-white/70 mb-0.5 font-medium">🔥 Mais tocada agora</p>
+                    <p className="text-xs text-white/70 mb-0.5 font-medium">{t('feedMostPlayed')}</p>
                     <h2 className="text-xl font-grotesk font-bold text-white truncate">{heroPlaylist.name}</h2>
-                    <p className="text-sm text-white/70 truncate">por {heroPlaylist.creator_username ? `@${heroPlaylist.creator_username}` : 'Usuário'} • {heroPlaylist.plays_count || 0} plays</p>
+                    <p className="text-sm text-white/70 truncate">{t('detailBy')} {heroPlaylist.creator_username ? `@${heroPlaylist.creator_username}` : t('detailUser')} • {heroPlaylist.plays_count || 0} {t('feedPlays')}</p>
                   </div>
                   <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center glow-primary flex-shrink-0">
                     <Play size={20} fill="white" className="text-white ml-0.5" />
@@ -199,7 +200,7 @@ export default function Feed() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                   >
-                    {expandedPlaylists ? '← Ver menos' : '+ Ver mais'}
+                    {expandedPlaylists ? t('feedSeeLess') : t('feedSeeMore')}
                   </motion.button>
                 )}
               </div>
@@ -210,7 +211,7 @@ export default function Feed() {
         {/* Podcasts em Alta */}
         {safePodcasts.length > 0 && (
           <div>
-            <h2 className="text-base font-semibold mb-3 text-foreground">Podcasts em Alta</h2>
+            <h2 className="text-base font-semibold mb-3 text-foreground">{t('feedPodcastsHot')}</h2>
 
             {/* Hero Podcast */}
             {safePodcasts[0] && (
@@ -221,9 +222,9 @@ export default function Feed() {
                 <div className="absolute inset-0 bg-black/40" />
                 <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
                   <div className="flex-1 min-w-0 mr-3">
-                    <p className="text-xs text-white/70 mb-0.5 font-medium">🔥 Mais tocado agora</p>
+                    <p className="text-xs text-white/70 mb-0.5 font-medium">{t('feedMostPlayedPodcast')}</p>
                     <h2 className="text-xl font-grotesk font-bold text-white truncate">{safePodcasts[0].title}</h2>
-                    <p className="text-sm text-white/70 truncate">{safePodcasts[0].playCount || 0} reproduções</p>
+                    <p className="text-sm text-white/70 truncate">{safePodcasts[0].playCount || 0} {t('feedRepros')}</p>
                   </div>
                   <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center glow-primary flex-shrink-0">
                     <Play size={20} fill="white" className="text-white ml-0.5" />
@@ -262,7 +263,7 @@ export default function Feed() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                   >
-                    {expandedPodcasts ? '← Ver menos' : '+ Ver mais'}
+                    {expandedPodcasts ? t('feedSeeLess') : t('feedSeeMore')}
                   </motion.button>
                 )}
               </div>
@@ -273,8 +274,8 @@ export default function Feed() {
         {!isLoading && sortedPlaylists.length === 0 && (
           <div className="text-center py-16 text-muted-foreground">
             <p className="text-4xl mb-3">🎧</p>
-            <p className="font-medium">Nenhuma playlist pública ainda.</p>
-            <p className="text-sm mt-1">Crie a primeira!</p>
+            <p className="font-medium">{t('feedNoPlaylists')}</p>
+            <p className="text-sm mt-1">{t('feedCreateFirst')}</p>
           </div>
         )}
       </div>
