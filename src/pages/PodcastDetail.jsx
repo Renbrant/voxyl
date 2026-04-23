@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { usePlayer } from '@/lib/PlayerContext';
 import { parseDurationToSeconds, formatDuration } from '@/lib/rssUtils';
 import { getFeedFromCache, saveFeedToCache, getRSSCacheFromCloud } from '@/lib/feedCache';
+import { t } from '@/lib/i18n';
 import { ArrowLeft, Play, Pause, Loader2, ListMusic, Heart, Info, X } from 'lucide-react';
 import PageTransition from '@/components/common/PageTransition';
 import { cn } from '@/lib/utils';
@@ -185,10 +186,10 @@ export default function PodcastDetail() {
         <div className="px-4 mt-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold text-foreground flex items-center gap-2">
-              <ListMusic size={16} className="text-primary" /> Episódios
+              <ListMusic size={16} className="text-primary" /> {t('detailEpisodes')}
               {episodes.length > 0 && <span className="text-muted-foreground text-sm font-normal">({episodes.length})</span>}
-              {feedSource === 'local' && episodes.length > 0 && <span className="text-xs px-2 py-1 rounded-full bg-accent/10 text-accent font-medium">📡 Cache</span>}
-              {!loading && feedSource === 'rss' && episodes.length > 0 && <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">✓ Atualizado</span>}
+              {feedSource === 'local' && episodes.length > 0 && <span className="text-xs px-2 py-1 rounded-full bg-accent/10 text-accent font-medium">{t('detailCached')}</span>}
+              {!loading && feedSource === 'rss' && episodes.length > 0 && <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">{t('detailUpdated')}</span>}
             </h2>
             {episodes.length > 0 && (
               <button
@@ -198,7 +199,7 @@ export default function PodcastDetail() {
                 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full gradient-primary text-white text-xs font-medium"
               >
-                <Play size={12} fill="white" /> Tocar tudo
+                <Play size={12} fill="white" /> {t('detailPlayAll')}
               </button>
             )}
           </div>
@@ -206,7 +207,7 @@ export default function PodcastDetail() {
           {loading ? (
             <div className="flex flex-col items-center py-12 gap-3 text-muted-foreground">
               <Loader2 size={24} className="animate-spin text-primary" />
-              <p className="text-sm">Carregando episódios...</p>
+              <p className="text-sm">{t('detailLoadingFeeds')}</p>
             </div>
           ) : (
             <div className="space-y-2 pb-32">

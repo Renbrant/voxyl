@@ -166,6 +166,8 @@ const translations = {
   detailBy: { pt: 'por', en: 'by' },
   detailFeeds: { pt: 'feeds', en: 'feeds' },
   detailUser: { pt: 'Usuário', en: 'User' },
+  detailCached: { pt: '📡 Cache', en: '📡 Cached' },
+  detailUpdated: { pt: '✓ Atualizado', en: '✓ Updated' },
 
   // Privacy Policy
   privacyTitle: { pt: 'Política de Privacidade', en: 'Privacy Policy' },
