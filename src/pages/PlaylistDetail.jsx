@@ -283,6 +283,7 @@ export default function PlaylistDetail() {
             <ListMusic size={16} className="text-primary" /> {t('detailEpisodes')}
             {episodes.length > 0 && <span className="text-muted-foreground text-sm font-normal">({episodes.length})</span>}
             {backgroundSyncSource === 'local' && episodes.length > 0 && <span className="text-xs px-2 py-1 rounded-full bg-accent/10 text-accent font-medium">{t('detailCached')}</span>}
+            {loadingEps && backgroundSyncSource === 'none' && episodes.length > 0 && <span className="flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground font-medium"><Loader2 size={11} className="animate-spin" />{t('detailLoading')}</span>}
             {!loadingEps && backgroundSyncSource === 'rss' && episodes.length > 0 && <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">{t('detailUpdated')}</span>}
           </h2>
           {episodes.length > 0 && (
