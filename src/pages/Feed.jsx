@@ -86,7 +86,11 @@ export default function Feed() {
     queryFn: async () => {
       try {
         const res = await base44.functions.invoke('getTopPodcastsByPlayback', {});
-        return res.data || [];
+        // Function returns array directly
+        if (Array.isArray(res.data)) return res.data;
+        // Fallback for old format { podcasts: [] }
+        if (Array.isArray(res.data?.podcasts)) return res.data.podcasts;
+        return [];
       } catch (err) {
         return [];
       }

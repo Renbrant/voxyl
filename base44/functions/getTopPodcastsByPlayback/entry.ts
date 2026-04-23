@@ -64,13 +64,13 @@ Deno.serve(async (req) => {
       }
     });
 
-    // Filter and sort
+    // Filter and sort — show all podcasts, sorted by play count
     const sorted = Object.values(podcastMap)
-      .filter(p => p.playCount > 0)
+      .filter(p => p.title && p.title !== 'Sem título')
       .sort((a, b) => b.playCount - a.playCount)
       .slice(0, 100);
 
-    return Response.json({ podcasts: sorted });
+    return Response.json(sorted);
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
