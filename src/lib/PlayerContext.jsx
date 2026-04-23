@@ -52,7 +52,7 @@ export function PlayerProvider({ children }) {
   const recordPodcastPlay = useCallback(() => {
     const ep = currentEpisodeRef.current;
     const audio = audioRef.current;
-    if (!ep?.audioUrl || !audio || !user) return;
+    if (!ep?.audioUrl || !audio) return;
 
     // Only record once per episode per session
     if (podcastPlayRecordedRef.current.has(ep.audioUrl)) return;

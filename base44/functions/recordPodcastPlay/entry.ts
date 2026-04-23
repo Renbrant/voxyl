@@ -3,11 +3,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    let user = null;
+    try { user = await base44.auth.me(); } catch (_) {}
+    const userId = user?.id || 'VISITOR';
 
     const { feed_url, podcast_title, podcast_image, audio_url, episode_title } = await req.json();
 
@@ -18,7 +16,7 @@ Deno.serve(async (req) => {
     // Check if this play was already recorded (avoid duplicates)
     const existing = await base44.asServiceRole.entities.PodcastPlay.filter({
       feed_url,
-      user_id: user.id,
+      user_id: userId,
       audio_url
     });
 
@@ -31,7 +29,7 @@ Deno.serve(async (req) => {
       feed_url,
       podcast_title: podcast_title || 'Unknown',
       podcast_image: podcast_image || '',
-      user_id: user.id,
+      user_id: userId,
       audio_url,
       episode_title: episode_title || 'Unknown',
       played_at: new Date().toISOString()
