@@ -37,6 +37,8 @@ export default function Settings() {
   const [showBlocked, setShowBlocked] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [blockedCount, setBlockedCount] = useState(0);
+  const [showDangerZone, setShowDangerZone] = useState(false);
+  const [dangerTaps, setDangerTaps] = useState(0);
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -108,14 +110,15 @@ export default function Settings() {
       action: handleLogout,
       color: 'text-orange-400',
     },
-    {
-      icon: Trash2,
-      label: 'Excluir Conta',
-      description: 'Ação irreversível',
-      action: () => setShowDelete(true),
-      color: 'text-destructive',
-    },
   ];
+
+  const handleDangerTap = () => {
+    const next = dangerTaps + 1;
+    setDangerTaps(next);
+    if (next >= 5) {
+      setShowDangerZone(true);
+    }
+  };
 
   return (
     <div className="bg-background pb-24">
@@ -164,7 +167,14 @@ export default function Settings() {
 
         {/* Danger Zone */}
         <div className="space-y-2 mt-8 pt-6 border-t border-border">
-          <p className="text-xs font-semibold text-destructive/70 px-4 mb-3 uppercase tracking-wide">Zona de Perigo</p>
+          <button
+            onClick={handleDangerTap}
+            className="w-full text-left px-4 mb-3"
+          >
+            <p className="text-xs font-semibold text-destructive/40 uppercase tracking-wide select-none">
+              {dangerTaps > 0 && dangerTaps < 5 ? '···' : 'Ações'}
+            </p>
+          </button>
           {dangerItems.map((item, idx) => {
             const Icon = item.icon;
             return (
@@ -186,6 +196,27 @@ export default function Settings() {
               </motion.button>
             );
           })}
+
+          {/* Hidden delete account — only shown after 5 taps on the danger label */}
+          <AnimatePresence>
+            {showDangerZone && (
+              <motion.button
+                onClick={() => setShowDelete(true)}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl bg-destructive/5 border border-destructive/20 hover:border-destructive/50 hover:bg-destructive/10 transition-colors active:scale-95 overflow-hidden"
+              >
+                <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0 text-destructive">
+                  <Trash2 size={18} />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="font-semibold text-sm text-destructive">Excluir Conta</p>
+                  <p className="text-xs text-muted-foreground">Ação permanente e irreversível</p>
+                </div>
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
