@@ -61,7 +61,7 @@ export default function Layout() {
     <div className="flex flex-col bg-background max-w-md mx-auto relative" style={{ height: '100dvh' }}>
       <main
         className="flex-1 overflow-y-auto pb-20"
-        style={{ WebkitOverflowScrolling: 'touch' }}
+        style={{ WebkitOverflowScrolling: 'touch', paddingBottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))' }}
       >
         <Outlet />
       </main>
