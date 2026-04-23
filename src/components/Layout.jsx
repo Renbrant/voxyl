@@ -20,10 +20,22 @@ export default function Layout() {
   const navigate = useNavigate();
   const { currentEpisode } = usePlayer();
   const tabHistory = useRef({});
-  const [isAuthed, setIsAuthed] = useState(null); // null = still checking
+  // Use cached value to avoid flash on navigation
+  const [isAuthed, setIsAuthed] = useState(() => {
+    const cached = sessionStorage.getItem('voxyl_authed');
+    if (cached === 'true') return true;
+    if (cached === 'false') return false;
+    return null;
+  });
 
   useEffect(() => {
-    base44.auth.isAuthenticated().then(setIsAuthed).catch(() => setIsAuthed(false));
+    base44.auth.isAuthenticated().then(v => {
+      sessionStorage.setItem('voxyl_authed', String(v));
+      setIsAuthed(v);
+    }).catch(() => {
+      sessionStorage.setItem('voxyl_authed', 'false');
+      setIsAuthed(false);
+    });
   }, []);
 
   const handleNavClick = (path) => {
@@ -75,9 +87,10 @@ export default function Layout() {
               handleNavClick(path);
             };
 
-            // Show login icon for profile tab only when confirmed not authed (not while loading)
-            const DisplayIcon = (path === '/profile' && isAuthed === false) ? LogIn : Icon;
-            const displayLabel = (path === '/profile' && isAuthed === false) ? 'Entrar' : label;
+            // Show login icon for profile tab when not authed or still loading (no cache)
+            const showLogin = path === '/profile' && isAuthed !== true;
+            const DisplayIcon = showLogin ? LogIn : Icon;
+            const displayLabel = showLogin ? 'Entrar' : label;
 
             return (
               <button
