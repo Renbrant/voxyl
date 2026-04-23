@@ -38,7 +38,7 @@ export default function AudioPlayer() {
 
         {minimized ? (
           /* Minimized bar */
-          <div className="flex items-center gap-3 px-3 py-2" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-3 px-3 py-2">
             <div className="w-7 h-7 rounded-lg overflow-hidden flex-shrink-0 bg-secondary">
               {currentEpisode.image
                 ? <img src={currentEpisode.image} alt="" className="w-full h-full object-cover" />
