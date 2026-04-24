@@ -126,6 +126,7 @@ const translations = {
   profileUploadPhoto: { pt: 'Enviar foto do celular', en: 'Upload from device' },
   profileEasterEgg: { pt: 'Easter egg encontrado!', en: 'Easter egg found!' },
   profileEasterEggMsg: { pt: '+5 playlists e +5 podcasts por playlist desbloqueados!', en: '+5 playlists and +5 podcasts per playlist unlocked!' },
+  feedLastPlayedPodcasts: { pt: 'Últimos Podcasts Escutados', en: 'Last Played Podcasts' },
 
   // Settings
   settingsTitle: { pt: 'Configurações', en: 'Settings' },
