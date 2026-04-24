@@ -109,7 +109,7 @@ export default function PodcastDetail() {
       } catch (error) {
         console.error('Erro ao carregar feed:', error);
       }
-    }).finally(() => setLoading(false));
+    })().finally(() => setLoading(false));
   }, [feedUrl, user]);
 
   const handlePlayEpisode = (ep) => {
