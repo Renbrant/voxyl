@@ -3,29 +3,32 @@ import { base44 } from '@/api/base44Client';
 import { X, Trash2, Loader2, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { t, isEn } from '@/lib/i18n';
+
+const REQUIRED_TEXT_VALUE = () => isEn ? 'DELETE MY ACCOUNT' : 'EXCLUIR MINHA CONTA';
 
 // Multi-step deletion with 3 confirmation stages
-const STEPS = [
+const STEPS = () => [
   {
-    title: 'Tem certeza?',
-    body: 'Você está prestes a excluir permanentemente sua conta no Voxyl. Esta ação não pode ser desfeita.',
-    warning: 'Suas playlists permanecerão no app, mas sem seu nome associado.',
-    confirmLabel: 'Sim, quero excluir minha conta',
-    cancelLabel: 'Não, voltar',
+    title: t('deleteStep1Title'),
+    body: t('deleteStep1Body'),
+    warning: t('deleteStep1Warning'),
+    confirmLabel: t('deleteStep1Confirm'),
+    cancelLabel: t('deleteStep1Cancel'),
   },
   {
-    title: 'Tem absoluta certeza?',
-    body: 'Após a exclusão, você perderá acesso a todas as suas configurações, curtidas e histórico de escuta.',
-    warning: 'Esta ação é permanente. Não há como recuperar sua conta depois.',
-    confirmLabel: 'Sim, tenho certeza',
-    cancelLabel: 'Cancelar',
+    title: t('deleteStep2Title'),
+    body: t('deleteStep2Body'),
+    warning: t('deleteStep2Warning'),
+    confirmLabel: t('deleteStep2Confirm'),
+    cancelLabel: t('deleteCancel'),
   },
   {
-    title: 'Confirmação final',
-    body: 'Para confirmar definitivamente, digite exatamente o texto abaixo:',
+    title: t('deleteStep3Title'),
+    body: t('deleteStep3Body'),
     warning: null,
-    confirmLabel: null, // uses input
-    cancelLabel: 'Desistir',
+    confirmLabel: null,
+    cancelLabel: t('deleteGiveUp'),
   },
 ];
 
@@ -34,8 +37,9 @@ export default function DeleteAccountModal({ user, onClose }) {
   const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const REQUIRED_TEXT = 'EXCLUIR MINHA CONTA';
+  const REQUIRED_TEXT = REQUIRED_TEXT_VALUE();
   const canDelete = confirm.trim() === REQUIRED_TEXT;
+  const steps = STEPS();
 
   const handleNext = () => {
     if (step < 2) setStep(s => s + 1);
@@ -49,7 +53,7 @@ export default function DeleteAccountModal({ user, onClose }) {
       const playlists = await base44.entities.Playlist.filter({ creator_id: user.id });
       await Promise.all(playlists.map(p =>
         base44.entities.Playlist.update(p.id, {
-          creator_name: 'Usuário removido',
+          creator_name: t('deletedUser'),
           creator_username: '',
           creator_email: '',
           creator_id: 'deleted',
@@ -69,7 +73,7 @@ export default function DeleteAccountModal({ user, onClose }) {
     base44.auth.logout('/');
   };
 
-  const current = STEPS[step];
+  const current = steps[step];
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm">
@@ -85,7 +89,7 @@ export default function DeleteAccountModal({ user, onClose }) {
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2 text-destructive">
             <ShieldAlert size={18} />
-            <h2 className="text-base font-grotesk font-bold">Excluir Conta</h2>
+            <h2 className="text-base font-grotesk font-bold">{t('settingsDeleteAccount')}</h2>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-full bg-secondary text-muted-foreground">
             <X size={18} />
@@ -94,7 +98,7 @@ export default function DeleteAccountModal({ user, onClose }) {
 
         {/* Step indicator */}
         <div className="flex gap-1.5 mb-5">
-          {STEPS.map((_, i) => (
+          {steps.map((_, i) => (
             <div
               key={i}
               className={`h-1 flex-1 rounded-full transition-colors ${i <= step ? 'bg-destructive' : 'bg-border'}`}
@@ -120,7 +124,7 @@ export default function DeleteAccountModal({ user, onClose }) {
         {step === 2 && (
           <div className="mb-4">
             <p className="text-xs text-muted-foreground mb-2">
-              Digite: <span className="font-mono font-bold text-destructive">{REQUIRED_TEXT}</span>
+              {t('deleteTypeLabel')}: <span className="font-mono font-bold text-destructive">{REQUIRED_TEXT}</span>
             </p>
             <input
               value={confirm}
@@ -155,7 +159,7 @@ export default function DeleteAccountModal({ user, onClose }) {
               className="flex-1 rounded-2xl bg-destructive hover:bg-destructive/90 text-white border-0 disabled:opacity-40"
             >
               {loading ? <Loader2 size={16} className="animate-spin mr-1" /> : <Trash2 size={16} className="mr-1" />}
-              {loading ? 'Excluindo...' : 'Excluir definitivamente'}
+              {loading ? t('deleteDeleting') : t('deleteConfirmFinal')}
             </Button>
           )}
         </div>

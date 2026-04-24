@@ -121,6 +121,13 @@ export default function Settings() {
       action: handleLogout,
       color: 'text-orange-400',
     },
+    {
+      icon: Trash2,
+      label: t('settingsDeleteAccount'),
+      description: t('settingsDeleteAccountDesc'),
+      action: () => setShowDelete(true),
+      color: 'text-destructive',
+    },
   ];
 
   const handleDangerTap = () => {
@@ -208,26 +215,7 @@ export default function Settings() {
             );
           })}
 
-          {/* Hidden delete account — only shown after 5 taps on the danger label */}
-          <AnimatePresence>
-            {showDangerZone && (
-              <motion.button
-                onClick={() => setShowDelete(true)}
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl bg-destructive/5 border border-destructive/20 hover:border-destructive/50 hover:bg-destructive/10 transition-colors active:scale-95 overflow-hidden"
-              >
-                <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0 text-destructive">
-                  <Trash2 size={18} />
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="font-semibold text-sm text-destructive">{t('settingsDeleteAccount')}</p>
-                  <p className="text-xs text-muted-foreground">{t('settingsDeleteAccountDesc')}</p>
-                </div>
-              </motion.button>
-            )}
-          </AnimatePresence>
+
         </div>
       </div>
 

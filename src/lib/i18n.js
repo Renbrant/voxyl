@@ -154,6 +154,25 @@ const translations = {
   settingsDeleteAccountDesc: { pt: 'Ação permanente e irreversível', en: 'Permanent and irreversible action' },
   settingsHidden: { pt: 'Oculto', en: 'Hidden' },
 
+  // Delete Account Modal
+  deletedUser: { pt: 'Usuário removido', en: 'Deleted user' },
+  deleteStep1Title: { pt: 'Tem certeza?', en: 'Are you sure?' },
+  deleteStep1Body: { pt: 'Você está prestes a excluir permanentemente sua conta no Voxyl. Esta ação não pode ser desfeita.', en: 'You are about to permanently delete your Voxyl account. This action cannot be undone.' },
+  deleteStep1Warning: { pt: 'Suas playlists permanecerão no app, mas sem seu nome associado.', en: 'Your playlists will remain in the app, but without your name associated.' },
+  deleteStep1Confirm: { pt: 'Sim, quero excluir minha conta', en: 'Yes, I want to delete my account' },
+  deleteStep1Cancel: { pt: 'Não, voltar', en: 'No, go back' },
+  deleteStep2Title: { pt: 'Tem absoluta certeza?', en: 'Are you absolutely sure?' },
+  deleteStep2Body: { pt: 'Após a exclusão, você perderá acesso a todas as suas configurações, curtidas e histórico de escuta.', en: 'After deletion, you will lose access to all your settings, likes and listening history.' },
+  deleteStep2Warning: { pt: 'Esta ação é permanente. Não há como recuperar sua conta depois.', en: 'This action is permanent. There is no way to recover your account afterwards.' },
+  deleteStep2Confirm: { pt: 'Sim, tenho certeza', en: 'Yes, I am sure' },
+  deleteCancel: { pt: 'Cancelar', en: 'Cancel' },
+  deleteStep3Title: { pt: 'Confirmação final', en: 'Final confirmation' },
+  deleteStep3Body: { pt: 'Para confirmar definitivamente, digite exatamente o texto abaixo:', en: 'To definitively confirm, type the exact text below:' },
+  deleteGiveUp: { pt: 'Desistir', en: 'Give up' },
+  deleteTypeLabel: { pt: 'Digite', en: 'Type' },
+  deleteDeleting: { pt: 'Excluindo...', en: 'Deleting...' },
+  deleteConfirmFinal: { pt: 'Excluir definitivamente', en: 'Delete permanently' },
+
   // PlaylistDetail
   detailEpisodes: { pt: 'Episódios', en: 'Episodes' },
   detailPlayAll: { pt: 'Tocar tudo', en: 'Play all' },
