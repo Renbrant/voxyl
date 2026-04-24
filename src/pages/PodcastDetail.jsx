@@ -40,7 +40,12 @@ export default function PodcastDetail() {
   }, [feedUrl]);
 
   useEffect(() => {
-    if (!feedUrl || !user) return;
+    if (!feedUrl) return;
+
+    // Reset state when feedUrl changes to avoid showing stale data
+    setPodcastMeta(null);
+    setEpisodes([]);
+    setFeedSource('none');
 
     const applyData = (data) => {
       setPodcastMeta({
@@ -110,7 +115,7 @@ export default function PodcastDetail() {
         console.error('Erro ao carregar feed:', error);
       }
     })().finally(() => setLoading(false));
-  }, [feedUrl, user]);
+  }, [feedUrl]);
 
   const handlePlayEpisode = (ep) => {
     if (currentEpisode?.audioUrl === ep.audioUrl) { togglePlay(); return; }
