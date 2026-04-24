@@ -48,6 +48,7 @@ export default function Feed() {
 
   const { pullProgress, refreshing } = usePullToRefresh(() => {
     invalidateCache('feed-playlists');
+    invalidateCache('all-playlists-feed');
     invalidateCache(`my-likes-${user?.id}`);
     invalidateCache(`my-playlists-${user?.id}`);
     invalidateCache(`user-podcast-plays-${user?.id}`);
@@ -55,6 +56,7 @@ export default function Feed() {
     queryClient.invalidateQueries({ queryKey: ['my-likes'] });
     queryClient.invalidateQueries({ queryKey: ['top-podcasts'] });
     queryClient.invalidateQueries({ queryKey: ['my-playlists'] });
+    queryClient.invalidateQueries({ queryKey: ['all-playlists-feed'] });
     queryClient.invalidateQueries({ queryKey: ['user-podcast-plays'] });
   }, containerRef);
 

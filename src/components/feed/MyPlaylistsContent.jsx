@@ -17,17 +17,18 @@ const GRADIENT_COLORS = [
 ];
 
 export default function MyPlaylistsContent({ user, likedIds, handleLike, blockedIds, setBlockedIds }) {
-  const { data: myRawPlaylists = [], isLoading: isLoadingPlaylists } = useQuery({
-    queryKey: ['my-playlists', user?.id],
+  // All public playlists (to find ones the user listened to)
+  const { data: allPlaylists = [], isLoading: isLoadingPlaylists } = useQuery({
+    queryKey: ['all-playlists-feed'],
     enabled: !!user,
     queryFn: async () => {
-      const cached = getCache(`my-playlists-${user.id}`);
+      const cached = getCache('all-playlists-feed');
       if (cached) return cached;
-      const data = await base44.entities.Playlist.filter({ creator_id: user.id }, '-created_date', 100);
-      setCache(`my-playlists-${user.id}`, data, TTL_5MIN);
+      const data = await base44.entities.Playlist.list('-updated_date', 200);
+      setCache('all-playlists-feed', data, TTL_5MIN);
       return data;
     },
-    initialData: () => getCache(`my-playlists-${user?.id}`) || undefined,
+    initialData: () => getCache('all-playlists-feed') || undefined,
   });
 
   const { data: userPodcastPlays = [], isLoading: isLoadingPlays } = useQuery({
@@ -36,20 +37,20 @@ export default function MyPlaylistsContent({ user, likedIds, handleLike, blocked
     queryFn: async () => {
       const cached = getCache(`user-podcast-plays-${user.id}`);
       if (cached) return cached;
-      const data = await base44.entities.PodcastPlay.filter({ user_id: user.id }, '-played_at', 50);
+      const data = await base44.entities.PodcastPlay.filter({ user_id: user.id }, '-played_at', 100);
       setCache(`user-podcast-plays-${user.id}`, data, TTL_5MIN);
       return data;
     },
     initialData: () => getCache(`user-podcast-plays-${user?.id}`) || undefined,
   });
 
+  // Playlists recently listened to by this user (any creator), sorted by last play
   const sortedMyPlaylists = useMemo(() => {
-    if (!myRawPlaylists.length) return [];
-    if (!userPodcastPlays.length) return myRawPlaylists;
+    if (!allPlaylists.length || !userPodcastPlays.length) return [];
 
     const playlistLastPlayedMap = new Map();
     userPodcastPlays.forEach(play => {
-      const matchingPlaylist = myRawPlaylists.find(pl =>
+      const matchingPlaylist = allPlaylists.find(pl =>
         pl.rss_feeds?.some(feed => feed.url === play.feed_url)
       );
       if (matchingPlaylist) {
@@ -60,15 +61,11 @@ export default function MyPlaylistsContent({ user, likedIds, handleLike, blocked
       }
     });
 
-    return [...myRawPlaylists].sort((a, b) => {
-      const aPlayed = playlistLastPlayedMap.get(a.id);
-      const bPlayed = playlistLastPlayedMap.get(b.id);
-      if (aPlayed && bPlayed) return new Date(bPlayed) - new Date(aPlayed);
-      if (aPlayed) return -1;
-      if (bPlayed) return 1;
-      return 0;
-    });
-  }, [myRawPlaylists, userPodcastPlays]);
+    // Only return playlists the user actually played
+    return allPlaylists
+      .filter(pl => playlistLastPlayedMap.has(pl.id))
+      .sort((a, b) => new Date(playlistLastPlayedMap.get(b.id)) - new Date(playlistLastPlayedMap.get(a.id)));
+  }, [allPlaylists, userPodcastPlays]);
 
   const lastPlayedPodcasts = useMemo(() => {
     const seen = new Set();
@@ -90,7 +87,7 @@ export default function MyPlaylistsContent({ user, likedIds, handleLike, blocked
     );
   }
 
-  if (!sortedMyPlaylists.length && !lastPlayedPodcasts.length) {
+  if (!isLoading && !sortedMyPlaylists.length && !lastPlayedPodcasts.length) {
     return (
       <div className="text-center py-16 text-muted-foreground">
         <p className="text-4xl mb-3">🎧</p>
@@ -104,7 +101,7 @@ export default function MyPlaylistsContent({ user, likedIds, handleLike, blocked
     <div>
       {sortedMyPlaylists.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-base font-semibold mb-3 text-foreground">{t('playlistsMine')}</h2>
+          <h2 className="text-base font-semibold mb-3 text-foreground">Ouvidas recentemente</h2>
           <div className="grid grid-cols-2 gap-3">
             {sortedMyPlaylists.map((pl, i) => (
               <motion.div key={pl.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
