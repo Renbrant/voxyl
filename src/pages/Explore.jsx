@@ -201,15 +201,17 @@ export default function Explore() {
       .catch(() => setPodcastLoading(false));
   }, [debouncedQuery, tab, user, podcastLanguage, podcastSortBy, podcastCategory]);
 
-  const filteredPlaylists = playlists.filter(p => {
-    if (blockedIds.includes(p.creator_id)) return false;
-    if (p.visibility === 'private') return false;
-    if (p.visibility === 'friends_only' && !(user && followStatuses[p.creator_id] === 'accepted')) return false;
-    return !voxylSearch ||
-      p.name?.toLowerCase().includes(voxylSearch.toLowerCase()) ||
-      p.description?.toLowerCase().includes(voxylSearch.toLowerCase()) ||
-      p.creator_name?.toLowerCase().includes(voxylSearch.toLowerCase());
-  });
+  const filteredPlaylists = playlists
+    .filter(p => {
+      if (blockedIds.includes(p.creator_id)) return false;
+      if (p.visibility === 'private') return false;
+      if (p.visibility === 'friends_only' && !(user && followStatuses[p.creator_id] === 'accepted')) return false;
+      return !voxylSearch ||
+        p.name?.toLowerCase().includes(voxylSearch.toLowerCase()) ||
+        p.description?.toLowerCase().includes(voxylSearch.toLowerCase()) ||
+        p.creator_name?.toLowerCase().includes(voxylSearch.toLowerCase());
+    })
+    .sort((a, b) => (b.plays_count || 0) - (a.plays_count || 0));
 
   // Build user list based on active filter
   const filteredUsers = (() => {
