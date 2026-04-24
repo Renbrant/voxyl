@@ -1,5 +1,3 @@
-import { base44 } from '@/api/base44Client';
-
 const CACHE_KEY_PREFIX = 'voxyl_feed_';
 const INDEX_KEY = 'voxyl_feed_index';
 const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -45,19 +43,17 @@ export function saveFeedToCache(url, data) {
     const index = getIndex();
     index[key] = Date.now();
     
-    // Check if we need to prune
     if (Object.keys(index).length >= MAX_CACHE_ENTRIES) {
       pruneOldEntries(index);
     }
     
     localStorage.setItem(key, JSON.stringify({ cachedAt: Date.now(), data }));
     saveIndex(index);
-    
-    // Save to cloud cache in background
-    saveRSSCacheToCloud(url, data).catch(() => {});
   } catch {
     // Storage full — ignore
   }
+  // Always return a resolved promise so callers can safely .catch()
+  return Promise.resolve();
 }
 
 export function invalidateFeedCache(url) {
@@ -77,46 +73,8 @@ function pruneOldEntries(index) {
   } catch {}
 }
 
-// Cloud cache functions for RSS feeds
-async function saveRSSCacheToCloud(feedUrl, feedData) {
-  try {
-    const existing = await base44.asServiceRole.entities.RSSCache.filter({ feed_url: feedUrl });
-    const data = JSON.stringify(feedData);
-    const now = new Date().toISOString();
-    
-    if (existing[0]) {
-      await base44.asServiceRole.entities.RSSCache.update(existing[0].id, {
-        data,
-        cached_at: now
-      });
-    } else {
-      await base44.asServiceRole.entities.RSSCache.create({
-        feed_url: feedUrl,
-        data,
-        cached_at: now
-      });
-    }
-  } catch (error) {
-    console.error('Error saving RSS to cloud cache:', error);
-  }
-}
-
+// Cloud cache is handled server-side by fetchRSSFeed function.
+// Frontend only uses localStorage cache.
 export async function getRSSCacheFromCloud(feedUrl) {
-  try {
-    const records = await base44.asServiceRole.entities.RSSCache.filter({ feed_url: feedUrl });
-    if (!records[0]) return null;
-    
-    const cached_at = new Date(records[0].cached_at).getTime();
-    const isExpired = Date.now() - cached_at > CACHE_TTL_MS;
-    
-    if (isExpired) {
-      await base44.asServiceRole.entities.RSSCache.delete(records[0].id);
-      return null;
-    }
-    
-    return JSON.parse(records[0].data);
-  } catch (error) {
-    console.error('Error reading RSS from cloud cache:', error);
-    return null;
-  }
+  return null; // no-op: cloud cache is managed by the backend function
 }

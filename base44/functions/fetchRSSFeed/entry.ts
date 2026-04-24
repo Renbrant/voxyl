@@ -117,13 +117,16 @@ Deno.serve(async (req) => {
 
     const payload = { title: meta.title, image: meta.image, author: meta.author, description: meta.description, items };
 
-    // Save/update cache (fire and forget)
+    // Save/update cache — truncate to 30 items to stay within field size limits
+    const cachePayload = { ...payload, items: items.slice(0, 30) };
     const now = new Date().toISOString();
-    if (cachedEntry) {
-      base44.asServiceRole.entities.RSSCache.update(cachedEntry.id, { data: JSON.stringify(payload), cached_at: now }).catch(() => {});
-    } else {
-      base44.asServiceRole.entities.RSSCache.create({ feed_url: url, data: JSON.stringify(payload), cached_at: now }).catch(() => {});
-    }
+    try {
+      if (cachedEntry) {
+        base44.asServiceRole.entities.RSSCache.update(cachedEntry.id, { data: JSON.stringify(cachePayload), cached_at: now }).catch(() => {});
+      } else {
+        base44.asServiceRole.entities.RSSCache.create({ feed_url: url, data: JSON.stringify(cachePayload), cached_at: now }).catch(() => {});
+      }
+    } catch {}
 
     return Response.json({ ...payload, items: items.slice(0, count) });
 
