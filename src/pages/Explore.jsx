@@ -114,10 +114,13 @@ export default function Explore() {
     await base44.functions.invoke('togglePlaylistLike', { playlist_id: playlist.id });
   };
 
-  // Fetch Voxyl playlists
+  // Fetch Voxyl playlists ordered by last week's plays across all users
   const { data: playlists = [], isLoading: playlistsLoading } = useQuery({
     queryKey: ['explore-playlists'],
-    queryFn: () => base44.entities.Playlist.list('-plays_count', 100),
+    queryFn: async () => {
+      const res = await base44.functions.invoke('getTopPlaylistsByPlayback', {});
+      return res.data?.playlists || [];
+    },
   });
 
   // Followers: users who follow me (accepted)

@@ -22,25 +22,32 @@ Deno.serve(async (req) => {
             playCount: 0,
           };
         }
-        // Prefer non-empty title/image from any playlist that has it
         if (!podcastMap[feed.url].title && feed.title) podcastMap[feed.url].title = feed.title;
         if (!podcastMap[feed.url].image && feed.image) podcastMap[feed.url].image = feed.image;
       });
     });
 
-    // Count plays from PodcastPlay records (admin-only entity)
+    // Only count plays from the last 7 days
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const allPlays = await base44.asServiceRole.entities.PodcastPlay.list('-played_at', 10000);
+
     allPlays.forEach(play => {
-      if (play.feed_url && podcastMap[play.feed_url]) {
-        podcastMap[play.feed_url].playCount++;
-        // Fill metadata from play records if missing
-        if (!podcastMap[play.feed_url].title && play.podcast_title) {
-          podcastMap[play.feed_url].title = play.podcast_title;
-        }
-        if (!podcastMap[play.feed_url].image && play.podcast_image) {
-          podcastMap[play.feed_url].image = play.podcast_image;
-        }
+      if (!play.feed_url) return;
+      if (play.played_at && play.played_at < oneWeekAgo) return;
+
+      if (!podcastMap[play.feed_url]) {
+        podcastMap[play.feed_url] = {
+          feedUrl: play.feed_url,
+          title: play.podcast_title || '',
+          image: play.podcast_image || '',
+          description: '',
+          author: '',
+          playCount: 0,
+        };
       }
+      podcastMap[play.feed_url].playCount++;
+      if (!podcastMap[play.feed_url].title && play.podcast_title) podcastMap[play.feed_url].title = play.podcast_title;
+      if (!podcastMap[play.feed_url].image && play.podcast_image) podcastMap[play.feed_url].image = play.podcast_image;
     });
 
     const sorted = Object.values(podcastMap)
