@@ -109,6 +109,21 @@ export default function Playlists() {
     }
   });
 
+  // User's recent plays (for sorting)
+  const { data: userPlays = [] } = useQuery({
+    queryKey: ['user-plays-sort', user?.id],
+    enabled: !!user,
+    queryFn: () => base44.entities.PodcastPlay.filter({ user_id: user.id }, '-played_at', 500),
+  });
+
+  // Map: feed_url -> last played_at
+  const feedLastPlayed = {};
+  userPlays.forEach(play => {
+    if (!feedLastPlayed[play.feed_url] || play.played_at > feedLastPlayed[play.feed_url]) {
+      feedLastPlayed[play.feed_url] = play.played_at;
+    }
+  });
+
   // Liked podcasts
   const { data: likedPodcasts = [], refetch: refetchPodcasts } = useQuery({
     queryKey: ['liked-podcasts', user?.id],
@@ -204,7 +219,11 @@ export default function Playlists() {
             {myPlaylists.length > 0 &&
           <>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium pb-1">{t('playlistsMine')}</p>
-                {myPlaylists.map((pl, i) =>
+                {[...myPlaylists].sort((a, b) => {
+                  const aLast = Math.max(...(a.rss_feeds || []).map(f => feedLastPlayed[f.url] ? new Date(feedLastPlayed[f.url]).getTime() : 0), 0);
+                  const bLast = Math.max(...(b.rss_feeds || []).map(f => feedLastPlayed[f.url] ? new Date(feedLastPlayed[f.url]).getTime() : 0), 0);
+                  return bLast - aLast;
+                }).map((pl, i) =>
             <motion.div key={pl.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                     <PlaylistCard
                 playlist={pl}
@@ -222,7 +241,11 @@ export default function Playlists() {
             {likedPlaylists.length > 0 &&
           <>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium pt-3 pb-1">{t('playlistsLiked')}</p>
-                {likedPlaylists.map((pl, i) =>
+                {[...likedPlaylists].sort((a, b) => {
+                  const aLast = Math.max(...(a.rss_feeds || []).map(f => feedLastPlayed[f.url] ? new Date(feedLastPlayed[f.url]).getTime() : 0), 0);
+                  const bLast = Math.max(...(b.rss_feeds || []).map(f => feedLastPlayed[f.url] ? new Date(feedLastPlayed[f.url]).getTime() : 0), 0);
+                  return bLast - aLast;
+                }).map((pl, i) =>
             <motion.div key={pl.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                     <PlaylistCard
                 playlist={pl}
@@ -277,7 +300,11 @@ export default function Playlists() {
               <p className="text-sm mt-1">{t('playlistsNoPodcastsHint')}</p>
             </div> :
 
-        likedPodcasts.map((like, i) =>
+        [...likedPodcasts].sort((a, b) => {
+          const aLast = feedLastPlayed[a.feed_url] ? new Date(feedLastPlayed[a.feed_url]).getTime() : 0;
+          const bLast = feedLastPlayed[b.feed_url] ? new Date(feedLastPlayed[b.feed_url]).getTime() : 0;
+          return bLast - aLast;
+        }).map((like, i) =>
         <motion.div key={like.feed_url} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                 <LikedPodcastCard
             podcastLike={like}
