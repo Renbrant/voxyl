@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { t } from '@/lib/i18n';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useLocation } from 'react-router-dom';
 import VoxylHeader from '@/components/common/VoxylHeader';
 import PlaylistCard from '@/components/playlist/PlaylistCard';
 import PodcastSearchBar from '@/components/explore/PodcastSearchBar';
@@ -17,23 +18,43 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 export default function Explore() {
-  const [tab, setTab] = useState('playlists');
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Read initial state from URL query params (restored when navigating back)
+  const params = new URLSearchParams(location.search);
+  const [tab, setTab] = useState(params.get('tab') || 'playlists');
   const [user, setUser] = useState(null);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(params.get('q') || '');
   const [podcastResults, setPodcastResults] = useState([]);
   const [podcastLoading, setPodcastLoading] = useState(false);
   const [selectedPodcast, setSelectedPodcast] = useState(null);
-  const [voxylSearch, setVoxylSearch] = useState('');
+  const [voxylSearch, setVoxylSearch] = useState(params.get('vq') || '');
   const [userSearch, setUserSearch] = useState('');
   const [userFilter, setUserFilter] = useState('connections');
   const [likes, setLikes] = useState([]);
   const [blockedIds, setBlockedIds] = useState([]);
   const [followStatuses, setFollowStatuses] = useState({});
   const [theyFollowMeIds, setTheyFollowMeIds] = useState(new Set());
-  const [podcastSortBy, setPodcastSortBy] = useState('relevance');
-  const [podcastLanguage, setPodcastLanguage] = useState('');
-  const [podcastCategory, setPodcastCategory] = useState('');
+  const [podcastSortBy, setPodcastSortBy] = useState(params.get('sort') || 'relevance');
+  const [podcastLanguage, setPodcastLanguage] = useState(params.get('lang') || '');
+  const [podcastCategory, setPodcastCategory] = useState(params.get('cat') || '');
   const [likedFeedUrls, setLikedFeedUrls] = useState(new Set());
+
+  // Sync state to URL so it survives navigation
+  useEffect(() => {
+    const p = new URLSearchParams();
+    if (tab !== 'playlists') p.set('tab', tab);
+    if (search) p.set('q', search);
+    if (voxylSearch) p.set('vq', voxylSearch);
+    if (podcastSortBy !== 'relevance') p.set('sort', podcastSortBy);
+    if (podcastLanguage) p.set('lang', podcastLanguage);
+    if (podcastCategory) p.set('cat', podcastCategory);
+    const qs = p.toString();
+    const newUrl = qs ? `/explore?${qs}` : '/explore';
+    // Replace state to keep back button pointing to previous page (not previous search state)
+    window.history.replaceState(null, '', newUrl);
+  }, [tab, search, voxylSearch, podcastSortBy, podcastLanguage, podcastCategory]);
 
   const debouncedQuery = useDebounce(search, 600);
   const debouncedUserSearch = useDebounce(userSearch, 400);
