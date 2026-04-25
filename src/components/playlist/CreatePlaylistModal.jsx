@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { X, Plus, Trash2, Globe, Lock, Loader2, Image as ImageIcon, Sparkles, Users, Search, Timer, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Plus, Trash2, Globe, Lock, Loader2, Image as ImageIcon, Sparkles, Users, Search, Timer, ChevronDown, ChevronUp, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateShareToken } from '@/lib/rssUtils';
 import { cn } from '@/lib/utils';
@@ -19,6 +20,7 @@ function getLimits() {
 
 export default function CreatePlaylistModal({ user, onClose, onCreated, playlistCount = 0 }) {
   const { MAX_PLAYLISTS, MAX_FEEDS } = getLimits();
+  const navigate = useNavigate();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState('public');
@@ -32,6 +34,7 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
   const [podcastSearch, setPodcastSearch] = useState('');
   const [podcastResults, setPodcastResults] = useState([]);
   const [searchingPodcasts, setSearchingPodcasts] = useState(false);
+  const [feedValidations, setFeedValidations] = useState({}); // { [index]: 'valid' | 'invalid' | 'checking' }
 
   const atPlaylistLimit = playlistCount >= MAX_PLAYLISTS;
 
@@ -59,8 +62,36 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
     setPodcastResults([]);
   };
   const [expandedFeedIdx, setExpandedFeedIdx] = useState(null);
-  const removeFeed = (i) => setFeeds(prev => prev.filter((_, idx) => idx !== i));
-  const updateFeed = (i, url) => setFeeds(prev => prev.map((f, idx) => idx === i ? { ...f, url } : f));
+  const removeFeed = (i) => {
+    setFeeds(prev => prev.filter((_, idx) => idx !== i));
+    setFeedValidations(prev => {
+      const next = {};
+      Object.entries(prev).forEach(([k, v]) => {
+        const ki = Number(k);
+        if (ki < i) next[ki] = v;
+        else if (ki > i) next[ki - 1] = v;
+      });
+      return next;
+    });
+  };
+
+  const validateFeedUrl = useCallback(async (i, url) => {
+    if (!url.trim()) { setFeedValidations(prev => { const n = {...prev}; delete n[i]; return n; }); return; }
+    setFeedValidations(prev => ({ ...prev, [i]: 'checking' }));
+    try {
+      const res = await base44.functions.invoke('fetchRSSFeed', { url: url.trim(), count: 1 });
+      const data = res.data || res;
+      const valid = !!(data?.title || data?.items?.length > 0);
+      setFeedValidations(prev => ({ ...prev, [i]: valid ? 'valid' : 'invalid' }));
+    } catch {
+      setFeedValidations(prev => ({ ...prev, [i]: 'invalid' }));
+    }
+  }, []);
+
+  const updateFeed = (i, url) => {
+    setFeeds(prev => prev.map((f, idx) => idx === i ? { ...f, url } : f));
+    setFeedValidations(prev => { const n = {...prev}; delete n[i]; return n; });
+  };
   const updateFeedSkip = (i, field, value) => setFeeds(prev => prev.map((f, idx) => idx === i ? { ...f, [field]: Number(value) || 0 } : f));
 
   const handleGenerateImage = async () => {
@@ -91,7 +122,7 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (andExplore = false) => {
     if (!name.trim()) { setError('Nome é obrigatório'); return; }
     const validFeeds = feeds.filter(f => f.url.trim());
     if (validFeeds.length > MAX_FEEDS) { setError(`Máximo de ${MAX_FEEDS} podcasts por playlist durante o período de testes.`); return; }
@@ -117,6 +148,7 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
     });
     setSaving(false);
     onCreated();
+    if (andExplore) navigate('/explore');
   };
 
   return (
@@ -297,15 +329,27 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
 
             {/* Manual RSS input */}
             <div className="space-y-2">
-              {feeds.map((feed, i) => (
-                <div key={i} className="rounded-xl bg-secondary border border-border overflow-hidden">
+              {feeds.map((feed, i) => {
+                const validation = feedValidations[i];
+                return (
+                <div key={i} className={cn("rounded-xl bg-secondary border overflow-hidden transition-colors",
+                  validation === 'valid' ? 'border-green-500/60' : validation === 'invalid' ? 'border-destructive/60' : 'border-border'
+                )}>
                   <div className="flex gap-2 p-2">
-                    <input
-                      value={feed.url}
-                      onChange={e => updateFeed(i, e.target.value)}
-                      placeholder="https://feed.exemplo.com/rss"
-                      className="flex-1 px-3 py-2 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground text-xs focus:outline-none focus:border-primary"
-                    />
+                    <div className="flex-1 relative">
+                      <input
+                        value={feed.url}
+                        onChange={e => updateFeed(i, e.target.value)}
+                        onBlur={e => e.target.value.trim() && validateFeedUrl(i, e.target.value)}
+                        placeholder="https://feed.exemplo.com/rss"
+                        className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground text-xs focus:outline-none focus:border-primary pr-7"
+                      />
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                        {validation === 'checking' && <Loader2 size={12} className="animate-spin text-muted-foreground" />}
+                        {validation === 'valid' && <CheckCircle2 size={12} className="text-green-500" />}
+                        {validation === 'invalid' && <AlertCircle size={12} className="text-destructive" />}
+                      </div>
+                    </div>
                     <button
                       type="button"
                       onClick={() => setExpandedFeedIdx(expandedFeedIdx === i ? null : i)}
@@ -319,6 +363,12 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
                       </button>
                     )}
                   </div>
+                  {validation === 'valid' && feed.url.trim() && (
+                    <p className="text-xs text-green-500 px-3 pb-2">✓ Feed RSS válido</p>
+                  )}
+                  {validation === 'invalid' && feed.url.trim() && (
+                    <p className="text-xs text-destructive px-3 pb-2">Feed inválido ou inacessível</p>
+                  )}
                   {expandedFeedIdx === i && (
                     <div className="px-3 pb-3 space-y-2 border-t border-border pt-2">
                       <p className="text-xs text-muted-foreground font-medium flex items-center gap-1"><Timer size={10} /> Pular vinheta / silêncio</p>
@@ -347,7 +397,8 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
               <button onClick={addFeed} className="text-xs text-primary flex items-center gap-1 mt-2">
                 <Plus size={12} /> Adicionar manualmente
               </button>
@@ -356,14 +407,23 @@ export default function CreatePlaylistModal({ user, onClose, onCreated, playlist
         </div>
 
         </div>{/* end scroll */}
-        <div className="px-5 pt-3 flex-shrink-0 border-t border-border" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}>
+        <div className="px-5 pt-3 flex-shrink-0 border-t border-border space-y-2" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}>
           <Button
-            onClick={handleSave}
+            onClick={() => handleSave(false)}
             disabled={saving}
             className="w-full rounded-2xl gradient-primary border-0 py-6 text-base font-semibold"
           >
             {saving ? <Loader2 size={18} className="animate-spin mr-2" /> : null}
             {saving ? 'Salvando...' : 'Criar Playlist'}
+          </Button>
+          <Button
+            onClick={() => handleSave(true)}
+            disabled={saving}
+            variant="outline"
+            className="w-full rounded-2xl border-primary/40 text-primary py-6 text-base font-semibold"
+          >
+            <Search size={16} className="mr-2" />
+            Salvar e buscar podcasts
           </Button>
         </div>
         </>
