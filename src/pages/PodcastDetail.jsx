@@ -98,9 +98,9 @@ export default function PodcastDetail() {
           applyData(fresh);
           setFeedSource(source);
         } else {
-          // Only update with new episodes
-          const oldUrls = new Set(cached.items?.map(e => e.link) || []);
-          const newItems = fresh.items?.filter(e => !oldUrls.has(e.link)) || [];
+          // Only update with new episodes (compare by audioUrl which is always present)
+          const oldUrls = new Set(cached.items?.map(e => e.audioUrl).filter(Boolean) || []);
+          const newItems = fresh.items?.filter(e => e.audioUrl && !oldUrls.has(e.audioUrl)) || [];
           if (newItems.length > 0) {
             const merged = {
               ...cached,

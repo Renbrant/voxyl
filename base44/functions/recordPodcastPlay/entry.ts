@@ -13,7 +13,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Check if this play was already recorded (avoid duplicates)
+    const now = new Date().toISOString();
+
+    // Check if this play was already recorded — update played_at if so
     const existing = await base44.asServiceRole.entities.PodcastPlay.filter({
       feed_url,
       user_id: userId,
@@ -21,7 +23,8 @@ Deno.serve(async (req) => {
     });
 
     if (existing.length > 0) {
-      return Response.json({ recorded: false, message: 'Play already recorded' });
+      await base44.asServiceRole.entities.PodcastPlay.update(existing[0].id, { played_at: now });
+      return Response.json({ recorded: true, updated: true });
     }
 
     // Record the play
@@ -32,7 +35,7 @@ Deno.serve(async (req) => {
       user_id: userId,
       audio_url,
       episode_title: episode_title || 'Unknown',
-      played_at: new Date().toISOString()
+      played_at: now,
     });
 
     return Response.json({ recorded: true });

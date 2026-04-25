@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
+import { invalidateCache } from '@/lib/appCache';
 import {
   getCachedProgress,
   setCachedProgress,
@@ -63,12 +64,18 @@ export function PlayerProvider({ children }) {
 
     if (playPercent >= 0.5) {
       podcastPlayRecordedRef.current.add(ep.audioUrl);
+      const feedUrl = ep.feedUrl || ep.id || '';
       base44.functions.invoke('recordPodcastPlay', {
-        feed_url: ep.feedUrl || ep.id || '',
+        feed_url: feedUrl,
         podcast_title: ep.feedTitle || '',
         podcast_image: ep.image || '',
         audio_url: ep.audioUrl,
         episode_title: ep.title || '',
+      }).then(() => {
+        // Invalidate caches so Feed and Playlists reflect the new play
+        if (user?.id) {
+          invalidateCache(`user-podcast-plays-${user.id}`);
+        }
       }).catch(() => {});
     }
   }, [user]);
