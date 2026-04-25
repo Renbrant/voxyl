@@ -47,7 +47,10 @@ export default function PodcastDetail() {
     setEpisodes([]);
     setFeedSource('none');
 
+    let cancelled = false;
+
     const applyData = (data) => {
+      if (cancelled) return;
       setPodcastMeta({
         title: data.title || '',
         image: data.image || '',
@@ -74,31 +77,24 @@ export default function PodcastDetail() {
     (async () => {
       try {
         let fresh;
-        let source = 'rss'; // Default to 'rss' for cloud cache or API fetch
+        let source = 'rss';
         
-        // Try cloud cache first
         const cloudCached = await getRSSCacheFromCloud(feedUrl).catch(() => null);
         if (cloudCached) {
           fresh = cloudCached;
         } else {
-          // Fall back to API - this is "fresh" data
           const res = await base44.functions.invoke('fetchRSSFeed', { url: feedUrl, count: 100 });
           fresh = res.data || res;
         }
         
-        // Only mark as 'local' if nothing was cached (meaning we loaded from localStorage)
-        if (cached) {
-          source = 'local';
-        }
-        
+        if (cancelled) return;
+
         saveFeedToCache(feedUrl, fresh).catch(() => {});
           
-        // If nothing was cached, show all fresh episodes
         if (!cached) {
           applyData(fresh);
-          setFeedSource(source);
+          if (!cancelled) setFeedSource(source);
         } else {
-          // Only update with new episodes (compare by audioUrl which is always present)
           const oldUrls = new Set(cached.items?.map(e => e.audioUrl).filter(Boolean) || []);
           const newItems = fresh.items?.filter(e => e.audioUrl && !oldUrls.has(e.audioUrl)) || [];
           if (newItems.length > 0) {
@@ -108,13 +104,14 @@ export default function PodcastDetail() {
             };
             applyData(merged);
           }
-          // Always update source based on fetch result
-          setFeedSource(source);
+          if (!cancelled) setFeedSource(source);
         }
       } catch (error) {
         console.error('Erro ao carregar feed:', error);
       }
-    })().finally(() => setLoading(false));
+    })().finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
   }, [feedUrl]);
 
   const handlePlayEpisode = (ep) => {
