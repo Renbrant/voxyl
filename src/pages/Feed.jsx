@@ -123,6 +123,15 @@ export default function Feed() {
     ? [...visiblePlaylists].sort((a, b) => (b.plays_count || 0) - (a.plays_count || 0))
     : [...visiblePlaylists].sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0));
 
+  // Recent tab: newest playlists with > 5 plays
+  const recentPlaylists = useMemo(() =>
+    [...visiblePlaylists]
+      .filter(p => (p.plays_count || 0) > 5)
+      .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
+      .slice(0, 10),
+    [visiblePlaylists]
+  );
+
   const heroPlaylist = sortedPlaylists[0];
   const trendingPlaylists = sortedPlaylists.slice(1);
   const displayedTrendingPlaylists = expandedPlaylists ? trendingPlaylists : trendingPlaylists.slice(0, 8);
@@ -192,6 +201,20 @@ export default function Feed() {
         {/* Trending / Recent Tabs */}
         {tab !== 'my-playlists' && (
           <>
+            {/* Recent: newest playlists with >5 plays */}
+            {tab === 'recent' && recentPlaylists.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-base font-semibold mb-3 text-foreground">Adicionadas recentemente</h2>
+                <div className="grid grid-cols-2 gap-3">
+                  {recentPlaylists.map((pl, i) => (
+                    <motion.div key={pl.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
+                      <PlaylistCard playlist={pl} liked={likes.includes(pl.id)} onLike={handleLike} currentUser={user} onBlocked={id => setBlockedIds(prev => [...prev, id])} />
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Playlists em Alta */}
             {!isLoading && heroPlaylist && (
               <div className="mb-8">
