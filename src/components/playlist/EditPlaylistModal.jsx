@@ -38,6 +38,8 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
   const [newFeedUrl, setNewFeedUrl] = useState('');
   const [addingFeed, setAddingFeed] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [feedError, setFeedError] = useState('');
   const [coverImage, setCoverImage] = useState(playlist.cover_image || '');
   const [generatingImage, setGeneratingImage] = useState(false);
@@ -82,6 +84,14 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
 
   const handleUpdateFeedSkip = (idx, field, value) => {
     setFeeds(prev => prev.map((f, i) => i === idx ? { ...f, [field]: Number(value) || 0 } : f));
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    await base44.entities.Playlist.delete(playlist.id);
+    setDeleting(false);
+    onSaved();
+    onClose();
   };
 
   const handleSave = async () => {
@@ -393,16 +403,43 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
           </div>
         </div>
 
-        {/* Save button */}
-        <div className="px-5 pt-3 flex-shrink-0 border-t border-border" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}>
+        {/* Footer buttons */}
+        <div className="px-5 pt-3 flex-shrink-0 border-t border-border space-y-2" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}>
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || deleting}
             className="w-full py-3.5 rounded-2xl gradient-primary text-white font-semibold flex items-center justify-center gap-2"
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             {saving ? 'Salvando...' : 'Salvar alterações'}
           </button>
+
+          {!confirmDelete ? (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              disabled={saving || deleting}
+              className="w-full py-3 rounded-2xl bg-destructive/10 text-destructive font-semibold text-sm flex items-center justify-center gap-2"
+            >
+              <Trash2 size={15} /> Excluir playlist
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="flex-1 py-3 rounded-2xl bg-secondary text-muted-foreground font-semibold text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 py-3 rounded-2xl bg-destructive text-white font-semibold text-sm flex items-center justify-center gap-2"
+              >
+                {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                {deleting ? 'Excluindo...' : 'Confirmar'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
