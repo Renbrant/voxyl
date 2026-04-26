@@ -140,6 +140,7 @@ export default function PlaylistCard({ playlist, onLike, liked, compact = false,
     {editingPlaylist && (
       <EditPlaylistModal
         playlist={playlist}
+        user={currentUser}
         onClose={() => setEditingPlaylist(false)}
         onSaved={() => { setEditingPlaylist(false); onEdited?.(); }}
       />

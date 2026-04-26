@@ -23,7 +23,17 @@ const TIME_FILTER_OPTIONS = [
   { label: 'Último ano', value: 8760 },
 ];
 
-export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
+const BASE_MAX_FEEDS = 5;
+const EGG_BONUS_FEEDS = 15;
+
+function getMaxFeeds(isAdmin = false) {
+  if (isAdmin) return Infinity;
+  const unlocked = localStorage.getItem('voxyl_egg_unlocked') === 'true';
+  return BASE_MAX_FEEDS + (unlocked ? EGG_BONUS_FEEDS : 0);
+}
+
+export default function EditPlaylistModal({ playlist, onClose, onSaved, user }) {
+  const MAX_FEEDS = getMaxFeeds(user?.role === 'admin');
   const [name, setName] = useState(playlist.name || '');
   const [description, setDescription] = useState(playlist.description || '');
   const [maxDuration, setMaxDuration] = useState(playlist.max_duration || 0);
@@ -44,8 +54,6 @@ export default function EditPlaylistModal({ playlist, onClose, onSaved }) {
   const [coverImage, setCoverImage] = useState(playlist.cover_image || '');
   const [generatingImage, setGeneratingImage] = useState(false);
   const [visibility, setVisibility] = useState(playlist.visibility || 'public');
-
-  const MAX_FEEDS = 5;
 
   const handleAddFeed = async () => {
     const url = newFeedUrl.trim();
