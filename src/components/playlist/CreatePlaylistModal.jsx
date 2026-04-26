@@ -11,7 +11,8 @@ const BASE_MAX_FEEDS = 5;
 const EGG_BONUS_PLAYLISTS = 5;
 const EGG_BONUS_FEEDS = 15; // 5 + 15 = 20 feeds when egg unlocked
 
-function getLimits() {
+function getLimits(isAdmin = false) {
+  if (isAdmin) return { MAX_PLAYLISTS: Infinity, MAX_FEEDS: Infinity };
   const unlocked = localStorage.getItem('voxyl_egg_unlocked') === 'true';
   return {
     MAX_PLAYLISTS: BASE_MAX_PLAYLISTS + (unlocked ? EGG_BONUS_PLAYLISTS : 0),
@@ -20,7 +21,8 @@ function getLimits() {
 }
 
 export default function CreatePlaylistModal({ user, onClose, onCreated, playlistCount = 0 }) {
-  const { MAX_PLAYLISTS, MAX_FEEDS } = getLimits();
+  const isAdmin = user?.role === 'admin';
+  const { MAX_PLAYLISTS, MAX_FEEDS } = getLimits(isAdmin);
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
