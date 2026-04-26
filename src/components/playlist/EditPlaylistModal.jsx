@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { X, Plus, Trash2, GripVertical, Loader2, Clock, Save, Image as ImageIcon, Lock, Globe, Users, ChevronDown, ChevronUp, Timer, ArrowDown, ArrowUp } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -33,7 +33,17 @@ function getMaxFeeds(isAdmin = false) {
 }
 
 export default function EditPlaylistModal({ playlist, onClose, onSaved, user }) {
-  const MAX_FEEDS = getMaxFeeds(user?.role === 'admin');
+  const [currentUser, setCurrentUser] = useState(user || null);
+
+  useEffect(() => {
+    if (!user) {
+      base44.auth.me().then(setCurrentUser).catch(() => {});
+    } else {
+      setCurrentUser(user);
+    }
+  }, [user]);
+
+  const MAX_FEEDS = getMaxFeeds(currentUser?.role === 'admin');
   const [name, setName] = useState(playlist.name || '');
   const [description, setDescription] = useState(playlist.description || '');
   const [maxDuration, setMaxDuration] = useState(playlist.max_duration || 0);
