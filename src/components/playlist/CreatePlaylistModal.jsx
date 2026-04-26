@@ -8,13 +8,14 @@ import { cn } from '@/lib/utils';
 
 const BASE_MAX_PLAYLISTS = 2;
 const BASE_MAX_FEEDS = 5;
-const EGG_BONUS = 5;
+const EGG_BONUS_PLAYLISTS = 5;
+const EGG_BONUS_FEEDS = 15; // 5 + 15 = 20 feeds when egg unlocked
 
 function getLimits() {
   const unlocked = localStorage.getItem('voxyl_egg_unlocked') === 'true';
   return {
-    MAX_PLAYLISTS: BASE_MAX_PLAYLISTS + (unlocked ? EGG_BONUS : 0),
-    MAX_FEEDS: BASE_MAX_FEEDS + (unlocked ? EGG_BONUS : 0),
+    MAX_PLAYLISTS: BASE_MAX_PLAYLISTS + (unlocked ? EGG_BONUS_PLAYLISTS : 0),
+    MAX_FEEDS: BASE_MAX_FEEDS + (unlocked ? EGG_BONUS_FEEDS : 0),
   };
 }
 
