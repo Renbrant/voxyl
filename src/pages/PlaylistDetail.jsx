@@ -385,7 +385,7 @@ export default function PlaylistDetail() {
                           <span className="text-xs text-muted-foreground">{ep.feedTitle}</span>
                         )}
                         {ep.duration && <span className="text-xs text-muted-foreground">• {ep.duration}</span>}
-                        {ep.pubDate && (
+                        {ep.pubDate && !isNaN(new Date(ep.pubDate).getTime()) && (
                           <span className="text-xs text-muted-foreground">
                             • {format(new Date(ep.pubDate), "d MMM yyyy", { locale: ptBR })}
                           </span>
@@ -493,7 +493,7 @@ export default function PlaylistDetail() {
                               <span className="text-xs text-muted-foreground">{ep.feedTitle}</span>
                             )}
                             {ep.duration && <span className="text-xs text-muted-foreground">• {ep.duration}</span>}
-                            {ep.pubDate && (
+                            {ep.pubDate && !isNaN(new Date(ep.pubDate).getTime()) && (
                               <span className="text-xs text-muted-foreground">
                                 • {format(new Date(ep.pubDate), "d MMM yyyy", { locale: ptBR })}
                               </span>
