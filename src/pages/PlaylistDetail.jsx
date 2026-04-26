@@ -71,17 +71,15 @@ export default function PlaylistDetail() {
       const pending = localStorage.getItem('voxyl_pending_playlist');
       const pendingCreatorId = localStorage.getItem('voxyl_pending_creator_id');
       if (pending === id) {
-        localStorage.removeItem('voxyl_pending_playlist');
-        localStorage.removeItem('voxyl_pending_creator_id');
-        // Auto-like the playlist as the first action post-signup
-        base44.entities.PlaylistLike.filter({ playlist_id: id, user_id: u.id })
-          .then(existing => {
-            if (existing.length === 0) {
-              base44.entities.PlaylistLike.create({ playlist_id: id, user_id: u.id, user_email: u.email });
-              base44.entities.Playlist.filter({ id })
-                .then(([pl]) => pl && base44.entities.Playlist.update(id, { likes_count: (pl.likes_count || 0) + 1 }));
-            }
-          });
+      localStorage.removeItem('voxyl_pending_playlist');
+      localStorage.removeItem('voxyl_pending_creator_id');
+      // Auto-like the playlist as the first action post-signup
+      base44.entities.PlaylistLike.filter({ playlist_id: id, user_id: u.id })
+        .then(existing => {
+          if (existing.length === 0) {
+            base44.functions.invoke('togglePlaylistLike', { playlist_id: id }).catch(() => {});
+          }
+        });
         // Auto-follow the creator if they came from a share link
         if (pendingCreatorId && pendingCreatorId !== u.id) {
           base44.entities.Follow.filter({ follower_id: u.id, following_id: pendingCreatorId })
