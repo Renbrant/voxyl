@@ -2,6 +2,10 @@
 
 **Voxyl** is a modern social podcast aggregator designed to give listeners total control over their audio streams. By blending traditional RSS technology with social curation, Voxyl allows users to build, share, and discover unique audio experiences.
 
+<p align="center">
+  <img src="promo/banner.png" width="100%">
+</p>
+
 ---
 
 ## 🌐 Try It Out
