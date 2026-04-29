@@ -62,6 +62,13 @@ We take user privacy seriously. Voxyl is built with transparency in mind:
 
 ---
 
+🛠️ Powered By
+This project was built and is powered by:
+
+Base44: An AI-driven, no-code development platform used as the primary environment for constructing and publishing the fully functional custom Voxyl application.
+
+---
+
 ## 👨‍💻 About the Developer
 
 Voxyl is developed by **Renato Brant**, a Brazilian Mechatronic Engineer based in Colorado. Passionate about technology and dedicated to sharing knowledge, Renato also hosts the **[Brant Channel](https://www.youtube.com/@Brant_Channel)** on YouTube. This project merges a background in high-tech automation with a love for filmmaking and photography, aiming to create a more organized and social way to consume long-form audio content.
