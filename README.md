@@ -1,39 +1,69 @@
-**Welcome to your Base44 project** 
+# Voxyl: Social Podcast Playlists 🎙️
 
-**About**
+**Voxyl** is a modern social podcast aggregator designed to give listeners total control over their audio streams. By blending traditional RSS technology with social curation, Voxyl allows users to build, share, and discover unique audio experiences.
 
-View and Edit  your app on [Base44.com](http://Base44.com) 
+---
 
-This project contains everything you need to run your app locally.
+## 🌐 Try It Out
 
-**Edit the code in your local development environment**
+Voxyl is currently in its beta phase. You can access the web version and start testing the app immediately at the following link:
 
-Any change pushed to the repo will also be reflected in the Base44 Builder.
+**👉 [Access Voxyl Web App](https://voxyl-app.base44.app/)**
 
-**Prerequisites:** 
+---
 
-1. Clone the repository using the project's Git URL 
-2. Navigate to the project directory
-3. Install dependencies: `npm install`
-4. Create an `.env.local` file and set the right environment variables
+## 🚀 Key Features
 
-```
-VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=your_backend_url
+* **Smart RSS Aggregation:** Combine up to 5 different RSS feeds into a single, seamless playlist.
+* **Social Discovery:** Follow friends and fellow curators to see what they are listening to.
+* **Guest Mode:** Explore trending content and public playlists instantly without needing an account.
+* **Advanced Playback:** Persistent hybrid caching ensures a smooth listening experience, even with fluctuating connections.
+* **UI/UX:** Fully responsive design with native support for Light, Dark, and System-Automatic themes.
 
-e.g.
-VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
-VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
-```
+---
 
-Run the app: `npm run dev`
+## 📱 Screenshots
 
-**Publish your changes**
+<p align="center">
+  <img src="screenshot/Voxyl%20-%20Apple%20resolution/1.png" width="200" alt="Screenshot 1">
+  <img src="screenshot/Voxyl%20-%20Apple%20resolution/2.png" width="200" alt="Screenshot 2">
+  <img src="screenshot/Voxyl%20-%20Apple%20resolution/3.png" width="200" alt="Screenshot 3">
+  <img src="screenshot/Voxyl%20-%20Apple%20resolution/4.png" width="200" alt="Screenshot 4">
+</p>
 
-Open [Base44.com](http://Base44.com) and click on Publish.
+<p align="center">
+  <img src="screenshot/Voxyl%20-%20Apple%20resolution/5.png" width="200" alt="Screenshot 5">
+  <img src="screenshot/Voxyl%20-%20Apple%20resolution/6.png" width="200" alt="Screenshot 6">
+  <img src="screenshot/Voxyl%20-%20Apple%20resolution/7.png" width="200" alt="Screenshot 7">
+  <img src="screenshot/Voxyl%20-%20Apple%20resolution/8.png" width="200" alt="Screenshot 8">
+</p>
 
-**Docs & Support**
+---
 
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
+## 🛠 Support & Bug Reporting
 
-Support: [https://app.base44.com/support](https://app.base44.com/support)
+This repository serves as the official support hub for Voxyl. If you encounter any issues or have suggestions, please let us know:
+
+1.  **GitHub Issues:** [Open a new issue](https://github.com/SEU_USUARIO/voxyl-support/issues) describing the problem.
+2.  **Direct Email:** [Seu E-mail de Suporte Aqui]
+3.  **Response Time:** We typically respond to support inquiries within 24-48 hours.
+
+---
+
+## 🔐 Privacy & Safety
+
+We take user privacy seriously. Voxyl is built with transparency in mind:
+
+* **Data Minimization:** We only collect essential data (Name/Email) required for account functionality.
+* **Account Control:** Users can delete their account and all associated data at any time via the Profile Settings.
+* **Privacy Policy:** Detailed information can be found [here](https://voxyl-app.base44.app/privacy).
+
+---
+
+## 👨‍💻 About the Developer
+
+Voxyl is developed by **Renato Brant**, a Mechatronic Engineer based in Colorado. This project merges a passion for high-tech automation with a love for filmmaking and photography, aiming to create a more organized and social way to consume long-form audio content.
+
+---
+
+*Voxyl is currently in Version 0.2 (Beta). Thank you for helping us shape the future of social podcasting!*
