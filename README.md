@@ -44,9 +44,7 @@ Voxyl is currently in its beta phase. You can access the web version and start t
 
 This repository serves as the official support hub for Voxyl. If you encounter any issues or have suggestions, please let us know:
 
-1.  **GitHub Issues:** [Open a new issue](https://github.com/SEU_USUARIO/voxyl-support/issues) describing the problem.
-2.  **Direct Email:** [Seu E-mail de Suporte Aqui]
-3.  **Response Time:** We typically respond to support inquiries within 24-48 hours.
+**GitHub Issues:** [Open a new issue](https://github.com/Renbrant/voxyl/issues) describing the problem.
 
 ---
 
@@ -62,7 +60,7 @@ We take user privacy seriously. Voxyl is built with transparency in mind:
 
 ## 👨‍💻 About the Developer
 
-Voxyl is developed by **Renato Brant**, a Mechatronic Engineer based in Colorado. This project merges a passion for high-tech automation with a love for filmmaking and photography, aiming to create a more organized and social way to consume long-form audio content.
+Voxyl is developed by **Renato Brant**, a Brazilian Mechatronic Engineer based in Colorado. Passionate about technology and dedicated to sharing knowledge, Renato also hosts the **[Brant Channel](https://www.youtube.com/@Brant_Channel)** on YouTube. This project merges a background in high-tech automation with a love for filmmaking and photography, aiming to create a more organized and social way to consume long-form audio content.
 
 ---
 
